@@ -38,20 +38,17 @@ export function HeroSection() {
         {/* Headline */}
         <motion.h1
           {...fadeUp(0.1, 16, 0.6)}
-          className="text-center font-display text-5xl md:text-7xl lg:text-[5.8rem] leading-[0.88] tracking-[-0.04em] text-foreground max-w-4xl"
+          className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-6xl"
         >
-          Automate Your Work <br className="hidden md:block" /> with Multi Agent
-          Catalyst
+          every SaaS company is becoming a <br className="hidden md:block" /> GaaS company — Agentic as a Service <br className="hidden md:block" /> "Jenseng Huang"
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
           {...fadeUp(0.2, 16, 0.6)}
-          className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[650px] leading-relaxed font-body"
+          className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed font-body"
         >
-          Otogent is the infrastructure for multi-agent systems. Connect your
-          favorite models, build complex workflows in minutes, and deploy with
-          confidence — all from one unified interface.
+          Otogent gives the Catalysts to Otomate your Workflows through multiple Agents Delegate Task.
         </motion.p>
 
         {/* CTA Buttons */}
