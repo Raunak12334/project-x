@@ -7,10 +7,6 @@ import { httpRequestDefinition } from "../definitions/http-request/definition";
 // Registry storage
 const registry: Record<string, NodeDefinition<any>> = {};
 
-// Register initial nodes
-registerNode(openAiDefinition);
-registerNode(httpRequestDefinition);
-
 /**
  * Register a node definition in the central registry
  */
@@ -27,7 +23,6 @@ export const getNodeDefinition = (type: NodeType, version = 1) => {
   const definition = registry[key];
 
   if (!definition) {
-    // If not found in registry, it might be a legacy node or not yet registered
     return null;
   }
 
@@ -45,3 +40,7 @@ export const getAllNodeDefinitions = () => Object.values(registry);
 export const isNodeSupported = (type: NodeType, version = 1) => {
   return !!registry[`${type}_v${version}`];
 };
+
+// Register initial nodes after function definitions to avoid hoisting issues
+registerNode(openAiDefinition);
+registerNode(httpRequestDefinition);
