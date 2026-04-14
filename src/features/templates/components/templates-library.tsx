@@ -21,13 +21,14 @@ import {
   workflowTemplates,
 } from "../lib/workflow-templates";
 
-const credentialLabels = {
+const credentialLabels: Record<string, string> = {
   OPENAI: "OpenAI",
   ANTHROPIC: "Anthropic",
   GEMINI: "Gemini",
   GEMMA: "Gemma",
   HUGGINGFACE: "Hugging Face",
-} as const;
+  GENERIC: "API Key",
+};
 
 const matchesTemplateSearch = (
   template: WorkflowTemplateDefinition,
