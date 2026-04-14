@@ -40,7 +40,7 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-6xl"
         >
-          every SaaS company is becoming a <br className="hidden md:block" /> GaaS company — Agentic as a Service <br className="hidden md:block" /> "Jenseng Huang"
+          Automate your Workflows with <br className="hidden md:block" /> Multi Agent System
         </motion.h1>
 
         {/* Subheadline */}
@@ -48,7 +48,7 @@ export function HeroSection() {
           {...fadeUp(0.2, 16, 0.6)}
           className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed font-body"
         >
-          Otogent gives the Catalysts to Otomate your Workflows through multiple Agents Delegate Task.
+          Otogent gives you the Catalysts to Automate your Workflows through Multi Delegate Agent
         </motion.p>
 
         {/* CTA Buttons */}
