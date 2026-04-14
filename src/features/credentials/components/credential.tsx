@@ -72,6 +72,11 @@ const credentialTypeOptions = [
     label: "Hugging Face",
     logo: "/logos/huggingface.svg",
   },
+  {
+    value: CredentialType.GENERIC,
+    label: "Generic (API Key/Token)",
+    logo: "/logos/google.svg", // Reusing google logo as generic for now
+  },
 ];
 
 interface CredentialFormProps {

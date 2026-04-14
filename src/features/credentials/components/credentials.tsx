@@ -123,6 +123,7 @@ const credentialLogos: Record<CredentialType, string> = {
   [CredentialType.GEMINI]: "/logos/gemini.svg",
   [CredentialType.GEMMA]: "/logos/google.svg",
   [CredentialType.HUGGINGFACE]: "/logos/huggingface.svg",
+  [CredentialType.GENERIC]: "/logos/google.svg", // Fallback for generic credentials
 };
 
 export const CredentialItem = ({ data }: { data: Credential }) => {
