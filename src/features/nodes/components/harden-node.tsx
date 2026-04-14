@@ -24,7 +24,10 @@ import Image from "next/image";
 
 export const HardenNode = memo((props: NodeProps) => {
   const { id, type, data } = props;
-  const definition = getNodeDefinition(type as NodeType, data.version || 1);
+  const definition = getNodeDefinition(
+    type as NodeType,
+    (data as any).version || 1,
+  );
   const { setNodes, setEdges } = useReactFlow();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -93,7 +96,7 @@ export const HardenNode = memo((props: NodeProps) => {
           </DialogHeader>
           <NodeConfigRenderer
             type={type as NodeType}
-            version={data.version || 1}
+            version={(data as any).version || 1}
             defaultValues={data}
             onSubmit={handleSave}
           />
