@@ -1,6 +1,5 @@
 import { NodeType, CredentialType } from "@prisma/client";
 import { NodeDefinition } from "../../core/types";
-import { executeOpenAi } from "./executor";
 import { openAiFields, openAiSchema } from "./schema";
 import { OPENAI_CHANNEL_NAME } from "@/inngest/channels/openai";
 import { fetchOpenAiRealtimeToken } from "./actions";
@@ -25,14 +24,13 @@ export const openAiDefinition: NodeDefinition<typeof openAiSchema> = {
       required: true,
     },
   ],
-  getSummary: (data) =>
-    data.userPrompt
-      ? `GPT-4: ${data.userPrompt.slice(0, 30)}...`
-      : "Not configured",
+  getSummary: (config) =>
+    config.userPrompt.substring(0, 50) +
+    (config.userPrompt.length > 50 ? "..." : ""),
   realtimeStatus: {
     channel: OPENAI_CHANNEL_NAME,
     topic: "status",
     refreshToken: fetchOpenAiRealtimeToken,
   },
-  execute: executeOpenAi,
+  execute: (ctx) => import("./executor").then((m) => m.executeOpenAi(ctx)),
 };

@@ -1,6 +1,5 @@
 import { NodeType, CredentialType } from "@prisma/client";
 import { NodeDefinition } from "../../core/types";
-import { executeHttpRequest } from "./executor";
 import { httpRequestFields, httpRequestSchema } from "./schema";
 
 export const httpRequestDefinition: NodeDefinition<typeof httpRequestSchema> = {
@@ -24,5 +23,5 @@ export const httpRequestDefinition: NodeDefinition<typeof httpRequestSchema> = {
     },
   ],
   getSummary: (config) => `${config.method} ${config.url}`,
-  execute: executeHttpRequest,
+  execute: (ctx) => import("./executor").then((m) => m.executeHttpRequest(ctx)),
 };
