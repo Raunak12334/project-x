@@ -20,7 +20,7 @@ export interface NodeExecutionResult<TOutput = any> {
 
 export interface NodeExecutionContext<TConfig = any> {
   config: TConfig;
-  memory: Record<string, any>; // Persistent data across the whole workflow run
+  context: Record<string, any>; // Workflow variables and state
   organizationId: string;
   credentials: Record<string, string>; // Plaintext secrets injected by engine
   step: any; // Inngest StepTools

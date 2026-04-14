@@ -54,95 +54,103 @@ export const NodeConfigRenderer = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {definition.fields.map((fieldDef) => (
-          <FormField
-            key={fieldDef.name}
-            control={form.control}
-            name={fieldDef.name}
-            render={({ field }) => {
-              const credReq = definition.credentials.find(
-                (c) =>
-                  c.key === fieldDef.name ||
-                  (fieldDef.type === "credential" && c.type !== undefined),
-              );
+        {definition.fields.map((fieldDef) => {
+          // Visibility check
+          if (fieldDef.visibleIf) {
+            const {
+              field: targetField,
+              operator,
+              value: targetValue,
+            } = fieldDef.visibleIf;
+            const actualValue = (watchValues as any)[targetField];
 
-              // Visibility check
-              if (fieldDef.visibleIf) {
-                const {
-                  field: targetField,
-                  operator,
-                  value: targetValue,
-                } = fieldDef.visibleIf;
-                const actualValue = (watchValues as any)[targetField];
+            let isVisible = false;
+            if (operator === "eq") isVisible = actualValue === targetValue;
+            else if (operator === "neq")
+              isVisible = actualValue !== targetValue;
+            else if (operator === "exists")
+              isVisible =
+                actualValue !== undefined &&
+                actualValue !== null &&
+                actualValue !== "";
+            else if (operator === "includes")
+              isVisible =
+                Array.isArray(actualValue) &&
+                actualValue.includes(targetValue);
 
-                let isVisible = false;
-                if (operator === "eq") isVisible = actualValue === targetValue;
-                else if (operator === "neq")
-                  isVisible = actualValue !== targetValue;
-                else if (operator === "exists")
-                  isVisible =
-                    actualValue !== undefined &&
-                    actualValue !== null &&
-                    actualValue !== "";
-                else if (operator === "includes")
-                  isVisible =
-                    Array.isArray(actualValue) &&
-                    actualValue.includes(targetValue);
+            if (!isVisible) return null;
+          }
 
-                if (!isVisible) return null;
-              }
-
-              if (fieldDef.type === "credential" && credReq) {
-                return (
-                  <CredentialField
-                    field={field}
-                    definition={fieldDef}
-                    credentialType={credReq.type}
-                  />
+          return (
+            <FormField
+              key={fieldDef.name}
+              control={form.control}
+              name={fieldDef.name}
+              render={({ field }) => {
+                const credReq = definition.credentials.find(
+                  (c) =>
+                    c.key === fieldDef.name ||
+                    (fieldDef.type === "credential" && c.type !== undefined),
                 );
-              }
 
-              return (
-                <FormItem>
-                  <FormLabel>{fieldDef.label}</FormLabel>
-                  <FormControl>
-                    {fieldDef.type === "textarea" ? (
-                      <Textarea {...field} placeholder={fieldDef.placeholder} />
-                    ) : fieldDef.type === "select" ? (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                fieldDef.placeholder || "Select an option"
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {fieldDef.options?.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input {...field} placeholder={fieldDef.placeholder} />
+                if (fieldDef.type === "credential" && credReq) {
+                  return (
+                    <CredentialField
+                      field={field}
+                      definition={fieldDef}
+                      credentialType={credReq.type}
+                    />
+                  );
+                }
+
+                return (
+                  <FormItem>
+                    <FormLabel>{fieldDef.label}</FormLabel>
+                    <FormControl>
+                      {fieldDef.type === "textarea" ? (
+                        <Textarea
+                          {...field}
+                          placeholder={fieldDef.placeholder}
+                        />
+                      ) : fieldDef.type === "select" ? (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  fieldDef.placeholder || "Select an option"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {fieldDef.options?.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input {...field} placeholder={fieldDef.placeholder} />
+                      )}
+                    </FormControl>
+                    {fieldDef.description && (
+                      <FormDescription>{fieldDef.description}</FormDescription>
                     )}
-                  </FormControl>
-                  {fieldDef.description && (
-                    <FormDescription>{fieldDef.description}</FormDescription>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-        ))}
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          );
+        })}
         <div className="flex justify-end pt-4">
           <Button type="submit">Save Settings</Button>
         </div>

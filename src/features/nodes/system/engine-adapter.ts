@@ -71,7 +71,6 @@ export async function executeNode(params: {
   // 3. Execute
   const result = await definition.execute({
     config: configWithMetadata,
-    memory: {}, // Placeholder for future memory system
     context,
     organizationId,
     credentials: resolvedCredentials,
