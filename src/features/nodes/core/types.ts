@@ -74,6 +74,7 @@ export interface NodeDefinition<TSchema extends z.ZodObject<any> = any> {
   version: number;
   label: string;
   category: "trigger" | "action" | "logic" | "transformation";
+  description?: string;
   icon?: string;
 
   // Model

@@ -8,6 +8,7 @@ export const openAiDefinition: NodeDefinition<typeof openAiSchema> = {
   type: NodeType.OPENAI,
   version: 1,
   label: "OpenAI",
+  description: "Generate text using OpenAI's powerful language models.",
   category: "action",
   icon: "openai", // Custom icon name for UI
   fields: openAiFields,

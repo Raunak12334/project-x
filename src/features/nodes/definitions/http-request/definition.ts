@@ -6,6 +6,7 @@ export const httpRequestDefinition: NodeDefinition<typeof httpRequestSchema> = {
   type: NodeType.HTTP_REQUEST,
   version: 1,
   label: "HTTP Request",
+  description: "Send a customizeable HTTP request to any URL.",
   category: "action",
   icon: "http",
   fields: httpRequestFields,
