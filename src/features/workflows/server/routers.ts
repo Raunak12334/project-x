@@ -95,6 +95,7 @@ export const workflowsRouter = createTRPCRouter({
 
         await tx.connection.createMany({
           data: connections,
+          skipDuplicates: true,
         });
 
         return workflow;
@@ -141,7 +142,11 @@ export const workflowsRouter = createTRPCRouter({
 
       // Transaction to ensure consistency
       return await prisma.$transaction(async (tx) => {
-        // Delete existing nodes and connections (cascade deletes connections)
+        // Delete existing connections and nodes before rebuilding the workflow.
+        await tx.connection.deleteMany({
+          where: { workflowId: id },
+        });
+
         await tx.node.deleteMany({
           where: { workflowId: id },
         });
@@ -181,6 +186,7 @@ export const workflowsRouter = createTRPCRouter({
 
         await tx.connection.createMany({
           data: connections,
+          skipDuplicates: true,
         });
 
         // Update workflow's updateAt timestamp
