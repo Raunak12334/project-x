@@ -118,12 +118,12 @@ export const CredentialsEmpty = () => {
 };
 
 const credentialLogos: Record<string, string> = {
-  [CredentialType.OPENAI]: "/logos/openai.svg",
-  [CredentialType.ANTHROPIC]: "/logos/anthropic.svg",
-  [CredentialType.GEMINI]: "/logos/gemini.svg",
-  [CredentialType.GEMMA]: "/logos/google.svg",
-  [CredentialType.HUGGINGFACE]: "/logos/huggingface.svg",
-  [CredentialType.GENERIC]: "/logos/google.svg", // Fallback for generic credentials
+  OPENAI: "/logos/openai.svg",
+  ANTHROPIC: "/logos/anthropic.svg",
+  GEMINI: "/logos/gemini.svg",
+  GEMMA: "/logos/google.svg",
+  HUGGINGFACE: "/logos/huggingface.svg",
+  GENERIC: "/logos/google.svg",
 };
 
 export const CredentialItem = ({ data }: { data: Credential }) => {
