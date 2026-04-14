@@ -5,6 +5,12 @@ import { generateSlug } from "random-word-slugs";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
 import { getWorkflowTemplateById } from "@/features/templates/lib/workflow-templates";
+import {
+  makeConnectionKey,
+  normalizeAndDedupeWorkflowConnections,
+  normalizeConnectionSourceHandle,
+  normalizeConnectionTargetHandle,
+} from "@/features/workflows/lib/connections";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
 import {
@@ -12,39 +18,6 @@ import {
   premiumProcedure,
   protectedProcedure,
 } from "@/trpc/init";
-
-type WorkflowEdgeInput = {
-  source: string;
-  target: string;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-};
-
-const normalizeConnectionHandle = (handle?: string | null) => handle || "main";
-
-const getConnectionKey = (edge: WorkflowEdgeInput) =>
-  [
-    edge.source,
-    edge.target,
-    normalizeConnectionHandle(edge.sourceHandle),
-    normalizeConnectionHandle(edge.targetHandle),
-  ].join(":");
-
-const dedupeWorkflowEdges = <TEdge extends WorkflowEdgeInput>(
-  edges: TEdge[],
-) => {
-  const seen = new Set<string>();
-  return edges.filter((edge) => {
-    const key = getConnectionKey(edge);
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
-};
 
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
@@ -110,14 +83,18 @@ export const workflowsRouter = createTRPCRouter({
           })),
         });
 
+        const connections = normalizeAndDedupeWorkflowConnections(
+          template.edges,
+        ).map((edge) => ({
+          workflowId: workflow.id,
+          fromNodeId: nodeIdMap.get(edge.source) ?? edge.source,
+          toNodeId: nodeIdMap.get(edge.target) ?? edge.target,
+          fromOutput: edge.sourceHandle,
+          toInput: edge.targetHandle,
+        }));
+
         await tx.connection.createMany({
-          data: dedupeWorkflowEdges(template.edges).map((edge) => ({
-            workflowId: workflow.id,
-            fromNodeId: nodeIdMap.get(edge.source) ?? edge.source,
-            toNodeId: nodeIdMap.get(edge.target) ?? edge.target,
-            fromOutput: normalizeConnectionHandle(edge.sourceHandle),
-            toInput: normalizeConnectionHandle(edge.targetHandle),
-          })),
+          data: connections,
         });
 
         return workflow;
@@ -181,15 +158,29 @@ export const workflowsRouter = createTRPCRouter({
           })),
         });
 
-        // Create connections with de-duplication to prevent unique constraint failures
-        await tx.connection.createMany({
-          data: dedupeWorkflowEdges(edges).map((edge) => ({
+        const connections = normalizeAndDedupeWorkflowConnections(edges).map(
+          (edge) => ({
             workflowId: id,
             fromNodeId: edge.source,
             toNodeId: edge.target,
-            fromOutput: normalizeConnectionHandle(edge.sourceHandle),
-            toInput: normalizeConnectionHandle(edge.targetHandle),
-          })),
+            fromOutput: edge.sourceHandle,
+            toInput: edge.targetHandle,
+          }),
+        );
+
+        if (
+          process.env.NODE_ENV !== "production" &&
+          connections.length !== edges.length
+        ) {
+          console.debug("[workflows.update] Duplicate connections removed", {
+            workflowId: id,
+            received: edges.length,
+            saved: connections.length,
+          });
+        }
+
+        await tx.connection.createMany({
+          data: connections,
         });
 
         // Update workflow's updateAt timestamp
@@ -227,11 +218,16 @@ export const workflowsRouter = createTRPCRouter({
 
       // Transform server connections to react-flow compatible edges
       const edges: Edge[] = workflow.connections.map((connection) => ({
-        id: connection.id,
+        id: makeConnectionKey(
+          connection.fromNodeId,
+          connection.toNodeId,
+          connection.fromOutput,
+          connection.toInput,
+        ),
         source: connection.fromNodeId,
         target: connection.toNodeId,
-        sourceHandle: connection.fromOutput,
-        targetHandle: connection.toInput,
+        sourceHandle: normalizeConnectionSourceHandle(connection.fromOutput),
+        targetHandle: normalizeConnectionTargetHandle(connection.toInput),
       }));
 
       return {

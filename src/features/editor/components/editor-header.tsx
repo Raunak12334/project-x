@@ -19,6 +19,7 @@ import {
   useUpdateWorkflow,
   useUpdateWorkflowName,
 } from "@/features/workflows/hooks/use-workflows";
+import { normalizeAndDedupeWorkflowConnections } from "@/features/workflows/lib/connections";
 import { editorAtom } from "../store/atoms";
 
 export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
@@ -31,7 +32,7 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
     }
 
     const nodes = editor.getNodes();
-    const edges = editor.getEdges();
+    const edges = normalizeAndDedupeWorkflowConnections(editor.getEdges());
 
     saveWorkflow.mutate({
       id: workflowId,

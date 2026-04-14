@@ -18,6 +18,10 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
+import {
+  hasWorkflowConnection,
+  normalizeWorkflowConnection,
+} from "@/features/workflows/lib/connections";
 
 import "@xyflow/react/dist/style.css";
 import { NodeType } from "@prisma/client";
@@ -55,7 +59,17 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   );
   const onConnect = useCallback(
     (params: Connection) =>
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+      setEdges((edgesSnapshot) => {
+        if (hasWorkflowConnection(edgesSnapshot, params)) {
+          if (process.env.NODE_ENV !== "production") {
+            console.debug("[workflow-editor] Duplicate edge ignored", params);
+          }
+
+          return edgesSnapshot;
+        }
+
+        return addEdge(normalizeWorkflowConnection(params), edgesSnapshot);
+      }),
     [],
   );
 

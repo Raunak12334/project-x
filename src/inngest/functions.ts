@@ -1,7 +1,7 @@
 import type { Realtime } from "@inngest/realtime";
 import { ExecutionStatus, type NodeType, Prisma } from "@prisma/client";
 import { NonRetriableError } from "inngest";
-import { getExecutor } from "@/features/executions/lib/executor-registry";
+import { executeNode } from "@/features/nodes/system/engine-adapter";
 import type { StepTools } from "@/features/executions/types";
 import { resolveWorkflowStartNodeIds } from "@/features/workflows/lib/start-nodes";
 import { isLangGraphEnabled } from "@/langgraph/config";
@@ -170,15 +170,34 @@ const runLegacyWorkflow = async (params: {
     console.log(
       `[runLegacyWorkflow] Executing node: ${node.id} (${node.type})`,
     );
-    const executor = getExecutor(node.type as NodeType);
-    context = await executor({
-      data: (node.data as Record<string, unknown>) ?? {},
-      nodeId: node.id,
+
+    const result = await executeNode({
+      node: {
+        id: node.id,
+        type: node.type as NodeType,
+        data: (node.data as Record<string, unknown>) ?? {},
+      },
       organizationId: params.organizationId,
       context,
       step: params.step,
       publish: params.publish,
     });
+
+    if (result.status === "FAILURE") {
+      throw new Error(
+        result.error?.message || `Node ${node.id} failed execution`,
+      );
+    }
+
+    // CRITICAL FIX: Merge context instead of replacing it
+    context = {
+      ...context,
+      ...result.data,
+      __routes: {
+        ...(context.__routes as Record<string, string>),
+        [node.id]: result.routeId,
+      },
+    };
 
     const candidateConnections = outgoingConnections.get(node.id) ?? [];
     const nextConnections = selectNextConnections(

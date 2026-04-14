@@ -76,16 +76,8 @@ export const BaseExecutionNode = memo(
                 <Icon className="size-6 text-muted-foreground" />
               )}
               {children}
-              <BaseHandle
-                id="target-1"
-                type="target"
-                position={Position.Left}
-              />
-              <BaseHandle
-                id="source-1"
-                type="source"
-                position={Position.Right}
-              />
+              <BaseHandle id="main" type="target" position={Position.Left} />
+              <BaseHandle id="main" type="source" position={Position.Right} />
             </BaseNodeContent>
           </BaseNode>
         </NodeStatusIndicator>

@@ -10,17 +10,13 @@ interface UseNodeStatusOptions {
   refreshToken: () => Promise<Realtime.Subscribe.Token>;
 }
 
-export function useNodeStatus({
-  nodeId,
-  channel,
-  topic,
-  refreshToken,
-}: UseNodeStatusOptions) {
+export function useNodeStatus(options: UseNodeStatusOptions | null) {
+  const { nodeId, channel, topic, refreshToken } = options || {};
   const [status, setStatus] = useState<NodeStatus>("initial");
 
   const { data } = useInngestSubscription({
-    refreshToken,
-    enabled: true,
+    refreshToken: refreshToken!,
+    enabled: !!refreshToken,
   });
 
   useEffect(() => {

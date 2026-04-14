@@ -78,11 +78,7 @@ export const BaseTriggerNode = memo(
                 <Icon className="size-6 text-muted-foreground" />
               )}
               {children}
-              <BaseHandle
-                id="source-1"
-                type="source"
-                position={Position.Right}
-              />
+              <BaseHandle id="main" type="source" position={Position.Right} />
             </BaseNodeContent>
           </BaseNode>
         </NodeStatusIndicator>

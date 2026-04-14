@@ -28,6 +28,7 @@ import { GoogleFormTrigger } from "@/features/triggers/components/google-form-tr
 import { ManualTriggerNode } from "@/features/triggers/components/manual-trigger/node";
 import { StripeTriggerNode } from "@/features/triggers/components/stripe-trigger/node";
 import { WebhookTriggerNode } from "@/features/triggers/components/webhook-trigger/node";
+import { HardenNode } from "@/features/nodes/components/harden-node";
 
 const createGenericNode = (title: string) => {
   const GenericNode = (props: NodeProps<Node>) => (
@@ -42,7 +43,7 @@ const createGenericNode = (title: string) => {
 export const nodeComponents = {
   [NodeType.INITIAL]: InitialNode,
   [NodeType.WEBHOOK_TRIGGER]: WebhookTriggerNode,
-  [NodeType.HTTP_REQUEST]: HttpRequestNode,
+  [NodeType.HTTP_REQUEST]: HardenNode,
   [NodeType.ROUTER]: RouterNode,
   [NodeType.CONDITION]: ConditionNode,
   [NodeType.HUMAN_APPROVAL]: HumanApprovalNode,
@@ -57,7 +58,7 @@ export const nodeComponents = {
   [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTrigger,
   [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
   [NodeType.GEMINI]: GeminiNode,
-  [NodeType.OPENAI]: OpenAiNode,
+  [NodeType.OPENAI]: HardenNode,
   [NodeType.HUGGINGFACE]: HuggingFaceNode,
   [NodeType.ANTHROPIC]: AnthropicNode,
   [NodeType.DISCORD]: DiscordNode,
