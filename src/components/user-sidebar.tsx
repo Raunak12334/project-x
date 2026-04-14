@@ -80,7 +80,7 @@ export const UserSidebar = () => {
                   height={34}
                   className="shrink-0 drop-shadow-sm"
                 />
-                <span className="font-black text-2xl tracking-tighter uppercase text-slate-900 dark:text-white">
+                <span className="font-black text-xl tracking-tighter uppercase text-slate-900 dark:text-white">
                   otogent
                 </span>
               </div>

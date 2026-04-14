@@ -25,7 +25,7 @@ export function WorkflowNode({
   return (
     <>
       {showToolbar && (
-        <NodeToolbar>
+        <NodeToolbar className="w-[180px] justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={onSettings}>
             <SettingsIcon className="size-4" />
           </Button>
@@ -39,7 +39,7 @@ export function WorkflowNode({
         <NodeToolbar
           position={Position.Bottom}
           isVisible
-          className="max-w-[200px] text-center"
+          className="w-[180px] text-center"
         >
           <p className="font-medium">{name}</p>
           {description && (
