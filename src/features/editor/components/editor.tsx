@@ -15,7 +15,15 @@ import {
   Panel,
   ReactFlow,
 } from "@xyflow/react";
-import { useCallback, useMemo, useState } from "react";
+import { NodeType } from "@prisma/client";
+import { useSetAtom } from "jotai";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
 import {
@@ -24,8 +32,6 @@ import {
 } from "@/features/workflows/lib/connections";
 
 import "@xyflow/react/dist/style.css";
-import { NodeType } from "@prisma/client";
-import { useSetAtom } from "jotai";
 import { nodeComponents } from "@/config/node-components";
 import { editorAtom } from "../store/atoms";
 import { AddNodeButton } from "./add-node-button";
@@ -43,6 +49,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: workflow } = useSuspenseWorkflow(workflowId);
 
   const setEditor = useSetAtom(editorAtom);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(workflow.edges);
@@ -80,8 +87,74 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     );
   }, [nodes]);
 
+  const isInitialOnlyWorkflow = useMemo(() => {
+    return (
+      edges.length === 0 &&
+      nodes.length === 1 &&
+      nodes[0]?.type === NodeType.INITIAL
+    );
+  }, [edges.length, nodes]);
+
+  useEffect(() => {
+    if (!isInitialOnlyWorkflow) {
+      return;
+    }
+
+    const centerInitialNode = () => {
+      const container = containerRef.current;
+
+      if (!container) {
+        return;
+      }
+
+      const { clientWidth, clientHeight } = container;
+
+      if (clientWidth === 0 || clientHeight === 0) {
+        return;
+      }
+
+      setNodes((currentNodes) => {
+        if (
+          currentNodes.length !== 1 ||
+          currentNodes[0]?.type !== NodeType.INITIAL
+        ) {
+          return currentNodes;
+        }
+
+        const centeredPosition = {
+          x: Math.round(clientWidth / 2 - 20),
+          y: Math.round(clientHeight / 2 - 20),
+        };
+
+        const currentPosition = currentNodes[0].position;
+
+        if (
+          currentPosition.x === centeredPosition.x &&
+          currentPosition.y === centeredPosition.y
+        ) {
+          return currentNodes;
+        }
+
+        return [
+          {
+            ...currentNodes[0],
+            position: centeredPosition,
+          },
+        ];
+      });
+    };
+
+    const frame = window.requestAnimationFrame(centerInitialNode);
+    window.addEventListener("resize", centerInitialNode);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", centerInitialNode);
+    };
+  }, [isInitialOnlyWorkflow]);
+
   return (
-    <div className="size-full">
+    <div ref={containerRef} className="size-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -90,7 +163,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         onConnect={onConnect}
         nodeTypes={nodeComponents}
         onInit={setEditor}
-        fitView
+        fitView={!isInitialOnlyWorkflow}
         snapGrid={[10, 10]}
         snapToGrid
         panOnScroll
