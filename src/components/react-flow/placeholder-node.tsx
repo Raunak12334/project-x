@@ -15,7 +15,7 @@ export const PlaceholderNode = forwardRef<HTMLDivElement, PlaceholderNodeProps>(
     return (
       <BaseNode
         ref={ref}
-        className="w-[40px] h-[40px] border-dashed border-gray-400 bg-card p-1 text-center text-gray-400 shadow-none cursor-pointer hover:border-gray-500 hover:bg-gray-50"
+        className="flex h-[40px] w-[40px] items-center justify-center border-dashed border-gray-400 bg-card p-0 text-gray-400 shadow-none cursor-pointer hover:border-gray-500 hover:bg-gray-50"
         onClick={onClick}
       >
         {children}
