@@ -1,9 +1,29 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
+import type { z } from "zod";
 import { openAiChannel } from "@/inngest/channels/openai";
 import { decrypt } from "@/lib/encryption";
-import type { NodeExecutionContext, NodeExecutionResult } from "../../core/types";
+import type {
+  NodeExecutionContext,
+  NodeExecutionResult,
+} from "../../core/types";
+import type { openAiSchema } from "./schema";
+
+type OpenAiConfig = z.infer<typeof openAiSchema> & {
+  nodeId?: string;
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "OpenAI request failed";
+
+const asStepRunner = (step: unknown) =>
+  step as {
+    run<T>(id: string, handler: () => Promise<T> | T): Promise<T>;
+  };
+
+const asPublisher = (publish: unknown) =>
+  publish as (event: unknown) => Promise<unknown>;
 
 export const executeOpenAi = async ({
   config,
@@ -12,15 +32,22 @@ export const executeOpenAi = async ({
   step,
   publish,
   credentials,
-}: NodeExecutionContext): Promise<NodeExecutionResult> => {
-  const { variableName, credentialId, systemPrompt: sysPromptRaw, userPrompt: userPromptRaw } = config;
+}: NodeExecutionContext<OpenAiConfig>): Promise<NodeExecutionResult> => {
+  const {
+    variableName,
+    credentialId,
+    systemPrompt: sysPromptRaw,
+    userPrompt: userPromptRaw,
+  } = config;
 
   // Realtime updates (preserving existing behavior)
-  const nodeId = (config as any).nodeId; // Engine will inject this or we get from config
+  const nodeId = config.nodeId;
   const scopedStep = (id: string) => (nodeId ? `${nodeId}-${id}` : id);
+  const runStep = asStepRunner(step);
+  const publishEvent = asPublisher(publish);
 
   if (nodeId) {
-    await publish(openAiChannel().status({ nodeId, status: "loading" }));
+    await publishEvent(openAiChannel().status({ nodeId, status: "loading" }));
   }
 
   try {
@@ -34,13 +61,16 @@ export const executeOpenAi = async ({
     let apiKey = credentials?.credentialId;
 
     if (!apiKey && credentialId) {
-      const credential = await step.run(scopedStep("get-openai-credential"), async () => {
-        // We'll import prisma from @lib/db if needed, but assuming engine provides it or we use it here.
-        const { default: prisma } = await import("@/lib/db");
-        return prisma.credential.findFirst({
-          where: { id: credentialId, organizationId },
-        });
-      });
+      const credential = await runStep.run(
+        scopedStep("get-openai-credential"),
+        async () => {
+          // We'll import prisma from @lib/db if needed, but assuming engine provides it or we use it here.
+          const { default: prisma } = await import("@/lib/db");
+          return prisma.credential.findFirst({
+            where: { id: credentialId, organizationId },
+          });
+        },
+      );
 
       if (credential) {
         apiKey = decrypt(credential.valueEncrypted || credential.value || "");
@@ -53,17 +83,20 @@ export const executeOpenAi = async ({
 
     const openai = createOpenAI({ apiKey });
 
-    const text = await step.run(scopedStep("openai-generate-text"), async () => {
-      const result = await generateText({
-        model: openai("gpt-4o-mini"),
-        system: systemPrompt,
-        prompt: userPrompt,
-      });
-      return result.text;
-    });
+    const text = await runStep.run(
+      scopedStep("openai-generate-text"),
+      async () => {
+        const result = await generateText({
+          model: openai("gpt-4o-mini"),
+          system: systemPrompt,
+          prompt: userPrompt,
+        });
+        return result.text;
+      },
+    );
 
     if (nodeId) {
-      await publish(openAiChannel().status({ nodeId, status: "success" }));
+      await publishEvent(openAiChannel().status({ nodeId, status: "success" }));
     }
 
     return {
@@ -71,16 +104,16 @@ export const executeOpenAi = async ({
       data: { [variableName]: { text } },
       routeId: "main",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (nodeId) {
-      await publish(openAiChannel().status({ nodeId, status: "error" }));
+      await publishEvent(openAiChannel().status({ nodeId, status: "error" }));
     }
     return {
       status: "FAILURE",
       data: null,
       routeId: "error",
       error: {
-        message: error.message,
+        message: getErrorMessage(error),
         code: "OPENAI_ERROR",
         isRetriable: true,
       },

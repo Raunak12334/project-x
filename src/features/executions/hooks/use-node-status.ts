@@ -15,7 +15,11 @@ export function useNodeStatus(options: UseNodeStatusOptions | null) {
   const [status, setStatus] = useState<NodeStatus>("initial");
 
   const { data } = useInngestSubscription({
-    refreshToken: refreshToken!,
+    refreshToken:
+      refreshToken ??
+      (async () => {
+        throw new Error("Realtime refresh token is not configured.");
+      }),
     enabled: !!refreshToken,
   });
 

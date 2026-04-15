@@ -1,7 +1,11 @@
+import crypto from "node:crypto";
 import { NodeType } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
+import { shouldEnforceWorkflowWebhookSecrets } from "@/lib/env";
+import { logger } from "@/lib/logger";
+import { verifyWebhookSecret } from "@/lib/webhook-security";
 
 const parseBody = async (request: NextRequest) => {
   if (request.method === "GET") {
@@ -51,6 +55,37 @@ const parseBody = async (request: NextRequest) => {
 const createWebhookResponse = (status: number, body: Record<string, unknown>) =>
   NextResponse.json(body, { status });
 
+const createIdempotencyKey = ({
+  workflowId,
+  nodeId,
+  method,
+  rawBody,
+  query,
+}: {
+  workflowId: string;
+  nodeId: string;
+  method: string;
+  rawBody: string;
+  query: Record<string, string>;
+}) => {
+  const providedKey = query.idempotencyKey;
+
+  if (providedKey) {
+    return `webhook:generic:${workflowId}:${nodeId}:${providedKey}`;
+  }
+
+  const sortedQuery = Object.entries(query)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+  const fingerprint = crypto
+    .createHash("sha256")
+    .update(`${method}\n${workflowId}\n${nodeId}\n${sortedQuery}\n${rawBody}`)
+    .digest("hex");
+
+  return `webhook:generic:${workflowId}:${nodeId}:${fingerprint}`;
+};
+
 const handleWebhookRequest = async (request: NextRequest) => {
   try {
     const url = new URL(request.url);
@@ -82,11 +117,23 @@ const handleWebhookRequest = async (request: NextRequest) => {
       });
     }
 
-    // Verify webhook secret if set
-    if (workflow.webhookSecret && workflow.webhookSecret !== secret) {
+    const hasValidSecret = Boolean(
+      workflow.webhookSecret &&
+        verifyWebhookSecret(workflow.webhookSecret, secret),
+    );
+
+    if (!hasValidSecret && (secret || shouldEnforceWorkflowWebhookSecrets())) {
+      logger.warn("webhook.generic.invalid_secret", { workflowId, nodeId });
       return createWebhookResponse(401, {
         success: false,
         error: "Invalid webhook secret",
+      });
+    }
+
+    if (!hasValidSecret) {
+      logger.warn("webhook.generic.legacy_unsigned_request_allowed", {
+        workflowId,
+        nodeId,
       });
     }
 
@@ -110,11 +157,24 @@ const handleWebhookRequest = async (request: NextRequest) => {
 
     const { rawBody, body } = await parseBody(request);
     const queryEntries = Object.fromEntries(url.searchParams.entries());
-    const { workflowId: _workflowId, nodeId: _nodeId, ...query } = queryEntries;
+    const {
+      workflowId: _workflowId,
+      nodeId: _nodeId,
+      secret: _secret,
+      ...query
+    } = queryEntries;
+    const idempotencyKey = createIdempotencyKey({
+      workflowId,
+      nodeId,
+      method: request.method,
+      rawBody,
+      query,
+    });
 
     await sendWorkflowExecution({
       workflowId,
       triggerNodeId: nodeId,
+      idempotencyKey,
       initialData: {
         webhook: {
           nodeId,
@@ -128,9 +188,11 @@ const handleWebhookRequest = async (request: NextRequest) => {
       },
     });
 
+    logger.info("webhook.generic.enqueued", { workflowId, nodeId });
+
     return createWebhookResponse(200, { success: true });
   } catch (error) {
-    console.error("Generic webhook error:", error);
+    logger.error("webhook.generic.failed", { error });
 
     return createWebhookResponse(500, {
       success: false,

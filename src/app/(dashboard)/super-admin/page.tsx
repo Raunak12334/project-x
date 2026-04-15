@@ -178,8 +178,8 @@ export default function SuperAdminDashboardPage() {
               {metrics?.activeSubscriptions || 0}
             </div>
             <p className="text-xs text-blue-600 font-medium mt-1">
-              PRO: {metrics?.subscriptionCounts?.PRO || 0} | ENT:{" "}
-              {metrics?.subscriptionCounts?.ENTERPRISE || 0}
+              PRO: {metrics?.subscriptionCounts?.PRO || 0} | CUSTOM:{" "}
+              {metrics?.subscriptionCounts?.CUSTOM || 0}
             </p>
           </CardContent>
         </Card>

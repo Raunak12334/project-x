@@ -48,15 +48,28 @@ model Organization {
 }
 
 model Subscription {
-  id                String       @id @default(cuid())
-  organizationId    String       @unique
-  plan              Plan         @default(FREE)
+  id                String             @id @default(cuid())
+  organizationId    String             @unique
+  plan              Plan               @default(FREE)
+  status            SubscriptionStatus @default(ACTIVE)
   freeTierStartedAt DateTime?
   expiresAt         DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @default(now()) @updatedAt
-  deletedAt         DateTime?
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  canceledAt        DateTime?
+
+  // Polar integration fields
+  polarCustomerId     String? @unique
+  polarSubscriptionId String? @unique
+  productId           String?
+  priceId             String?
+
+  // Quota fields
+  workflowLimit       Int     @default(2)  // FREE: 2, PRO: -1 (unlimited), CUSTOM: configured
+  featureFlags        Json?   // For CUSTOM plans
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("subscription")
 }
@@ -380,6 +393,21 @@ model SupportTicket {
   @@map("support_ticket")
 }
 
+model WorkflowTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  isPremium   Boolean  @default(false)
+  category    String
+  tags        String[]
+  nodes       Json
+  edges       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("workflow_template")
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN
@@ -389,7 +417,17 @@ enum Role {
 enum Plan {
   FREE
   PRO
+  CUSTOM
+  /// Legacy value kept so existing production rows and older migrations remain readable.
   ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  TRIALING
 }
 
 enum InviteStatus {

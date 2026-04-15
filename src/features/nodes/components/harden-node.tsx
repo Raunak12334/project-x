@@ -1,33 +1,31 @@
 "use client";
 
-import { memo, useState, useCallback, useMemo } from "react";
+import type { NodeType } from "@prisma/client";
 import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
-import { WorkflowNode } from "@/components/workflow-node";
-import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
+import { memo, useCallback, useMemo, useState } from "react";
 import { BaseHandle } from "@/components/react-flow/base-handle";
+import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
 import {
-  NodeStatusIndicator,
   type NodeStatus,
+  NodeStatusIndicator,
 } from "@/components/react-flow/node-status-indicator";
-import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import { WorkflowNode } from "@/components/workflow-node";
+import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
 import { getNodeDefinition } from "../core/registry";
 import { NodeConfigRenderer } from "./node-config-renderer";
-import type { NodeType } from "@prisma/client";
-import Image from "next/image";
 
 export const HardenNode = memo((props: NodeProps) => {
   const { id, type, data } = props;
-  const definition = getNodeDefinition(
-    type as NodeType,
-    (data as any).version || 1,
-  );
+  const nodeData = data as Record<string, unknown>;
+  const version = typeof nodeData.version === "number" ? nodeData.version : 1;
+  const definition = getNodeDefinition(type as NodeType, version);
   const { setNodes, setEdges } = useReactFlow();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -39,7 +37,7 @@ export const HardenNode = memo((props: NodeProps) => {
           topic: definition.realtimeStatus.topic,
           refreshToken: definition.realtimeStatus.refreshToken,
         }
-      : (null as any),
+      : null,
   );
 
   const handleDelete = useCallback(() => {
@@ -52,7 +50,7 @@ export const HardenNode = memo((props: NodeProps) => {
   const handleOpenSettings = useCallback(() => setDialogOpen(true), []);
 
   const handleSave = useCallback(
-    (values: any) => {
+    (values: Record<string, unknown>) => {
       setNodes((currentNodes) =>
         currentNodes.map((node) => {
           if (node.id === id) {
@@ -72,11 +70,10 @@ export const HardenNode = memo((props: NodeProps) => {
     [id, setNodes],
   );
 
-  const icon = definition?.icon || "logo";
   const name = definition?.label || "Unknown Node";
   const summary = useMemo(() => {
-    return definition?.getSummary?.(data) || definition?.description;
-  }, [data, definition]);
+    return definition?.getSummary?.(nodeData) || definition?.description;
+  }, [nodeData, definition]);
 
   if (!definition) {
     return (
@@ -96,8 +93,8 @@ export const HardenNode = memo((props: NodeProps) => {
           </DialogHeader>
           <NodeConfigRenderer
             type={type as NodeType}
-            version={(data as any).version || 1}
-            defaultValues={data}
+            version={version}
+            defaultValues={nodeData}
             onSubmit={handleSave}
           />
         </DialogContent>
@@ -110,15 +107,12 @@ export const HardenNode = memo((props: NodeProps) => {
         onSettings={handleOpenSettings}
       >
         <NodeStatusIndicator status={nodeStatus as NodeStatus} variant="border">
-          <BaseNode status={nodeStatus as NodeStatus} onDoubleClick={handleOpenSettings}>
-            <BaseNodeContent className="flex flex-col items-center justify-center p-2 min-w-[64px]">
-              <Image
-                src={icon.startsWith("/") ? icon : `/logos/${icon}.svg`}
-                alt={name}
-                width={24}
-                height={24}
-                className="object-contain mb-1"
-              />
+          <BaseNode
+            status={nodeStatus as NodeStatus}
+            onDoubleClick={handleOpenSettings}
+          >
+            <BaseNodeContent className="w-full h-full flex items-center justify-center p-0">
+              {/* Icon rendering is handled by lucide-react only */}
 
               {/* Render Ports Dynamically */}
               {definition.ports.map((port) => (

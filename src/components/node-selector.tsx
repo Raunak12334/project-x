@@ -4,7 +4,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
 import { useReactFlow } from "@xyflow/react";
 import { SearchIcon } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -198,15 +197,7 @@ export function NodeSelector({
                         onClick={() => handleNodeSelect(item)}
                       >
                         <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border bg-background shadow-sm transition-colors group-hover:border-primary/30">
-                          {typeof Icon === "string" ? (
-                            <Image
-                              src={Icon}
-                              alt={item.label}
-                              width={24}
-                              height={24}
-                              className="size-6 object-contain rounded-sm"
-                            />
-                          ) : (
+                          {typeof Icon === "string" ? null : (
                             <Icon className="size-6 text-muted-foreground" />
                           )}
                         </div>

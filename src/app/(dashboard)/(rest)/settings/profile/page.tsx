@@ -23,6 +23,10 @@ export default async function ProfileSettingsPage() {
 
   const { organization } = user;
   const isFree = organization.subscription?.plan === "FREE";
+  const planLabel =
+    organization.subscription?.plan === "ENTERPRISE"
+      ? "CUSTOM"
+      : organization.subscription?.plan || "UNKNOWN";
 
   return (
     <div className="max-w-3xl mx-auto p-8 w-full">
@@ -104,9 +108,7 @@ export default async function ProfileSettingsPage() {
                     <BadgeCheck className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">
-                      {organization.subscription?.plan || "UNKNOWN"} Plan
-                    </h3>
+                    <h3 className="font-semibold text-lg">{planLabel} Plan</h3>
                     <p className="text-sm text-muted-foreground">
                       {isFree
                         ? `Expires: ${organization.subscription?.expiresAt?.toLocaleDateString() || "Unknown"}`

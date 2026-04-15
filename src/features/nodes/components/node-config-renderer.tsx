@@ -1,7 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NodeType } from "@prisma/client";
 import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -12,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,16 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { CredentialField } from "./fields/credential-field";
+import { Textarea } from "@/components/ui/textarea";
 import { getNodeDefinition } from "../core/registry";
-import type { NodeType } from "@prisma/client";
+import { CredentialField } from "./fields/credential-field";
 
 interface Props {
   type: NodeType;
   version?: number;
-  defaultValues: any;
-  onSubmit: (values: any) => void;
+  defaultValues: Record<string, unknown>;
+  onSubmit: (values: Record<string, unknown>) => void;
 }
 
 export const NodeConfigRenderer = ({
@@ -40,7 +40,7 @@ export const NodeConfigRenderer = ({
 }: Props) => {
   const definition = getNodeDefinition(type, version);
 
-  const form = useForm({
+  const form = useForm<Record<string, unknown>>({
     resolver: definition ? zodResolver(definition.configSchema) : undefined,
     defaultValues: defaultValues || {},
   });
@@ -62,7 +62,7 @@ export const NodeConfigRenderer = ({
               operator,
               value: targetValue,
             } = fieldDef.visibleIf;
-            const actualValue = (watchValues as any)[targetField];
+            const actualValue = watchValues[targetField];
 
             let isVisible = false;
             if (operator === "eq") isVisible = actualValue === targetValue;
@@ -75,8 +75,7 @@ export const NodeConfigRenderer = ({
                 actualValue !== "";
             else if (operator === "includes")
               isVisible =
-                Array.isArray(actualValue) &&
-                actualValue.includes(targetValue);
+                Array.isArray(actualValue) && actualValue.includes(targetValue);
 
             if (!isVisible) return null;
           }
@@ -87,6 +86,11 @@ export const NodeConfigRenderer = ({
               control={form.control}
               name={fieldDef.name}
               render={({ field }) => {
+                const stringValue =
+                  typeof field.value === "string" ||
+                  typeof field.value === "number"
+                    ? field.value
+                    : "";
                 const credReq = definition.credentials.find(
                   (c) =>
                     c.key === fieldDef.name ||
@@ -110,12 +114,17 @@ export const NodeConfigRenderer = ({
                       {fieldDef.type === "textarea" ? (
                         <Textarea
                           {...field}
+                          value={stringValue}
                           placeholder={fieldDef.placeholder}
                         />
                       ) : fieldDef.type === "select" ? (
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={
+                            typeof field.value === "string"
+                              ? field.value
+                              : undefined
+                          }
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -138,7 +147,11 @@ export const NodeConfigRenderer = ({
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Input {...field} placeholder={fieldDef.placeholder} />
+                        <Input
+                          {...field}
+                          value={stringValue}
+                          placeholder={fieldDef.placeholder}
+                        />
                       )}
                     </FormControl>
                     {fieldDef.description && (

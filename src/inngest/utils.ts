@@ -42,11 +42,12 @@ export const sendWorkflowExecution = async (data: {
   executionId?: string;
   checkpointId?: string;
   resume?: boolean;
+  idempotencyKey?: string;
   [key: string]: unknown;
 }) => {
   return inngest.send({
     name: "workflows/execute.workflow",
     data,
-    id: createId(),
+    id: data.idempotencyKey || createId(),
   });
 };

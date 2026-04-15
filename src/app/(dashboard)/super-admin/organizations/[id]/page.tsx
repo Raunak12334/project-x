@@ -25,6 +25,8 @@ export default function OrganizationDetailPage() {
     trpc.platform.getOrganizations.queryOptions(),
   );
   const org = orgs?.find((o) => o.id === id);
+  const planLabel = (plan?: string | null) =>
+    plan === "ENTERPRISE" ? "CUSTOM" : plan || "AUTO_FREE";
 
   if (isLoading)
     return (
@@ -58,7 +60,7 @@ export default function OrganizationDetailPage() {
             </h1>
             <div className="flex items-center gap-3">
               <Badge className="bg-emerald-500">
-                {org.subscription?.plan || "AUTO_FREE"}
+                {planLabel(org.subscription?.plan)}
               </Badge>
               <span className="text-xs text-slate-400 font-mono">
                 UUID: {org.id}

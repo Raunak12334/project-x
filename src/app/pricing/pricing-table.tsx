@@ -3,7 +3,11 @@
 import { Check, Loader2, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { selectFreeTier } from "./actions";
+import {
+  createProCheckoutUrl,
+  requestCustomPlan,
+  selectFreeTier,
+} from "./actions";
 
 export function PricingTable() {
   const [loading, setLoading] = useState<"free" | "pro" | "enterprise" | null>(
@@ -22,9 +26,27 @@ export function PricingTable() {
 
   const handleCheckoutPro = async () => {
     setLoading("pro");
-    // Placeholder for Polar checkout redirect
-    alert("Redirecting to Polar.sh checkout...");
-    setLoading(null);
+    try {
+      const checkoutUrl = await createProCheckoutUrl();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      setLoading(null);
+      alert("Checkout failed. Please try again or contact support.");
+    }
+  };
+
+  const handleRequestCustom = async () => {
+    setLoading("enterprise");
+    try {
+      const result = await requestCustomPlan();
+      alert(result.message);
+    } catch (error) {
+      console.error("Custom plan request failed:", error);
+      alert("Custom plan request failed. Please contact support@otogent.com.");
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -113,9 +135,9 @@ export function PricingTable() {
             </Button>
           </div>
 
-          {/* Enterprise Tier */}
+          {/* Custom Tier */}
           <div className="border border-border bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm relative flex flex-col">
-            <h3 className="text-xl font-medium mb-2">Enterprise</h3>
+            <h3 className="text-xl font-medium mb-2">Custom</h3>
             <p className="text-muted-foreground text-sm mb-6">
               Custom limits and dedicated hosting.
             </p>
@@ -134,10 +156,15 @@ export function PricingTable() {
             </ul>
             <Button
               variant="outline"
+              onClick={handleRequestCustom}
               disabled={loading !== null}
               className="w-full rounded-xl py-6"
             >
-              Contact Sales
+              {loading === "enterprise" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Contact Sales"
+              )}
             </Button>
           </div>
         </div>

@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { assertSameOrganization, requireOrganization } from "@/lib/auth-utils";
 import prisma from "@/lib/db";
-import { sendInviteEmail } from "@/lib/email";
+import { getInviteLink, sendInviteEmail } from "@/lib/email";
 import { logAudit } from "@/lib/log-audit";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -14,7 +14,14 @@ export async function inviteTeamMember(email: string, organizationId: string) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
-  if (!rateLimit(`invite_team_member:${user.id}`, 5, 60 * 1000)) {
+  const isWithinInviteLimit = await rateLimit({
+    organizationId,
+    key: `invite_team_member:${user.id}`,
+    limit: 5,
+    windowMs: 60 * 1000,
+  });
+
+  if (!isWithinInviteLimit) {
     throw new Error("Too many invite requests. Please try again later.");
   }
 
@@ -36,14 +43,13 @@ export async function inviteTeamMember(email: string, organizationId: string) {
     throw new Error("User is already a member of this organization.");
   }
 
-  // Check if there's already an active invite
+  // Check if there's already an invite for this address in this organization.
   const existingInvite = await prisma.teamInvite.findUnique({
     where: {
       email_organizationId: {
         email: normalizedEmail,
         organizationId,
       },
-      deletedAt: null, // Only consider invites that are not soft-deleted
     },
   });
 
@@ -54,35 +60,51 @@ export async function inviteTeamMember(email: string, organizationId: string) {
     ) {
       throw new Error("A pending invite already exists for this email.");
     }
-    await prisma.teamInvite.update({
-      where: { id: existingInvite.id },
-      data: { deletedAt: new Date() },
-    });
   }
 
   // Generate secure random token (production-grade)
   const token = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-  // Create invite in database
-  const invite = await prisma.teamInvite.create({
-    data: {
-      email: normalizedEmail,
-      tokenHash,
-      organizationId,
-      invitedById: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      role: "USER",
-    },
-  });
+  const inviteExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const invite = existingInvite
+    ? await prisma.teamInvite.update({
+        where: { id: existingInvite.id },
+        data: {
+          tokenHash,
+          invitedById: user.id,
+          expiresAt: inviteExpiry,
+          role: "USER",
+          status: "PENDING",
+          used: false,
+          deletedAt: null,
+        },
+      })
+    : await prisma.teamInvite.create({
+        data: {
+          email: normalizedEmail,
+          tokenHash,
+          organizationId,
+          invitedById: user.id,
+          expiresAt: inviteExpiry,
+          role: "USER",
+        },
+      });
 
-  // Send real email invite using Resend
-  await sendInviteEmail({
-    to: normalizedEmail,
-    organizationName: currentUser?.organization?.name || "Our Team",
-    invitedBy: currentUser?.name || "A team member",
-    token, // Send the unhashed token in the email
-  });
+  try {
+    await sendInviteEmail({
+      to: normalizedEmail,
+      organizationName: currentUser?.organization?.name || "Our Team",
+      invitedBy: currentUser?.name || "A team member",
+      token,
+    });
+  } catch (error) {
+    await prisma.teamInvite.update({
+      where: { id: invite.id },
+      data: { status: "REVOKED", deletedAt: new Date() },
+    });
+    throw error;
+  }
 
   revalidatePath("/team");
 
@@ -93,7 +115,7 @@ export async function inviteTeamMember(email: string, organizationId: string) {
     metadata: { invitedEmail: email, inviteId: invite.id },
   });
 
-  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/signup?token=${token}`; // Use the unhashed token for the link
+  const inviteLink = getInviteLink(token);
 
   return { success: true, inviteId: invite.id, inviteLink };
 }

@@ -1,10 +1,11 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "@/lib/db";
+import { requireEnv } from "@/lib/env";
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL,
-  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: requireEnv("BETTER_AUTH_URL"),
+  secret: requireEnv("BETTER_AUTH_SECRET"),
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -25,23 +26,4 @@ export const auth = betterAuth({
   databaseHooks: {
     // Removed auto-admin promotion for security
   },
-  plugins: [
-    // polar({
-    //   client: polarClient,
-    //   createCustomerOnSignUp: false,
-    //   use: [
-    //     checkout({
-    //       products: [
-    //         {
-    //           productId: "fa72e7fb-780c-47d5-9118-ac7ed8685d22",
-    //           slug: "pro",
-    //         },
-    //       ],
-    //       successUrl: process.env.POLAR_SUCCESS_URL,
-    //       authenticatedUsersOnly: true,
-    //     }),
-    //     portal(),
-    //   ],
-    // }),
-  ],
 });

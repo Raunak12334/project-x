@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { CopyIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTRPC } from "@/trpc/client";
 
 interface Props {
   open: boolean;
@@ -22,10 +24,16 @@ interface Props {
 export const StripeTriggerDialog = ({ open, onOpenChange }: Props) => {
   const params = useParams();
   const workflowId = params.workflowId as string;
+  const trpc = useTRPC();
+  const { data: workflow } = useQuery(
+    trpc.workflows.getOne.queryOptions({ id: workflowId }),
+  );
 
   // Construct the webhook URL
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const webhookUrl = `${baseUrl}/api/webhooks/stripe?workflowId=${workflowId}`;
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const webhookUrl = `${baseUrl}/api/webhooks/stripe?workflowId=${encodeURIComponent(workflowId)}&secret=${encodeURIComponent(workflow?.webhookSecret ?? "")}`;
 
   const copyToClipboard = async () => {
     try {

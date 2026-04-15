@@ -1,16 +1,16 @@
 import type { NodeType } from "@prisma/client";
-import type { NodeDefinition } from "./types";
-
-import { openAiDefinition } from "../definitions/openai/definition";
 import { httpRequestDefinition } from "../definitions/http-request/definition";
 
+import { openAiDefinition } from "../definitions/openai/definition";
+import type { NodeDefinition } from "./types";
+
 // Registry storage
-const registry: Record<string, NodeDefinition<any>> = {};
+const registry: Record<string, NodeDefinition> = {};
 
 /**
  * Register a node definition in the central registry
  */
-export const registerNode = (definition: NodeDefinition<any>) => {
+export const registerNode = (definition: NodeDefinition) => {
   const key = `${definition.type}_v${definition.version}`;
   registry[key] = definition;
 };

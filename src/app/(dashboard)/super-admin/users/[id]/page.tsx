@@ -23,6 +23,8 @@ export default function UserDetailPage() {
     trpc.platform.getUsers.queryOptions(),
   );
   const user = users?.find((u) => u.id === id);
+  const planLabel = (plan?: string | null) =>
+    plan === "ENTERPRISE" ? "CUSTOM" : plan || "FREE";
 
   if (isLoading)
     return (
@@ -123,7 +125,7 @@ export default function UserDetailPage() {
                 variant="outline"
                 className="border-blue-500 text-blue-500 font-black"
               >
-                {user.organization?.subscription?.plan || "FREE"} CLUSTER
+                {planLabel(user.organization?.subscription?.plan)} CLUSTER
               </Badge>
               <p className="text-xs text-slate-500">
                 Joined this organization cluster on{" "}

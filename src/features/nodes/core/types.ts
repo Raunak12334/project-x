@@ -1,5 +1,11 @@
-import type { NodeType, CredentialType } from "@prisma/client";
+import type { Realtime } from "@inngest/realtime";
+import type { CredentialType, NodeType } from "@prisma/client";
 import type { z } from "zod";
+import type { StepTools } from "@/features/executions/types";
+
+export type WorkflowContext = Record<string, unknown>;
+export type StepRunner = StepTools;
+export type PublishFn = Realtime.PublishFn;
 
 // --- EXECUTION CONTRACT ---
 export type ExecutionStatus = "SUCCESS" | "FAILURE" | "RETRY";
@@ -11,20 +17,20 @@ export interface NodeExecutionError {
   isRetriable: boolean;
 }
 
-export interface NodeExecutionResult<TOutput = any> {
+export interface NodeExecutionResult<TOutput = unknown> {
   status: ExecutionStatus;
   data: TOutput;
   routeId: string; // Must match one of the output port IDs
   error?: NodeExecutionError;
 }
 
-export interface NodeExecutionContext<TConfig = any> {
+export interface NodeExecutionContext<TConfig = Record<string, unknown>> {
   config: TConfig;
-  context: Record<string, any>; // Workflow variables and state
+  context: WorkflowContext;
   organizationId: string;
   credentials: Record<string, string>; // Plaintext secrets injected by engine
-  step: any; // Inngest StepTools
-  publish: any; // Realtime publish function
+  step: StepRunner;
+  publish: PublishFn;
 }
 
 // --- PORTS & ROUTING ---
@@ -60,16 +66,18 @@ export interface NodeFieldDefinition {
   placeholder?: string;
   description?: string;
   options?: { label: string; value: string }[]; // For selects
-  defaultValue?: any;
+  defaultValue?: unknown;
   visibleIf?: {
     field: string;
     operator: "eq" | "neq" | "includes" | "exists";
-    value?: any;
+    value?: unknown;
   };
 }
 
 // --- NODE DEFINITION ---
-export interface NodeDefinition<TSchema extends z.ZodObject<any> = any> {
+export interface NodeDefinition<
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
+> {
   type: NodeType;
   version: number;
   label: string;
@@ -91,7 +99,7 @@ export interface NodeDefinition<TSchema extends z.ZodObject<any> = any> {
   realtimeStatus?: {
     channel: string;
     topic: string;
-    refreshToken: () => Promise<any>;
+    refreshToken: () => Promise<Realtime.Subscribe.Token>;
   };
-  migrate?: (oldData: any, fromVersion: number) => any;
+  migrate?: (oldData: unknown, fromVersion: number) => unknown;
 }

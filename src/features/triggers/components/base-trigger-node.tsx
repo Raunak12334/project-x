@@ -2,7 +2,6 @@
 
 import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
 import type { LucideIcon } from "lucide-react";
-import Image from "next/image";
 import { memo, type ReactNode } from "react";
 import { BaseHandle } from "@/components/react-flow/base-handle";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
@@ -71,11 +70,9 @@ export const BaseTriggerNode = memo(
             onDoubleClick={onDoubleClick}
             className="rounded-l-2xl relative group"
           >
-            <BaseNodeContent className="flex flex-col items-center justify-center p-3">
-              {typeof Icon === "string" ? (
-                <Image src={Icon} alt={name} width={24} height={24} />
-              ) : (
-                <Icon className="size-6 text-muted-foreground" />
+            <BaseNodeContent className="w-full h-full flex items-center justify-center p-0">
+              {typeof Icon === "string" ? null : (
+                <Icon className="size-5 text-muted-foreground" />
               )}
               {children}
               <BaseHandle id="main" type="source" position={Position.Right} />

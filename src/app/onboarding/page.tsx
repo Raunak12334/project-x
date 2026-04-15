@@ -17,7 +17,12 @@ export default async function OnboardingPage({
   if (token) {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     pendingInvite = await prisma.teamInvite.findUnique({
-      where: { tokenHash },
+      where: {
+        tokenHash,
+        email: userEmail,
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+      },
       include: { organization: true },
     });
   } else {

@@ -21,6 +21,8 @@ export default function OrganizationsManagementPage() {
     trpc.platform.getOrganizations.queryOptions(),
   );
   const [search, setSearch] = useState("");
+  const planLabel = (plan?: string | null) =>
+    plan === "ENTERPRISE" ? "CUSTOM" : plan || "AUTO_FREE";
 
   const filteredOrgs = orgs?.filter(
     (o) =>
@@ -95,6 +97,7 @@ export default function OrganizationsManagementPage() {
                   <div className="flex justify-center">
                     <Badge
                       className={`${
+                        org.subscription?.plan === "CUSTOM" ||
                         org.subscription?.plan === "ENTERPRISE"
                           ? "bg-purple-500 hover:bg-purple-600"
                           : org.subscription?.plan === "PRO"
@@ -102,7 +105,7 @@ export default function OrganizationsManagementPage() {
                             : "bg-slate-400"
                       }`}
                     >
-                      {org.subscription?.plan || "AUTO_FREE"}
+                      {planLabel(org.subscription?.plan)}
                     </Badge>
                   </div>
 

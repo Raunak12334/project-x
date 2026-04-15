@@ -9,6 +9,10 @@ import {
   superAdminProcedure,
 } from "../init";
 
+function isCustomPlan(plan: "FREE" | "PRO" | "CUSTOM" | "ENTERPRISE") {
+  return plan === "CUSTOM" || plan === "ENTERPRISE";
+}
+
 export const superAdminRouter = createTRPCRouter({
   createTicket: protectedProcedure
     .input(
@@ -115,15 +119,14 @@ export const superAdminRouter = createTRPCRouter({
     const subscriptionCounts = {
       FREE: subscriptions.filter((s) => s.plan === "FREE").length,
       PRO: subscriptions.filter((s) => s.plan === "PRO").length,
-      ENTERPRISE: subscriptions.filter((s) => s.plan === "ENTERPRISE").length,
+      CUSTOM: subscriptions.filter((s) => isCustomPlan(s.plan)).length,
     };
 
     return {
       metrics: {
         totalUsers,
         totalOrganizations,
-        activeSubscriptions:
-          subscriptionCounts.PRO + subscriptionCounts.ENTERPRISE,
+        activeSubscriptions: subscriptionCounts.PRO + subscriptionCounts.CUSTOM,
         subscriptionCounts,
         totalWorkflows,
         totalExecutions,
@@ -194,7 +197,7 @@ export const superAdminRouter = createTRPCRouter({
     const planStats = {
       FREE: subs.filter((s) => s.plan === "FREE").length,
       PRO: subs.filter((s) => s.plan === "PRO").length,
-      ENTERPRISE: subs.filter((s) => s.plan === "ENTERPRISE").length,
+      CUSTOM: subs.filter((s) => isCustomPlan(s.plan)).length,
     };
 
     const expiringSoon = subs.filter(
@@ -205,8 +208,8 @@ export const superAdminRouter = createTRPCRouter({
         s.expiresAt < thirtyDaysFromNow,
     );
 
-    // Simple revenue estimation: PRO=$20, ENT=$100
-    const estimatedMRR = planStats.PRO * 20 + planStats.ENTERPRISE * 100;
+    // Simple revenue estimation: PRO=$20, CUSTOM=$100
+    const estimatedMRR = planStats.PRO * 20 + planStats.CUSTOM * 100;
 
     return {
       planStats,

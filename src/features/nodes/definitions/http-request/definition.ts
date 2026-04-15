@@ -1,5 +1,5 @@
-import { NodeType, CredentialType } from "@prisma/client";
-import { NodeDefinition } from "../../core/types";
+import { CredentialType, NodeType } from "@prisma/client";
+import type { NodeDefinition } from "../../core/types";
 import { httpRequestFields, httpRequestSchema } from "./schema";
 
 export const httpRequestDefinition: NodeDefinition<typeof httpRequestSchema> = {

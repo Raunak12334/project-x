@@ -3,7 +3,10 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import superjson from "superjson";
 import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { polarClient } from "@/lib/polar";
+
 export const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -25,7 +28,23 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 
-import prisma from "@/lib/db";
+function hasUsableLocalSubscription(
+  subscription: {
+    plan: "FREE" | "PRO" | "CUSTOM" | "ENTERPRISE";
+    status: string;
+    expiresAt: Date | null;
+  } | null,
+) {
+  if (!subscription || subscription.status !== "ACTIVE") {
+    return false;
+  }
+
+  if (subscription.plan !== "FREE") {
+    return true;
+  }
+
+  return Boolean(subscription.expiresAt && subscription.expiresAt > new Date());
+}
 
 export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   const session = await auth.api.getSession({
@@ -63,28 +82,49 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 });
 export const premiumProcedure = protectedProcedure.use(
   async ({ ctx, next }) => {
-    // 1. Check local DB subscription first (Free Tier)
     const subscription = await prisma.subscription.findUnique({
       where: { organizationId: ctx.auth.organizationId },
+      include: {
+        organization: { select: { _count: { select: { workflows: true } } } },
+      },
     });
 
-    const isLocalActive =
-      subscription &&
-      (!subscription.expiresAt || subscription.expiresAt > new Date());
-
-    if (isLocalActive) {
-      return next({ ctx });
+    if (subscription && hasUsableLocalSubscription(subscription)) {
+      if (subscription.plan === "FREE") {
+        const workflowCount = subscription.organization._count.workflows;
+        if (workflowCount >= (subscription.workflowLimit || 2)) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `Free plan limited to ${subscription.workflowLimit || 2} workflows. Upgrade to PRO for unlimited workflows.`,
+          });
+        }
+      }
+      return next({ ctx: { ...ctx, subscription } });
     }
 
-    // 2. Check Polar for external paid subscription
-    const customer = await polarClient.customers.getStateExternal({
-      externalId: ctx.auth.user.id,
-    });
+    let customer: Awaited<
+      ReturnType<typeof polarClient.customers.getStateExternal>
+    >;
+    try {
+      customer = await polarClient.customers.getStateExternal({
+        externalId: ctx.auth.user.id,
+      });
+    } catch (polarError) {
+      logger.error("subscription.polar_lookup_failed", {
+        userId: ctx.auth.user.id,
+        organizationId: ctx.auth.organizationId,
+        error: polarError,
+      });
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "Unable to verify subscription status. Please contact support.",
+      });
+    }
 
-    if (
-      !customer.activeSubscriptions ||
-      customer.activeSubscriptions.length === 0
-    ) {
+    const activeSubscription = customer.activeSubscriptions?.[0];
+
+    if (!activeSubscription) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message:
@@ -92,7 +132,31 @@ export const premiumProcedure = protectedProcedure.use(
       });
     }
 
-    return next({ ctx: { ...ctx, customer } });
+    await prisma.subscription.upsert({
+      where: { organizationId: ctx.auth.organizationId },
+      create: {
+        organizationId: ctx.auth.organizationId,
+        plan: "PRO",
+        status: "ACTIVE",
+        polarCustomerId: customer.id,
+        polarSubscriptionId: activeSubscription.id,
+        productId: activeSubscription.productId,
+        workflowLimit: -1,
+      },
+      update: {
+        plan: "PRO",
+        status: "ACTIVE",
+        polarCustomerId: customer.id,
+        polarSubscriptionId: activeSubscription.id,
+        productId: activeSubscription.productId,
+        canceledAt: null,
+        workflowLimit: -1,
+      },
+    });
+
+    return next({
+      ctx: { ...ctx, customer, subscription: activeSubscription },
+    });
   },
 );
 

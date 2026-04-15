@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { createProCheckoutUrl } from "@/app/pricing/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { authClient } from "@/lib/auth-client";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -19,7 +18,15 @@ interface UpgradeModalProps {
 }
 
 export const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
-  const _router = useRouter();
+  const handleUpgrade = async () => {
+    try {
+      const checkoutUrl = await createProCheckoutUrl();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Upgrade failed:", error);
+      alert("Upgrade failed. Please try again or contact support.");
+    }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -33,9 +40,7 @@ export const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => authClient.checkout({ slug: "pro" })}
-          >
+          <AlertDialogAction onClick={handleUpgrade}>
             Upgrade Now
           </AlertDialogAction>
         </AlertDialogFooter>

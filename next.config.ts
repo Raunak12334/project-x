@@ -1,8 +1,21 @@
+import { createRequire } from "node:module";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+const require = createRequire(import.meta.url);
+
 const nextConfig: NextConfig = {
   devIndicators: false,
+  webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "@opentelemetry/winston-transport": false,
+      handlebars: require.resolve("handlebars/dist/cjs/handlebars.js"),
+    };
+
+    return config;
+  },
 };
 
 export default withSentryConfig(nextConfig, {

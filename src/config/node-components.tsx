@@ -9,7 +9,6 @@ import { EmailSendNode } from "@/features/executions/components/email-send/node"
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { GemmaNode } from "@/features/executions/components/gemma/node";
 import { GenericIntegrationNode } from "@/features/executions/components/generic-integration-node";
-import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import { HuggingFaceNode } from "@/features/executions/components/huggingface/node";
 import { HumanApprovalNode } from "@/features/executions/components/human-approval/node";
 import { InstagramNode } from "@/features/executions/components/instagram/node";
@@ -17,18 +16,17 @@ import { JsonTransformNode } from "@/features/executions/components/json-transfo
 import { LinkedinNode } from "@/features/executions/components/linkedin/node";
 import { LoggerNode } from "@/features/executions/components/logger/node";
 import { MergeNode } from "@/features/executions/components/merge/node";
-import { OpenAiNode } from "@/features/executions/components/openai/node";
 import { RouterNode } from "@/features/executions/components/router/node";
 import { SetVariableNode } from "@/features/executions/components/set-variable/node";
 import { SlackNode } from "@/features/executions/components/slack/node";
 import { TelegramNode } from "@/features/executions/components/telegram/node";
 import { TextTemplateNode } from "@/features/executions/components/text-template/node";
 import { XNode } from "@/features/executions/components/x/node";
+import { HardenNode } from "@/features/nodes/components/harden-node";
 import { GoogleFormTrigger } from "@/features/triggers/components/google-form-trigger/node";
 import { ManualTriggerNode } from "@/features/triggers/components/manual-trigger/node";
 import { StripeTriggerNode } from "@/features/triggers/components/stripe-trigger/node";
 import { WebhookTriggerNode } from "@/features/triggers/components/webhook-trigger/node";
-import { HardenNode } from "@/features/nodes/components/harden-node";
 
 const createGenericNode = (title: string) => {
   const GenericNode = (props: NodeProps<Node>) => (

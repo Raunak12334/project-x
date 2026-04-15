@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { CopyIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTRPC } from "@/trpc/client";
 
 interface Props {
   nodeId: string;
@@ -23,8 +25,14 @@ interface Props {
 export const WebhookTriggerDialog = ({ nodeId, open, onOpenChange }: Props) => {
   const params = useParams();
   const workflowId = params.workflowId as string;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const webhookUrl = `${baseUrl}/api/webhooks/generic?workflowId=${encodeURIComponent(workflowId)}&nodeId=${encodeURIComponent(nodeId)}`;
+  const trpc = useTRPC();
+  const { data: workflow } = useQuery(
+    trpc.workflows.getOne.queryOptions({ id: workflowId }),
+  );
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const webhookUrl = `${baseUrl}/api/webhooks/generic?workflowId=${encodeURIComponent(workflowId)}&nodeId=${encodeURIComponent(nodeId)}&secret=${encodeURIComponent(workflow?.webhookSecret ?? "")}`;
   const curlExample = `curl -X POST "${webhookUrl}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"orderId":"123","status":"paid"}'`;
 
   const copyText = async (value: string, successMessage: string) => {

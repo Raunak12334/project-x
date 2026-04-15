@@ -1,8 +1,8 @@
-import { NodeType, CredentialType } from "@prisma/client";
-import { NodeDefinition } from "../../core/types";
-import { openAiFields, openAiSchema } from "./schema";
+import { CredentialType, NodeType } from "@prisma/client";
 import { OPENAI_CHANNEL_NAME } from "@/inngest/channels/openai";
+import type { NodeDefinition } from "../../core/types";
 import { fetchOpenAiRealtimeToken } from "./actions";
+import { openAiFields, openAiSchema } from "./schema";
 
 export const openAiDefinition: NodeDefinition<typeof openAiSchema> = {
   type: NodeType.OPENAI,

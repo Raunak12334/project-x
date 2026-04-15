@@ -1,7 +1,6 @@
 "use client";
 
 import type { Credential } from "@prisma/client";
-import { CredentialType } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

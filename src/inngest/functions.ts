@@ -1,12 +1,13 @@
 import type { Realtime } from "@inngest/realtime";
 import { ExecutionStatus, type NodeType, Prisma } from "@prisma/client";
 import { NonRetriableError } from "inngest";
-import { executeNode } from "@/features/nodes/system/engine-adapter";
 import type { StepTools } from "@/features/executions/types";
+import { executeNode } from "@/features/nodes/system/engine-adapter";
 import { resolveWorkflowStartNodeIds } from "@/features/workflows/lib/start-nodes";
 import { isLangGraphEnabled } from "@/langgraph/config";
 import { runWorkflowGraph } from "@/langgraph/run-graph";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { anthropicChannel } from "./channels/anthropic";
 import { dbQueryChannel } from "./channels/db-query";
 import { discordChannel } from "./channels/discord";
@@ -85,18 +86,22 @@ const selectNextConnections = (
   }
 
   const selectedRoute = getSelectedRouteForNode(context, nodeId);
-  console.log(
-    `[selectNextConnections] Node ${nodeId} has ${connections.length} total connections. Routing to: ${selectedRoute}`,
-  );
+  logger.debug("workflow.route.selected", {
+    nodeId,
+    connectionCount: connections.length,
+    selectedRoute,
+  });
 
   const matchingConnections = connections.filter(
     (connection) => connection.fromOutput === selectedRoute,
   );
 
   if (matchingConnections.length > 0) {
-    console.log(
-      `[selectNextConnections] Node ${nodeId} found ${matchingConnections.length} matching connections for route ${selectedRoute}`,
-    );
+    logger.debug("workflow.route.matched", {
+      nodeId,
+      selectedRoute,
+      connectionCount: matchingConnections.length,
+    });
     return matchingConnections;
   }
 
@@ -105,9 +110,10 @@ const selectNextConnections = (
       connection.fromOutput === "default" || connection.fromOutput === "main",
   );
 
-  console.log(
-    `[selectNextConnections] Node ${nodeId} using ${fallbackConnections.length} fallback connections (main/default)`,
-  );
+  logger.debug("workflow.route.fallback", {
+    nodeId,
+    connectionCount: fallbackConnections.length,
+  });
 
   return fallbackConnections;
 };
@@ -160,16 +166,20 @@ const runLegacyWorkflow = async (params: {
   let context = params.initialData;
 
   for (const node of params.orderedNodes) {
-    console.log(
-      `[runLegacyWorkflow] Checking node: ${node.id} (${node.type}). Active: ${activeNodes.has(node.id)}`,
-    );
+    logger.debug("workflow.node.checked", {
+      nodeId: node.id,
+      nodeType: node.type,
+      active: activeNodes.has(node.id),
+    });
     if (!activeNodes.has(node.id)) {
       continue;
     }
 
-    console.log(
-      `[runLegacyWorkflow] Executing node: ${node.id} (${node.type})`,
-    );
+    logger.info("workflow.node.executing", {
+      nodeId: node.id,
+      nodeType: node.type,
+      organizationId: params.organizationId,
+    });
 
     const result = await executeNode({
       node: {
@@ -190,9 +200,16 @@ const runLegacyWorkflow = async (params: {
     }
 
     // CRITICAL FIX: Merge context instead of replacing it
+    const resultData =
+      result.data &&
+      typeof result.data === "object" &&
+      !Array.isArray(result.data)
+        ? result.data
+        : {};
+
     context = {
       ...context,
-      ...result.data,
+      ...resultData,
       __routes: {
         ...(context.__routes as Record<string, string>),
         [node.id]: result.routeId,
@@ -206,13 +223,16 @@ const runLegacyWorkflow = async (params: {
       node.id,
     );
 
-    console.log(
-      `[runLegacyWorkflow] Node ${node.id} finished. Activating ${nextConnections.length} next nodes.`,
-    );
+    logger.info("workflow.node.completed", {
+      nodeId: node.id,
+      routeId: result.routeId,
+      nextNodeCount: nextConnections.length,
+    });
     for (const connection of nextConnections) {
-      console.log(
-        `[runLegacyWorkflow]   Activating node: ${connection.toNodeId}`,
-      );
+      logger.debug("workflow.node.activated", {
+        fromNodeId: node.id,
+        toNodeId: connection.toNodeId,
+      });
       activeNodes.add(connection.toNodeId);
     }
   }
@@ -228,10 +248,10 @@ export const executeWorkflow = inngest.createFunction(
       const error = event.data.error;
       const originalEvent = event.data.event;
 
-      console.error(
-        `Workflow execution failed for event ${originalEvent.id}:`,
-        error.message,
-      );
+      logger.error("workflow.execution.failed", {
+        inngestEventId: originalEvent.id,
+        error,
+      });
 
       // Find execution by inngestEventId (non-unique index)
       const execution = await prisma.execution.findFirst({
@@ -239,9 +259,9 @@ export const executeWorkflow = inngest.createFunction(
       });
 
       if (!execution) {
-        console.warn(
-          `No execution found for inngestEventId: ${originalEvent.id}`,
-        );
+        logger.warn("workflow.execution_record_missing", {
+          inngestEventId: originalEvent.id,
+        });
         return;
       }
 
@@ -291,14 +311,39 @@ export const executeWorkflow = inngest.createFunction(
     const resumeExecutionId = event.data.executionId as string | undefined;
     const checkpointId = event.data.checkpointId as string | undefined;
     const triggerNodeId = event.data.triggerNodeId as string | undefined;
+    const idempotencyKey = event.data.idempotencyKey as string | undefined;
 
     if (!inngestEventId || !workflowId) {
       throw new NonRetriableError("Event ID or workflow ID is missing");
     }
 
-    console.log(
-      `Starting workflow execution for workflowId: ${workflowId}, executionId: ${resumeExecutionId || "new"}`,
-    );
+    logger.info("workflow.execution.starting", {
+      workflowId,
+      executionId: resumeExecutionId || "new",
+      inngestEventId,
+      triggerNodeId,
+      idempotencyKey,
+    });
+
+    if (!resumeExecutionId && idempotencyKey) {
+      const existingExecution = await step.run(
+        "check-idempotency",
+        async () => {
+          return prisma.execution.findFirst({
+            where: { idempotencyKey },
+          });
+        },
+      );
+
+      if (existingExecution) {
+        logger.warn("workflow.execution.replay_skipped", {
+          workflowId,
+          idempotencyKey,
+          existingExecutionId: existingExecution.id,
+        });
+        return existingExecution.output || {};
+      }
+    }
 
     const execution = await step.run("create-execution", async () => {
       if (resumeExecutionId) {
@@ -318,13 +363,40 @@ export const executeWorkflow = inngest.createFunction(
         });
       }
 
-      return prisma.execution.create({
-        data: {
-          workflowId,
-          inngestEventId,
-        },
-      });
+      try {
+        return await prisma.execution.create({
+          data: {
+            workflowId,
+            inngestEventId,
+            idempotencyKey,
+          },
+        });
+      } catch (error) {
+        if (
+          idempotencyKey &&
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "P2002"
+        ) {
+          const existingExecution = await prisma.execution.findFirstOrThrow({
+            where: { idempotencyKey },
+          });
+          logger.warn("workflow.execution.concurrent_replay_skipped", {
+            workflowId,
+            idempotencyKey,
+            existingExecutionId: existingExecution.id,
+          });
+          return existingExecution;
+        }
+
+        throw error;
+      }
     });
+
+    if (!resumeExecutionId && execution.inngestEventId !== inngestEventId) {
+      return execution.output || {};
+    }
 
     const { workflowDefinition, organizationId } = await step.run(
       "prepare-workflow-context",

@@ -2,7 +2,6 @@
 
 import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
 import type { LucideIcon } from "lucide-react";
-import Image from "next/image";
 import { memo, type ReactNode } from "react";
 import { BaseHandle } from "@/components/react-flow/base-handle";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
@@ -63,17 +62,9 @@ export const BaseExecutionNode = memo(
       >
         <NodeStatusIndicator status={status} variant="border">
           <BaseNode status={status} onDoubleClick={onDoubleClick}>
-            <BaseNodeContent className="flex flex-col items-center justify-center p-2 min-w-[64px]">
-              {typeof Icon === "string" ? (
-                <Image
-                  src={Icon}
-                  alt={name}
-                  width={24}
-                  height={24}
-                  className="object-contain"
-                />
-              ) : (
-                <Icon className="size-6 text-muted-foreground" />
+            <BaseNodeContent className="w-full h-full flex items-center justify-center p-0">
+              {typeof Icon === "string" ? null : (
+                <Icon className="size-5 text-muted-foreground" />
               )}
               {children}
               <BaseHandle id="main" type="target" position={Position.Left} />

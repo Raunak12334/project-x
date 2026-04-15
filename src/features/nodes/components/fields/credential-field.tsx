@@ -1,7 +1,7 @@
 "use client";
 
-import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
 import type { CredentialType } from "@prisma/client";
+import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -16,10 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
 import type { NodeFieldDefinition } from "../../core/types";
 
 interface Props {
-  field: any;
+  field: ControllerRenderProps<FieldValues, string>;
   definition: NodeFieldDefinition;
   credentialType: CredentialType;
 }

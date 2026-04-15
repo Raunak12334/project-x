@@ -1,21 +1,48 @@
-const rateLimitStore = new Map<string, { count: number; lastReset: number }>();
+import prisma from "@/lib/db";
 
-export function rateLimit(
-  key: string,
-  limit: number,
-  windowMs: number,
-): boolean {
-  const now = Date.now();
-  const store = rateLimitStore.get(key) || { count: 0, lastReset: now };
+type RateLimitInput = {
+  organizationId: string;
+  key: string;
+  limit: number;
+  windowMs: number;
+};
 
-  if (now - store.lastReset > windowMs) {
-    store.count = 1;
-    store.lastReset = now;
-  } else {
-    store.count++;
+const getWindowResetAt = (now: number, windowMs: number) =>
+  new Date(Math.floor(now / windowMs) * windowMs + windowMs);
+
+export async function rateLimit({
+  organizationId,
+  key,
+  limit,
+  windowMs,
+}: RateLimitInput): Promise<boolean> {
+  if (limit < 1 || windowMs < 1000) {
+    throw new Error("Invalid rate limit configuration");
   }
 
-  rateLimitStore.set(key, store);
+  const now = Date.now();
+  const resetAt = getWindowResetAt(now, windowMs);
 
-  return store.count <= limit;
+  const bucket = await prisma.rateLimitBucket.upsert({
+    where: {
+      organizationId_limitType_resetAt: {
+        organizationId,
+        limitType: key,
+        resetAt,
+      },
+    },
+    create: {
+      organizationId,
+      limitType: key,
+      count: 1,
+      limit,
+      resetAt,
+    },
+    update: {
+      count: { increment: 1 },
+      limit,
+    },
+  });
+
+  return bucket.count <= limit;
 }

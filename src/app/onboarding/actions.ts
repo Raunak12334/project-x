@@ -30,26 +30,27 @@ export async function submitOnboardingForm(data: {
     if (
       !pendingInvite ||
       pendingInvite.status !== "PENDING" ||
+      pendingInvite.email !== userEmail ||
       pendingInvite.expiresAt < new Date()
     ) {
       throw new Error("Invalid or expired invitation token.");
     }
 
-    // Join existing organization
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        name: data.fullName,
-        role: pendingInvite.role,
-        onboardingCompleted: true,
-        organizationId: pendingInvite.organizationId,
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: {
+          name: data.fullName,
+          role: pendingInvite.role,
+          onboardingCompleted: true,
+          organizationId: pendingInvite.organizationId,
+        },
+      });
 
-    // Mark invite as accepted
-    await prisma.teamInvite.update({
-      where: { id: pendingInvite.id },
-      data: { status: "ACCEPTED" },
+      await tx.teamInvite.update({
+        where: { id: pendingInvite.id },
+        data: { status: "ACCEPTED", used: true, deletedAt: new Date() },
+      });
     });
 
     redirect("/workflows");
@@ -65,19 +66,21 @@ export async function submitOnboardingForm(data: {
   });
 
   if (inviteByEmail) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        name: data.fullName,
-        role: inviteByEmail.role,
-        onboardingCompleted: true,
-        organizationId: inviteByEmail.organizationId,
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: {
+          name: data.fullName,
+          role: inviteByEmail.role,
+          onboardingCompleted: true,
+          organizationId: inviteByEmail.organizationId,
+        },
+      });
 
-    await prisma.teamInvite.update({
-      where: { id: inviteByEmail.id },
-      data: { status: "ACCEPTED" },
+      await tx.teamInvite.update({
+        where: { id: inviteByEmail.id },
+        data: { status: "ACCEPTED", used: true, deletedAt: new Date() },
+      });
     });
 
     redirect("/workflows");

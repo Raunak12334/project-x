@@ -25,6 +25,8 @@ export default function UsersManagementPage() {
     trpc.platform.getUsers.queryOptions(),
   );
   const [search, setSearch] = useState("");
+  const planLabel = (plan?: string | null) =>
+    plan === "ENTERPRISE" ? "CUSTOM" : plan || "FREE";
 
   const filteredUsers = users?.filter(
     (u) =>
@@ -140,7 +142,8 @@ export default function UsersManagementPage() {
                         variant="outline"
                         className="text-[9px] h-4 py-0 font-black uppercase tracking-widest border-primary/20 text-primary"
                       >
-                        {user.organization.subscription.plan} Subscriber
+                        {planLabel(user.organization.subscription.plan)}{" "}
+                        Subscriber
                       </Badge>
                     )}
                   </div>

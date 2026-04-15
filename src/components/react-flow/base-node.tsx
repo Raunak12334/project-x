@@ -12,7 +12,7 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     <div
       ref={ref}
       className={cn(
-        "relative rounded-sm border border-muted-foreground bg-card text-card-foreground hover:bg-accent shadow-sm w-[180px] min-h-[140px]",
+        "relative w-[40px] h-[40px] rounded-lg border border-muted-foreground bg-card text-card-foreground shadow-sm transition-all duration-150 hover:border-slate-300 hover:shadow-md",
         className,
       )}
       {...props}
@@ -77,7 +77,10 @@ export const BaseNodeContent = forwardRef<
   <div
     ref={ref}
     data-slot="base-node-content"
-    className={cn("flex flex-col gap-y-2 p-3", className)}
+    className={cn(
+      "flex h-full w-full items-center justify-center p-0",
+      className,
+    )}
     {...props}
   />
 ));

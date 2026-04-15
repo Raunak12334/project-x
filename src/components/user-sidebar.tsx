@@ -16,6 +16,11 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  createBillingPortalUrl,
+  createProCheckoutUrl,
+} from "@/app/pricing/actions";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +37,32 @@ import { authClient } from "@/lib/auth-client";
 export const UserSidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
+
+  const handleUpgradeToPro = async () => {
+    setUpgradeLoading(true);
+    try {
+      const checkoutUrl = await createProCheckoutUrl();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Upgrade checkout failed:", error);
+      alert("Upgrade failed. Please try again or contact support.");
+      setUpgradeLoading(false);
+    }
+  };
+
+  const handleOpenBillingPortal = async () => {
+    setBillingLoading(true);
+    try {
+      const portalUrl = await createBillingPortalUrl();
+      window.location.href = portalUrl;
+    } catch (error) {
+      console.error("Billing portal failed:", error);
+      alert("Billing portal failed. Please try again or contact support.");
+      setBillingLoading(false);
+    }
+  };
 
   const userMenuItems = [
     {
@@ -117,20 +148,26 @@ export const UserSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
-              onClick={() => router.push("/pricing")}
+              onClick={handleUpgradeToPro}
+              disabled={upgradeLoading}
             >
               <StarIcon className="size-4" />
-              <span>Upgrade to Pro</span>
+              <span>
+                {upgradeLoading ? "Opening Checkout..." : "Upgrade to Pro"}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
           <SidebarMenuItem>
             <SidebarMenuButton
               className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
-              onClick={() => router.push("/settings/billing")} // or your exact billing route
+              onClick={handleOpenBillingPortal}
+              disabled={billingLoading}
             >
               <CreditCardIcon className="size-4" />
-              <span>Billing Portal</span>
+              <span>
+                {billingLoading ? "Opening Billing..." : "Billing Portal"}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 

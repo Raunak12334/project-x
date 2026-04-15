@@ -1,7 +1,11 @@
+import crypto from "node:crypto";
 import { NodeType } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
+import { shouldEnforceWorkflowWebhookSecrets } from "@/lib/env";
+import { logger } from "@/lib/logger";
+import { verifyWebhookSecret } from "@/lib/webhook-security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,12 +40,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify webhook secret if set
-    if (workflow.webhookSecret && workflow.webhookSecret !== secret) {
+    const hasValidSecret = Boolean(
+      workflow.webhookSecret &&
+        verifyWebhookSecret(workflow.webhookSecret, secret),
+    );
+
+    if (!hasValidSecret && (secret || shouldEnforceWorkflowWebhookSecrets())) {
+      logger.warn("webhook.google_form.invalid_secret", { workflowId, nodeId });
       return NextResponse.json(
         { success: false, error: "Invalid webhook secret" },
         { status: 401 },
       );
+    }
+
+    if (!hasValidSecret) {
+      logger.warn("webhook.google_form.legacy_unsigned_request_allowed", {
+        workflowId,
+        nodeId,
+      });
     }
 
     const triggerNodes = await prisma.node.findMany({
@@ -75,6 +91,10 @@ export async function POST(request: NextRequest) {
 
     const triggerNodeId = triggerNodes[0].id;
     const body = await request.json();
+    const idempotencyKey =
+      typeof body.responseId === "string" && body.responseId
+        ? `webhook:google-form:${workflowId}:${triggerNodeId}:${body.responseId}`
+        : `webhook:google-form:${workflowId}:${triggerNodeId}:${crypto.randomUUID()}`;
 
     const formData = {
       nodeId: triggerNodeId,
@@ -91,14 +111,20 @@ export async function POST(request: NextRequest) {
     await sendWorkflowExecution({
       workflowId,
       triggerNodeId,
+      idempotencyKey,
       initialData: {
         googleForm: formData,
       },
     });
 
+    logger.info("webhook.google_form.enqueued", {
+      workflowId,
+      nodeId: triggerNodeId,
+    });
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("Google form webhook error:", error);
+    logger.error("webhook.google_form.failed", { error });
     return NextResponse.json(
       { success: false, error: "Failed to process Google Form submission" },
       { status: 500 },

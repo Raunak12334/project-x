@@ -6,6 +6,7 @@ export type WorkflowTemplateDefinition = {
   description: string;
   category: string;
   tags: string[];
+  isPremium?: boolean;
   requiredCredentials: CredentialType[];
   nodes: Array<{
     id: string;
@@ -29,6 +30,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
       "Checks if a support message is urgent. If it is urgent, it asks for approval and sends it to Slack.",
     category: "Support",
     tags: ["triage", "support", "approval", "urgent"],
+    isPremium: true,
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
       {
@@ -597,3 +599,14 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
 
 export const getWorkflowTemplateById = (templateId: string) =>
   workflowTemplates.find((template) => template.id === templateId);
+
+export const getFilteredTemplates = (
+  plan: "FREE" | "PRO" | "CUSTOM" = "FREE",
+) => {
+  if (plan === "PRO" || plan === "CUSTOM") {
+    return workflowTemplates;
+  }
+
+  // FREE plan only gets non-premium templates
+  return workflowTemplates.filter((template) => !template.isPremium);
+};

@@ -1,19 +1,29 @@
-import { NodeType } from "@prisma/client";
-import { getNodeDefinition } from "../core/registry";
+import type { NodeType } from "@prisma/client";
 import { getExecutor as getLegacyExecutor } from "@/features/executions/lib/executor-registry";
 import { decrypt } from "@/lib/encryption";
-import type { NodeExecutionResult } from "../core/types";
+import { getNodeDefinition } from "../core/registry";
+import type {
+  NodeExecutionResult,
+  PublishFn,
+  StepRunner,
+  WorkflowContext,
+} from "../core/types";
 
 /**
  * Adapter to bridge legacy execution logic with the new hardened node system.
  * It detects if a node has a new definition and uses it, otherwise falls back to legacy.
  */
 export async function executeNode(params: {
-  node: { id: string; type: NodeType; data: any; version?: number };
+  node: {
+    id: string;
+    type: NodeType;
+    data: Record<string, unknown>;
+    version?: number;
+  };
   organizationId: string;
-  context: Record<string, any>;
-  step: any;
-  publish: any;
+  context: WorkflowContext;
+  step: StepRunner;
+  publish: PublishFn;
 }): Promise<NodeExecutionResult> {
   const { node, organizationId, context, step, publish } = params;
   const definition = getNodeDefinition(node.type, node.version || 1);
@@ -42,8 +52,8 @@ export async function executeNode(params: {
   // 1. Resolve credentials (basic implementation for now)
   const resolvedCredentials: Record<string, string> = {};
   for (const req of definition.credentials) {
-    const credId = (node.data as any)[req.key];
-    if (credId) {
+    const credId = node.data[req.key];
+    if (typeof credId === "string" && credId) {
       const { default: prisma } = await import("@/lib/db");
       const credential = await step.run(
         `${node.id}-resolve-cred-${req.key}`,

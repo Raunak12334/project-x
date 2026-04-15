@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { NodeType, type Prisma } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import type { Edge, Node } from "@xyflow/react";
 import { generateSlug } from "random-word-slugs";
 import z from "zod";
@@ -13,6 +14,7 @@ import {
 } from "@/features/workflows/lib/connections";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
+import { createWebhookSecret } from "@/lib/webhook-security";
 import {
   createTRPCRouter,
   premiumProcedure,
@@ -41,6 +43,7 @@ export const workflowsRouter = createTRPCRouter({
       data: {
         name: generateSlug(3),
         organizationId: ctx.auth.organizationId,
+        webhookSecret: createWebhookSecret(),
         nodes: {
           create: {
             type: NodeType.INITIAL,
@@ -60,11 +63,21 @@ export const workflowsRouter = createTRPCRouter({
         throw new Error("Template not found");
       }
 
+      // Check premium template access
+      if (template.isPremium && ctx.subscription?.plan === "FREE") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Premium templates require a PRO subscription. Upgrade to access this template.",
+        });
+      }
+
       return prisma.$transaction(async (tx) => {
         const workflow = await tx.workflow.create({
           data: {
             name: template.name,
             organizationId: ctx.auth.organizationId,
+            webhookSecret: createWebhookSecret(),
           },
         });
 
@@ -151,16 +164,22 @@ export const workflowsRouter = createTRPCRouter({
           where: { workflowId: id },
         });
 
+        const nodeTypeSchema = z.enum(NodeType);
+
         // Create nodes
         await tx.node.createMany({
-          data: nodes.map((node) => ({
-            id: node.id,
-            workflowId: id,
-            name: node.type || "unknown",
-            type: node.type as NodeType,
-            position: node.position,
-            data: node.data || {},
-          })),
+          data: nodes.map((node) => {
+            const type = nodeTypeSchema.parse(node.type);
+
+            return {
+              id: node.id,
+              workflowId: id,
+              name: type,
+              type,
+              position: node.position,
+              data: node.data || {},
+            };
+          }),
         });
 
         const connections = normalizeAndDedupeWorkflowConnections(edges).map(
@@ -239,6 +258,7 @@ export const workflowsRouter = createTRPCRouter({
       return {
         id: workflow.id,
         name: workflow.name,
+        webhookSecret: workflow.webhookSecret || "",
         nodes,
         edges,
       };

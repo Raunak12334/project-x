@@ -2,6 +2,28 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "./auth";
 import prisma from "./db";
+import { logger } from "./logger";
+
+function hasUsableSubscription(
+  subscription:
+    | {
+        plan: "FREE" | "PRO" | "CUSTOM" | "ENTERPRISE";
+        status: string;
+        expiresAt: Date | null;
+      }
+    | null
+    | undefined,
+) {
+  if (!subscription || subscription.status !== "ACTIVE") {
+    return false;
+  }
+
+  if (subscription.plan !== "FREE") {
+    return true;
+  }
+
+  return Boolean(subscription.expiresAt && subscription.expiresAt > new Date());
+}
 
 export const requireAuth = async () => {
   const authData = await auth.api.getSession({
@@ -54,9 +76,10 @@ export function assertSameOrganization(
   userOrgId: string,
 ) {
   if (resourceOrgId !== userOrgId) {
-    console.error(
-      `SECURITY ALERT: Cross-organization access attempt. User Org: ${userOrgId}, Resource Org: ${resourceOrgId}`,
-    );
+    logger.error("security.cross_organization_access_attempt", {
+      userOrganizationId: userOrgId,
+      resourceOrganizationId: resourceOrgId,
+    });
     throw new Error("Unauthorized: Access Denied");
   }
 }
@@ -122,7 +145,7 @@ export const enforceAppRouting = async (currentPath?: string) => {
     return { session, user };
   }
 
-  if (!organization?.subscription) {
+  if (!hasUsableSubscription(organization?.subscription)) {
     if (currentPath !== "/pricing") {
       redirect("/pricing");
     }

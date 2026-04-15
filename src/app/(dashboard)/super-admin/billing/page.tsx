@@ -30,7 +30,7 @@ import { useTRPC } from "@/trpc/client";
 const PLAN_COLORS = {
   FREE: "#94a3b8",
   PRO: "#3b82f6",
-  ENTERPRISE: "#a855f7",
+  CUSTOM: "#a855f7",
 };
 
 export default function PlatformBillingPage() {
@@ -61,9 +61,9 @@ export default function PlatformBillingPage() {
     },
     { name: "Pro", value: stats?.planStats.PRO || 0, color: PLAN_COLORS.PRO },
     {
-      name: "Enterprise",
-      value: stats?.planStats.ENTERPRISE || 0,
-      color: PLAN_COLORS.ENTERPRISE,
+      name: "Custom",
+      value: stats?.planStats.CUSTOM || 0,
+      color: PLAN_COLORS.CUSTOM,
     },
   ];
 
@@ -105,10 +105,10 @@ export default function PlatformBillingPage() {
             <div className="text-4xl font-black text-slate-900 dark:text-slate-100">
               {(
                 (((stats?.planStats.PRO || 0) +
-                  (stats?.planStats.ENTERPRISE || 0)) /
+                  (stats?.planStats.CUSTOM || 0)) /
                   ((stats?.planStats.FREE || 1) +
                     (stats?.planStats.PRO || 0) +
-                    (stats?.planStats.ENTERPRISE || 0))) *
+                    (stats?.planStats.CUSTOM || 0))) *
                 100
               ).toFixed(1)}
               %
