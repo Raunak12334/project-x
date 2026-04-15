@@ -26,6 +26,10 @@ export function getAppUrl() {
   return appUrl;
 }
 
+export function getPolarSuccessBaseUrl() {
+  return process.env.POLAR_SUCCESS_URL || getAppUrl();
+}
+
 export function getProductionEnvReport() {
   const required = [
     "DATABASE_URL",

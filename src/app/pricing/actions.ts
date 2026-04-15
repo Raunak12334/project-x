@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth-utils";
 import prisma from "@/lib/db";
-import { getAppUrl, requireEnv } from "@/lib/env";
+import { getPolarSuccessBaseUrl, requireEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { polarClient } from "@/lib/polar";
 
@@ -79,14 +79,14 @@ export async function createProCheckoutUrl() {
   }
 
   const productId = requireEnv("POLAR_PRO_PRODUCT_ID");
-  const appUrl = getAppUrl();
+  const successBaseUrl = getPolarSuccessBaseUrl();
 
   let checkout: Awaited<ReturnType<typeof polarClient.checkouts.create>>;
 
   try {
     checkout = await polarClient.checkouts.create({
       products: [productId],
-      successUrl: `${appUrl}/workflows?success=true`,
+      successUrl: `${successBaseUrl}/workflows?success=true`,
       externalCustomerId: user.id,
       customerEmail: user.email,
       customerName: user.name,
