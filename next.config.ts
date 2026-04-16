@@ -5,6 +5,8 @@ import type { NextConfig } from "next";
 const require = createRequire(import.meta.url);
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  poweredByHeader: false,
   devIndicators: false,
   webpack: (config) => {
     config.resolve = config.resolve || {};

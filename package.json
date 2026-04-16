@@ -2,11 +2,16 @@
   "name": "otogent",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.22.2",
+    "npm": "10.x"
+  },
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "clean:next": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\"",
-    "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --turbopack",
-    "build": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next build",
-    "start": "next start",
+    "dev": "node ./scripts/run-next-stable.cjs dev",
+    "build": "node ./scripts/run-next-stable.cjs build",
+    "start": "node ./scripts/run-next-stable.cjs start",
     "lint": "biome check",
     "ngrok:dev": "dotenv -- ngrok http --url=$NGROK_URL 3000",
     "format": "biome format --write",

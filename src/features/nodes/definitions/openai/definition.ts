@@ -10,7 +10,7 @@ export const openAiDefinition: NodeDefinition<typeof openAiSchema> = {
   label: "OpenAI",
   description: "Generate text using OpenAI's powerful language models.",
   category: "action",
-  icon: "openai", // Custom icon name for UI
+  icon: "/logos/openai.svg",
   fields: openAiFields,
   configSchema: openAiSchema,
   ports: [

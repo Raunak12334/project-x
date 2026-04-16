@@ -3,6 +3,7 @@
 import type { NodeType } from "@prisma/client";
 import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { memo, useCallback, useMemo, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { BaseHandle } from "@/components/react-flow/base-handle";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
 import {
@@ -112,7 +113,13 @@ export const HardenNode = memo((props: NodeProps) => {
             onDoubleClick={handleOpenSettings}
           >
             <BaseNodeContent className="w-full h-full flex items-center justify-center p-0">
-              {/* Icon rendering is handled by lucide-react only */}
+              {definition.icon?.startsWith("/") && (
+                <BrandLogo
+                  src={definition.icon}
+                  alt={`${name} logo`}
+                  className="size-5"
+                />
+              )}
 
               {/* Render Ports Dynamically */}
               {definition.ports.map((port) => (

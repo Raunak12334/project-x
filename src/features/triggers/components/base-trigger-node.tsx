@@ -3,6 +3,7 @@
 import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
 import type { LucideIcon } from "lucide-react";
 import { memo, type ReactNode } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { BaseHandle } from "@/components/react-flow/base-handle";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
 import {
@@ -73,6 +74,9 @@ export const BaseTriggerNode = memo(
             <BaseNodeContent className="w-full h-full flex items-center justify-center p-0">
               {typeof Icon === "string" ? null : (
                 <Icon className="size-5 text-muted-foreground" />
+              )}
+              {typeof Icon === "string" && (
+                <BrandLogo src={Icon} alt={`${name} logo`} className="size-5" />
               )}
               {children}
               <BaseHandle id="main" type="source" position={Position.Right} />

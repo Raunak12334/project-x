@@ -6,6 +6,7 @@ import { useReactFlow } from "@xyflow/react";
 import { SearchIcon } from "lucide-react";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/brand-logo";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -197,7 +198,13 @@ export function NodeSelector({
                         onClick={() => handleNodeSelect(item)}
                       >
                         <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border bg-background shadow-sm transition-colors group-hover:border-primary/30">
-                          {typeof Icon === "string" ? null : (
+                          {typeof Icon === "string" ? (
+                            <BrandLogo
+                              src={Icon}
+                              alt={`${item.label} logo`}
+                              className="size-6"
+                            />
+                          ) : (
                             <Icon className="size-6 text-muted-foreground" />
                           )}
                         </div>
