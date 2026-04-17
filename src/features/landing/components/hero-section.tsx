@@ -40,9 +40,8 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-6xl"
         >
-          every SaaS company is becoming a <br className="hidden md:block" />{" "}
-          GaaS company — Agentic as a Service <br className="hidden md:block" />{" "}
-          "Jensen Huang"
+          Otomate your Workflows with <br className="hidden md:block" />
+          Multi Agent Catalyst
         </motion.h1>
 
         {/* Subheadline */}
