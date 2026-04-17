@@ -21,7 +21,7 @@ export function HeroSection() {
         loop
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
-        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
+        src="https://d8j0ntlc91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
       />
 
       {/* Content */}
@@ -42,7 +42,7 @@ export function HeroSection() {
         >
           every SaaS company is becoming a <br className="hidden md:block" />{" "}
           GaaS company — Agentic as a Service <br className="hidden md:block" />{" "}
-          "Jenseng Huang"
+          "Jensen Huang"
         </motion.h1>
 
         {/* Subheadline */}
