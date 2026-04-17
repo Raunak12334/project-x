@@ -6,9 +6,9 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Otomate your Workflows with Multi Agent Catalyst | Otogent",
+  title: "Otogent — Infrastructure for Multi Agent System",
   description:
-    "Otogent gives the Catalysts to Otomate your Workflows through multiple Agents Delegate Task.",
+    "Otogent — Build, deploy, and manage AI agent workflows in minutes. Connect models from OpenAI, Anthropic, and Gemini. No infrastructure required.",
 };
 
 export default async function Page() {
