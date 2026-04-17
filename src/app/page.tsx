@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "every SaaS company is becoming a GaaS company — Agentic as a Service \"Jensen Huang\"",
+  title: "Otomate your Workflows with Multi Agent Catalyst | Otogent",
   description:
     "Otogent gives the Catalysts to Otomate your Workflows through multiple Agents Delegate Task.",
 };
