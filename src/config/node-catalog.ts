@@ -1,5 +1,6 @@
 import { NodeType } from "@prisma/client";
 import {
+  Boxes,
   BracesIcon,
   BrainCircuitIcon,
   CalendarClockIcon,
@@ -30,7 +31,8 @@ export type NodeCatalogGroupId =
   | "logic"
   | "data"
   | "ai"
-  | "communication";
+  | "communication"
+  | "integrations";
 
 export type InputField = {
   key: string;
@@ -79,6 +81,7 @@ export type NodeCatalogItem = {
   outputs: OutputField[];
   setupGuide: string[];
   testAction?: string;
+  defaultData?: Record<string, unknown>;
 };
 
 export const nodeCatalogGroups: Array<{
@@ -106,6 +109,11 @@ export const nodeCatalogGroups: Array<{
     id: "communication",
     label: "Send",
     description: "Send updates to your team.",
+  },
+  {
+    id: "integrations",
+    label: "Integrations",
+    description: "Connect 11,000+ apps via Composio.",
   },
 ];
 
@@ -1628,6 +1636,54 @@ export const nodeCatalog: NodeCatalogItem[] = [
     ],
     testAction: "executeTelegram",
   },
+  {
+    type: NodeType.COMPOSIO,
+    label: "Composio Integration",
+    description: "Execute any action from Composio's 11,000+ toolset.",
+    icon: "/logos/composio.svg",
+    brandIcon: null,
+    group: "data",
+    keywords: ["composio", "integration", "app", "action", "tool"],
+    inputs: [
+      {
+        key: "toolSlug",
+        label: "Tool Slug",
+        type: "text",
+        required: true,
+        supportsDynamic: false,
+        placeholder: "GITHUB_STAR_REPO",
+      },
+      {
+        key: "argumentsJson",
+        label: "JSON Arguments",
+        type: "textarea",
+        required: false,
+        supportsDynamic: true,
+        placeholder: "{ \"repo\": \"my/repo\" }",
+      },
+    ],
+    credentials: [
+      {
+        key: "credentialId",
+        label: "Composio API Key",
+        type: "password",
+        required: true,
+        supportsDynamic: false,
+      },
+    ],
+    outputs: [
+      {
+        key: "data",
+        type: "object",
+        description: "Response data from the Composio Tool execution.",
+      },
+    ],
+    setupGuide: [
+      "Find the exact toolSlug from Composio dashboard.",
+      "Input valid JSON for the arguments with Handlebars tags if needed.",
+    ],
+    testAction: "executeComposio",
+  },
 ];
 
 export const getNodeCatalogItem = (type: NodeType) =>
@@ -1645,5 +1701,7 @@ export const getNodeIconByGroup = (group: NodeCatalogGroupId) => {
       return BrainCircuitIcon;
     case "communication":
       return SendIcon;
+    case "integrations":
+      return Boxes;
   }
 };

@@ -4,6 +4,7 @@ import { manualTriggerExecutor } from "@/features/triggers/components/manual-tri
 import { stripeTriggerExecutor } from "@/features/triggers/components/stripe-trigger/executor";
 import { webhookTriggerExecutor } from "@/features/triggers/components/webhook-trigger/executor";
 import { anthropicExecutor } from "../components/anthropic/executor";
+import { composioExecutor } from "../components/composio/executor";
 import { conditionExecutor } from "../components/condition/executor";
 import { dbQueryExecutor } from "../components/db-query/executor";
 import { delayExecutor } from "../components/delay/executor";
@@ -61,6 +62,7 @@ export const executorRegistry: Record<NodeType, RegistryExecutor> = {
   [NodeType.GEMINI]: geminiExecutor,
   [NodeType.ANTHROPIC]: anthropicExecutor,
   [NodeType.OPENAI]: openAiExecutor,
+  [NodeType.COMPOSIO]: composioExecutor as any,
   [NodeType.HUGGINGFACE]: huggingFaceExecutor,
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,

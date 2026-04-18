@@ -4,6 +4,7 @@ import type { Credential } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   EmptyView,
   EntityContainer,
@@ -15,7 +16,9 @@ import {
   ErrorView,
   LoadingView,
 } from "@/components/entity-components";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEntitySearch } from "@/hooks/use-entity-search";
+import { ComposioMarketplace } from "./composio-marketplace";
 import {
   useRemoveCredential,
   useSuspenseCredentials,
@@ -82,13 +85,40 @@ export const CredentialsContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const [activeTab, setActiveTab ] = useState("managed");
+
   return (
     <EntityContainer
-      header={<CredentialsHeader />}
-      search={<CredentialsSearch />}
-      pagination={<CredentialsPagination />}
+      header={<CredentialsHeader disabled={activeTab === "marketplace"} />}
+      search={activeTab === "managed" ? <CredentialsSearch /> : null}
+      pagination={activeTab === "managed" ? <CredentialsPagination /> : null}
     >
-      {children}
+      <Tabs defaultValue="managed" className="w-full" onValueChange={setActiveTab}>
+        <div className="px-6 border-b">
+            <TabsList className="h-12 bg-transparent gap-8 p-0">
+                <TabsTrigger 
+                    value="managed" 
+                    className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+                >
+                    API Credentials
+                </TabsTrigger>
+                <TabsTrigger 
+                    value="marketplace" 
+                    className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+                >
+                    Integrations Marketplace
+                </TabsTrigger>
+            </TabsList>
+        </div>
+        
+        <TabsContent value="managed" className="mt-0 outline-none">
+            {children}
+        </TabsContent>
+        
+        <TabsContent value="marketplace" className="mt-0 p-6 outline-none">
+            <ComposioMarketplace />
+        </TabsContent>
+      </Tabs>
     </EntityContainer>
   );
 };

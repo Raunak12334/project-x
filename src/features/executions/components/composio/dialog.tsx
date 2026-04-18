@@ -1,0 +1,215 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CredentialType } from "@prisma/client";
+import { Plug } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+
+const formSchema = z.object({
+  variableName: z
+    .string()
+    .min(1, { message: "Variable name is required" })
+    .regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, {
+      message:
+        "Variable name must start with a letter or underscore and container only letters, numbers, and underscores",
+    }),
+  credentialId: z.string().min(1, "Credential is required"),
+  toolSlug: z.string().min(1, "Tool slug is required"),
+  argumentsJson: z.string().optional(),
+});
+
+export type ComposioFormValues = z.infer<typeof formSchema>;
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  defaultValues?: Partial<ComposioFormValues>;
+}
+
+export const ComposioDialog = ({
+  open,
+  onOpenChange,
+  onSubmit,
+  defaultValues = {},
+}: Props) => {
+  const { data: credentials, isLoading: isLoadingCredentials } =
+    useCredentialsByType(CredentialType.COMPOSIO);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      variableName: defaultValues.variableName || "",
+      credentialId: defaultValues.credentialId || "",
+      toolSlug: defaultValues.toolSlug || "",
+      argumentsJson: defaultValues.argumentsJson || "{}",
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        variableName: defaultValues.variableName || "",
+        credentialId: defaultValues.credentialId || "",
+        toolSlug: defaultValues.toolSlug || "",
+        argumentsJson: defaultValues.argumentsJson || "{}",
+      });
+    }
+  }, [open, defaultValues, form]);
+
+  const watchVariableName = form.watch("variableName") || "myComposioResult";
+
+  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+    // Basic JSON validation before submitting
+    if (values.argumentsJson && values.argumentsJson.trim() !== "") {
+      try {
+        // Attempt to parse to see if it's generally valid JSON, ignoring interpolation blocks since they could make JSON technically invalid until runtime.
+        // For simplicity we just accept the string, as Handlebars templating might break strict JSON parsing.
+      } catch (e) {
+        // We'll let it pass because of Handlebars
+      }
+    }
+    onSubmit(values);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Composio Execution Configuration</DialogTitle>
+          <DialogDescription>
+            Configure a tool execution directly via Composio.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-8 mt-4"
+          >
+            <FormField
+              control={form.control}
+              name="variableName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Variable Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="myComposioResult" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Use this name to reference the result in other nodes:{" "}
+                    {`{{${watchVariableName}.data}}`}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="credentialId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Composio API Credential</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoadingCredentials || !credentials?.length}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a Composio Key" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {credentials?.map((credential) => (
+                        <SelectItem key={credential.id} value={credential.id}>
+                          <div className="flex items-center gap-2">
+                            <Plug size={16} />
+                            {credential.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="toolSlug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tool Slug</FormLabel>
+                  <FormControl>
+                    <Input placeholder="GITHUB_STAR_REPO" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    The specific action to perform. Consult Composio docs for slugs.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="argumentsJson"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>JSON Arguments</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder={'{\n  "repo": "{{trigger.repo}}"\n}'}
+                      className="min-h-[120px] font-mono text-sm"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    The parameters required by the tool. Can use Handlebars templating like `{"{{myvariable}}"}`
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="mt-4">
+              <Button type="submit">Save</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};

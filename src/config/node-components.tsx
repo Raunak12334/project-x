@@ -2,6 +2,7 @@ import { NodeType } from "@prisma/client";
 import type { Node, NodeProps, NodeTypes } from "@xyflow/react";
 import { InitialNode } from "@/components/initial-node";
 import { AnthropicNode } from "@/features/executions/components/anthropic/node";
+import { ComposioNode } from "@/features/executions/components/composio/node";
 import { ConditionNode } from "@/features/executions/components/condition/node";
 import { DelayNode } from "@/features/executions/components/delay/node";
 import { DiscordNode } from "@/features/executions/components/discord/node";
@@ -57,6 +58,7 @@ export const nodeComponents = {
   [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
   [NodeType.GEMINI]: GeminiNode,
   [NodeType.OPENAI]: HardenNode,
+  [NodeType.COMPOSIO]: ComposioNode,
   [NodeType.HUGGINGFACE]: HuggingFaceNode,
   [NodeType.ANTHROPIC]: AnthropicNode,
   [NodeType.DISCORD]: DiscordNode,

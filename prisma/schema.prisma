@@ -457,6 +457,7 @@ enum CredentialType {
   GEMINI
   GEMMA
   HUGGINGFACE
+  COMPOSIO
   GENERIC
 }
 
@@ -496,6 +497,7 @@ enum NodeType {
   TWILIO_SMS
   HUBSPOT
   SHOPIFY
+  COMPOSIO
 }
 
 enum ExecutionStatus {

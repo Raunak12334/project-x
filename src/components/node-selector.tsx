@@ -23,6 +23,7 @@ import {
   nodeCatalogGroups,
 } from "@/config/node-catalog";
 import { isTriggerNodeType } from "@/features/workflows/lib/start-nodes";
+import { useTRPC } from "@/trpc/client";
 
 interface NodeSelectorProps {
   open: boolean;
@@ -54,19 +55,41 @@ export function NodeSelector({
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
 
+  const trpc = useTRPC();
+  const { data: connectedApps } = trpc.composio.listConnectedAccounts.useQuery();
+
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
+
+    // Map connected Composio apps to individual tools in the catalog
+    const dynamicComposioNodes: NodeCatalogItem[] = (connectedApps?.items || []).map(app => ({
+      type: NodeType.COMPOSIO,
+      label: app.name,
+      description: `Managed integration for ${app.name} via Composio.`,
+      icon: app.logo || Boxes,
+      group: "integrations",
+      keywords: ["composio", app.slug, app.name.toLowerCase()],
+      inputs: [], // Dynamic nodes use their own data
+      outputs: [{ key: "data", type: "object", description: "Response data" }],
+      setupGuide: ["Ensure your account is connected in the marketplace."],
+      defaultData: {
+        toolSlug: `${app.slug.toUpperCase()}_GET_INFO`, // Default to a safe action or list
+        name: `${app.name} Action`
+      }
+    }));
+
+    const allNodes = [...nodeCatalog, ...dynamicComposioNodes];
 
     return nodeCatalogGroups
       .map((group) => ({
         ...group,
-        items: nodeCatalog.filter(
+        items: allNodes.filter(
           (item) =>
             item.group === group.id && matchesSearch(item, normalizedSearch),
         ),
       }))
       .filter((group) => group.items.length > 0);
-  }, [deferredSearch]);
+  }, [deferredSearch, connectedApps]);
 
   const filteredNodeCount = useMemo(
     () =>
@@ -107,7 +130,7 @@ export function NodeSelector({
 
         const newNode = {
           id: createId(),
-          data: {},
+          data: selection.defaultData || {},
           position: flowPosition,
           type: selection.type,
         };
