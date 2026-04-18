@@ -1636,53 +1636,6 @@ export const nodeCatalog: NodeCatalogItem[] = [
     ],
     testAction: "executeTelegram",
   },
-  {
-    type: NodeType.COMPOSIO,
-    label: "Composio Integration",
-    description: "Execute any action from Composio's 11,000+ toolset.",
-    icon: "/logos/composio.svg",
-    brandIcon: null,
-    group: "integrations",
-    keywords: ["composio", "integration", "app", "action", "tool"],
-    inputs: [
-      {
-        key: "toolSlug",
-        label: "Tool Slug",
-        type: "text",
-        required: true,
-        supportsDynamic: false,
-        placeholder: "GITHUB_STAR_REPO",
-      },
-      {
-        key: "argumentsJson",
-        label: "JSON Arguments",
-        type: "textarea",
-        required: false,
-        supportsDynamic: true,
-        placeholder: "{ \"repo\": \"my/repo\" }",
-      },
-    ],
-    credentials: [
-      {
-        key: "credentialId",
-        label: "Composio API Key",
-        type: "password",
-        required: true,
-        supportsDynamic: false,
-      },
-    ],
-    outputs: [
-      {
-        key: "data",
-        type: "object",
-        description: "Response data from the Composio Tool execution.",
-      },
-    ],
-    setupGuide: [
-      "Find the exact toolSlug from Composio dashboard.",
-      "Input valid JSON for the arguments with Handlebars tags if needed.",
-    ],
-    testAction: "executeComposio",
   },
 ];
 

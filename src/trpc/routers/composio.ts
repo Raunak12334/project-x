@@ -16,7 +16,7 @@ export const composioRouter = createTRPCRouter({
       const session = await composio.create(ctx.auth.organizationId);
       
       const response = await session.toolkits({ 
-        limit: 50,
+        limit: 100,
         // search: input.search // SDK might support this or we filter manually
       });
 

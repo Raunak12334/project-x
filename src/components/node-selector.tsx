@@ -58,16 +58,16 @@ export function NodeSelector({
   const deferredSearch = useDeferredValue(search);
 
   const trpc = useTRPC();
-  const { data: connectedApps } = useQuery(trpc.composio.listConnectedAccounts.queryOptions());
+  const { data: composioApps } = useQuery(trpc.composio.listApps.queryOptions({ search: deferredSearch }));
 
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
-    // Map connected Composio apps to individual tools in the catalog
-    const dynamicComposioNodes: NodeCatalogItem[] = (connectedApps?.items || []).map(app => ({
+    // Map Composio apps to individual tools in the catalog
+    const dynamicComposioNodes: NodeCatalogItem[] = (composioApps?.items || []).map(app => ({
       type: NodeType.COMPOSIO,
       label: app.name,
-      description: `Managed integration for ${app.name} via Composio.`,
+      description: app.description || `Integration for ${app.name} via Composio.`,
       icon: app.logo || Boxes,
       group: "integrations",
       keywords: ["composio", app.slug, app.name.toLowerCase()],
@@ -91,7 +91,7 @@ export function NodeSelector({
         ),
       }))
       .filter((group) => group.items.length > 0);
-  }, [deferredSearch, connectedApps]);
+  }, [deferredSearch, composioApps]);
 
   const filteredNodeCount = useMemo(
     () =>
