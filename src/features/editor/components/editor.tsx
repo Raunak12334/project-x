@@ -36,6 +36,8 @@ import { nodeComponents } from "@/config/node-components";
 import { editorAtom } from "../store/atoms";
 import { AddNodeButton } from "./add-node-button";
 import { ExecuteWorkflowButton } from "./execute-workflow-button";
+import { WorkflowSidebar } from "./workflow-sidebar";
+import { selectedNodeIdAtom } from "../store/atoms";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -58,6 +60,17 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     (changes: NodeChange[]) =>
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
     [],
+  );
+
+  const setSelectedNodeId = useSetAtom(selectedNodeIdAtom);
+
+  const onSelectionChange = useCallback(
+    ({ nodes }: { nodes: Node[] }) => {
+      if (nodes.length > 0) {
+        setSelectedNodeId(nodes[0].id);
+      }
+    },
+    [setSelectedNodeId],
   );
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) =>
@@ -154,34 +167,38 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   }, [isInitialOnlyWorkflow]);
 
   return (
-    <div ref={containerRef} className="size-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeComponents}
-        onInit={setEditor}
-        fitView={!isInitialOnlyWorkflow}
-        snapGrid={[10, 10]}
-        snapToGrid
-        panOnScroll
-        panOnDrag={false}
-        selectionOnDrag
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-        <Panel position="top-right">
-          <AddNodeButton />
-        </Panel>
-        {hasManualTrigger && (
-          <Panel position="bottom-center">
-            <ExecuteWorkflowButton workflowId={workflowId} />
+    <div ref={containerRef} className="size-full flex overflow-hidden">
+      <div className="flex-1 relative h-full">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectionChange={onSelectionChange}
+          nodeTypes={nodeComponents}
+          onInit={setEditor}
+          fitView={!isInitialOnlyWorkflow}
+          snapGrid={[10, 10]}
+          snapToGrid
+          panOnScroll
+          panOnDrag={false}
+          selectionOnDrag
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+          <Panel position="top-right">
+            <AddNodeButton />
           </Panel>
-        )}
-      </ReactFlow>
+          {hasManualTrigger && (
+            <Panel position="bottom-center">
+              <ExecuteWorkflowButton workflowId={workflowId} />
+            </Panel>
+          )}
+        </ReactFlow>
+      </div>
+      <WorkflowSidebar />
     </div>
   );
 };
