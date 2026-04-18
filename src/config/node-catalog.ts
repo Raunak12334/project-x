@@ -95,6 +95,11 @@ export const nodeCatalogGroups: Array<{
     description: "Choose how the workflow begins.",
   },
   {
+    id: "integrations",
+    label: "Integrations",
+    description: "Connect 11,000+ apps via Composio.",
+  },
+  {
     id: "logic",
     label: "Flow",
     description: "Control where the workflow goes next.",
@@ -109,11 +114,6 @@ export const nodeCatalogGroups: Array<{
     id: "communication",
     label: "Send",
     description: "Send updates to your team.",
-  },
-  {
-    id: "integrations",
-    label: "Integrations",
-    description: "Connect 11,000+ apps via Composio.",
   },
 ];
 
@@ -1642,7 +1642,7 @@ export const nodeCatalog: NodeCatalogItem[] = [
     description: "Execute any action from Composio's 11,000+ toolset.",
     icon: "/logos/composio.svg",
     brandIcon: null,
-    group: "data",
+    group: "integrations",
     keywords: ["composio", "integration", "app", "action", "tool"],
     inputs: [
       {

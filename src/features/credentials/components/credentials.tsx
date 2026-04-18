@@ -115,7 +115,7 @@ export const CredentialsContainer = ({
             {children}
         </TabsContent>
         
-        <TabsContent value="marketplace" className="mt-0 p-6 outline-none">
+        <TabsContent value="marketplace" className="mt-0 p-8 outline-none">
             <ComposioMarketplace />
         </TabsContent>
       </Tabs>

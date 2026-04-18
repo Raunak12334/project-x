@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { SearchIcon, PlusIcon, CheckIcon, ExternalLinkIcon, Plug } from "lucide-react";
+import { SearchIcon, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { LoadingView } from "@/components/entity-components";
+import { SetupSidebar } from "./setup-sidebar";
+import { IntegrationCard } from "./integration-card";
 
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
@@ -41,7 +41,11 @@ export const ComposioMarketplace = () => {
   };
 
   if (isLoading) {
-    return <LoadingView message="Loading marketplace..." />;
+    return (
+        <div className="flex h-[600px] items-center justify-center">
+            <LoadingView message="Loading marketplace..." />
+        </div>
+    );
   }
 
   const apps = data?.items || [];
@@ -51,80 +55,66 @@ export const ComposioMarketplace = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-md w-full">
-          <SearchIcon className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search 11,000+ apps (Gmail, GitHub, Slack...)"
-            className="pl-9 h-11 rounded-xl"
-          />
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {filteredApps.length} apps available
-        </div>
-      </div>
+    <div className="flex min-h-[calc(100vh-200px)] w-full gap-8 bg-white">
+      {/* Sidebar Section */}
+      <SetupSidebar />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredApps.map((app) => (
-          <div 
-            key={app.slug}
-            className="group relative flex items-start gap-4 p-4 rounded-2xl border bg-card hover:shadow-md transition-all border-border/60"
-          >
-            <div className="size-12 shrink-0 flex items-center justify-center rounded-xl border bg-background overflow-hidden p-2">
-              {app.logo ? (
-                <Image 
-                  src={app.logo} 
-                  alt={app.name} 
-                  width={32} 
-                  height={32} 
-                  className="object-contain"
-                />
-              ) : (
-                <Plug className="size-6 text-muted-foreground" />
-              )}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-semibold text-sm truncate">{app.name}</h3>
-                {app.isConnected && (
-                   <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full uppercase">
-                     <CheckIcon className="size-2.5" />
-                     Connected
-                   </span>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                Integrate {app.name} tools into your Otogent workflows.
+      {/* Main Content Section */}
+      <div className="flex-1 flex flex-col gap-8 pb-12">
+        <header className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Integrations</h1>
+              <p className="text-sm font-medium text-slate-500 max-w-2xl">
+                Connect apps to help your assistant take action on your behalf by granting access.
               </p>
-              
-              <div className="mt-4">
-                <Button 
-                  size="sm" 
-                  variant={app.isConnected ? "outline" : "default"}
-                  className="w-full h-8 rounded-lg text-xs font-medium gap-2"
-                  onClick={() => handleConnect(app.slug)}
-                  disabled={connectMutation.isPending}
-                >
-                  {app.isConnected ? (
-                    <>Reconnect <ExternalLinkIcon className="size-3" /></>
-                  ) : (
-                    <>Connect <PlusIcon className="size-3" /></>
-                  )}
-                </Button>
-              </div>
+            </div>
+            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="size-6" />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 pt-4">
+            <div className="relative max-w-lg w-full">
+              <SearchIcon className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search 11,000+ apps (Gmail, GitHub, Slack...)"
+                className="pl-11 h-12 bg-slate-50 border-none rounded-2xl focus-visible:ring-1 focus-visible:ring-slate-200 transition-all text-sm font-medium"
+              />
+            </div>
+            <div className="px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+               <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">
+                 {filteredApps.length} Results
+               </span>
             </div>
           </div>
-        ))}
+        </header>
 
-        {filteredApps.length === 0 && (
-            <div className="col-span-full py-20 text-center border border-dashed rounded-3xl">
-                <p className="text-sm text-muted-foreground">No apps found matching "{search}"</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredApps.map((app) => (
+            <IntegrationCard
+              key={app.slug}
+              name={app.name}
+              logo={app.logo}
+              description={`Integrate ${app.name} tools into your Otogent workflows.`}
+              isConnected={app.isConnected || false}
+              onConnect={() => handleConnect(app.slug)}
+              isConnecting={connectMutation.isPending && (connectMutation.variables as any)?.toolkitSlug === app.slug}
+            />
+          ))}
+
+          {filteredApps.length === 0 && (
+            <div className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[32px] bg-slate-50/30">
+                <div className="size-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                    <SearchIcon className="size-8 text-slate-200" />
+                </div>
+                <h3 className="text-slate-900 font-semibold mb-1">No integrations found</h3>
+                <p className="text-sm text-slate-500">Try searching for something else like "Gmail" or "Slack"</p>
             </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
