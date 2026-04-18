@@ -68,7 +68,7 @@ export const ComposioMarketplace = () => {
                          app.slug.toLowerCase().includes(search.toLowerCase());
     
     const matchesCategory = selectedCategories.length === 0 || 
-                           (app.categories || []).some(cat => selectedCategories.includes(cat));
+                           (app.categories || []).some((cat: string) => selectedCategories.includes(cat));
     
     return matchesSearch && matchesCategory;
   });
