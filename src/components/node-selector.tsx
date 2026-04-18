@@ -3,7 +3,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
 import { useReactFlow } from "@xyflow/react";
-import { SearchIcon } from "lucide-react";
+import { Boxes, SearchIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand-logo";
@@ -56,7 +57,7 @@ export function NodeSelector({
   const deferredSearch = useDeferredValue(search);
 
   const trpc = useTRPC();
-  const { data: connectedApps } = trpc.composio.listConnectedAccounts.useQuery();
+  const { data: connectedApps } = useQuery(trpc.composio.listConnectedAccounts.queryOptions());
 
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();

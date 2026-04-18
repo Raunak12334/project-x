@@ -25,7 +25,6 @@ export const composioRouter = createTRPCRouter({
           slug: toolkit.slug,
           name: toolkit.name,
           logo: toolkit.logo,
-          description: toolkit.description,
           isConnected: toolkit.connection?.isActive ?? false,
         })),
       };

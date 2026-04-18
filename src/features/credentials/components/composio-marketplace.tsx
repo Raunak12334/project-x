@@ -7,25 +7,34 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { LoadingView } from "@/components/entity-components";
 
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
   const [search, setSearch] = useState("");
   
-  const { data, isLoading } = trpc.composio.listApps.useQuery({ 
-    search 
-  });
+  const { data, isLoading } = useQuery(
+    trpc.composio.listApps.queryOptions({ 
+        search 
+    })
+  );
 
-  const connectMutation = trpc.composio.getConnectUrl.useMutation({
-    onSuccess: (data) => {
-      window.open(data.url, "_blank");
-      toast.success("Opening connection portal...");
-    },
-    onError: (error) => {
-      toast.error(`Failed to get connect URL: ${error.message}`);
-    }
-  });
+  const connectMutation = useMutation(
+    trpc.composio.getConnectUrl.mutationOptions({
+        onSuccess: (data) => {
+            if (data.url) {
+                window.open(data.url, "_blank");
+                toast.success("Opening connection portal...");
+            } else {
+                toast.error("Connect URL is missing");
+            }
+        },
+        onError: (error) => {
+            toast.error(`Failed to get connect URL: ${error.message}`);
+        }
+    })
+  );
 
   const handleConnect = (slug: string) => {
     connectMutation.mutate({ toolkitSlug: slug });
@@ -89,7 +98,7 @@ export const ComposioMarketplace = () => {
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                {app.description || `Integrate ${app.name} tools into your Otogent workflows.`}
+                Integrate {app.name} tools into your Otogent workflows.
               </p>
               
               <div className="mt-4">
