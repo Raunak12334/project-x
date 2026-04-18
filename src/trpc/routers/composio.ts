@@ -25,7 +25,10 @@ export const composioRouter = createTRPCRouter({
           slug: toolkit.slug,
           name: toolkit.name,
           logo: toolkit.logo,
+          description: toolkit.description,
           isConnected: toolkit.connection?.isActive ?? false,
+          categories: (toolkit as any).categories || ["Other"],
+          authType: (toolkit as any).authScheme || (toolkit as any).auth_type || "OAUTH2",
         })),
       };
     }),

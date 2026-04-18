@@ -9,6 +9,7 @@ import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand-logo";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -213,38 +214,47 @@ export function NodeSelector({
                 <div className="grid gap-3 sm:grid-cols-2">
                   {group.items.map((item) => {
                     const Icon = item.icon;
+                    const isIntegration = item.group === "integrations";
 
                     return (
                       <button
                         type="button"
                         key={item.type}
-                        className="group flex min-h-[120px] w-full items-start gap-4 rounded-3xl border bg-card px-4 py-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-accent/20 hover:shadow-md"
+                        className={cn(
+                          "group relative flex flex-col items-center text-center gap-4 rounded-[24px] border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-accent/10 hover:shadow-lg",
+                          isIntegration ? "bg-gradient-to-b from-card to-slate-50/50" : ""
+                        )}
                         onClick={() => handleNodeSelect(item)}
                       >
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border bg-background shadow-sm transition-colors group-hover:border-primary/30">
+                        <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border bg-background shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:shadow-md group-hover:border-primary/20">
                           {typeof Icon === "string" ? (
                             <BrandLogo
                               src={Icon}
                               alt={`${item.label} logo`}
-                              className="size-6"
+                              className="size-7"
                             />
                           ) : (
-                            <Icon className="size-6 text-muted-foreground" />
+                            <Icon className="size-7 text-muted-foreground transition-colors group-hover:text-primary" />
                           )}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-semibold">
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <span className="text-sm font-bold tracking-tight">
                               {item.label}
                             </span>
                             {item.group === "triggers" && (
-                              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-primary">
-                                Start
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-primary border border-primary/20">
+                                Trigger
                               </span>
                             )}
+                            {isIntegration && (
+                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100">
+                                    Integration
+                                </span>
+                            )}
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">
                             {item.description}
                           </p>
                         </div>
