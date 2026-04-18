@@ -1636,7 +1636,6 @@ export const nodeCatalog: NodeCatalogItem[] = [
     ],
     testAction: "executeTelegram",
   },
-  },
 ];
 
 export const getNodeCatalogItem = (type: NodeType) =>
