@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BotIcon,
   CreditCardIcon,
   FolderOpenIcon,
   HistoryIcon,
@@ -69,7 +68,6 @@ export const UserSidebar = () => {
       title: "Workspace",
       items: [
         { title: "Workflows", icon: FolderOpenIcon, url: "/workflows" },
-        { title: "AI Agents", icon: BotIcon, url: "/agents" },
         { title: "Templates", icon: LayoutTemplateIcon, url: "/templates" },
       ],
     },
