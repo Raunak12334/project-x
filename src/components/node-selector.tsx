@@ -105,10 +105,6 @@ export function NodeSelector({
 
   const isTriggerOnboardingMode = !hasConfiguredTrigger;
 
-  const triggerNodes = useMemo(() => {
-    const triggerGroup = groupedNodes.find((group) => group.id === "triggers");
-    return triggerGroup?.items ?? [];
-  }, [groupedNodes]);
 
   const filteredNodeCount = useMemo(
     () =>
@@ -199,56 +195,21 @@ export function NodeSelector({
           </div>
         </SheetHeader>
 
-        {!isTriggerOnboardingMode && (
-          <div className="sticky top-0 z-10 border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-            <div className="relative max-w-lg">
-              <SearchIcon className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search nodes"
-                className="h-11 rounded-2xl border-border/60 bg-card pl-9 shadow-sm"
-              />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {filteredNodeCount} result{filteredNodeCount === 1 ? "" : "s"}
-            </p>
+        <div className="sticky top-0 z-10 border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+          <div className="relative max-w-lg">
+            <SearchIcon className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search nodes, apps, or triggers"
+              className="h-11 rounded-2xl border-border/60 bg-card pl-9 shadow-sm"
+            />
           </div>
-        )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            {filteredNodeCount} result{filteredNodeCount === 1 ? "" : "s"}
+          </p>
+        </div>
 
-        {isTriggerOnboardingMode ? (
-          <div className="px-0 py-1">
-            {triggerNodes.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  type="button"
-                  key={`trigger-${item.type}`}
-                  className="flex w-full items-start gap-4 border-b px-6 py-5 text-left transition hover:bg-accent/40"
-                  onClick={() => handleNodeSelect(item)}
-                >
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
-                    {typeof Icon === "string" ? (
-                      <BrandLogo
-                        src={Icon}
-                        alt={`${item.label} logo`}
-                        className="size-4"
-                      />
-                    ) : (
-                      <Icon className="size-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold leading-none">{item.label}</p>
-                    <p className="mt-1.5 text-sm text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
           <div className="space-y-7 px-6 py-6">
           {groupedNodes.length === 0 && (
             <div className="rounded-3xl border border-dashed bg-card px-4 py-12 text-center">
@@ -338,7 +299,6 @@ export function NodeSelector({
             );
           })}
           </div>
-        )}
       </SheetContent>
     </Sheet>
   );
