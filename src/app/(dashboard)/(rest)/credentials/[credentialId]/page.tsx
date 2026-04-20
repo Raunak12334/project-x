@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { CredentialView } from "@/features/credentials/components/credential";
+import { CredentialForm, CredentialView } from "@/features/credentials/components/credential-form";
 import {
   CredentialsError,
   CredentialsLoading,

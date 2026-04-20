@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SearchIcon, X } from "lucide-react";
+import { SearchIcon, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { LoadingView } from "@/components/entity-components";
 import { SetupSidebar } from "./setup-sidebar";
 import { IntegrationCard } from "./integration-card";
+import { Button } from "@/components/ui/button";
 
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();

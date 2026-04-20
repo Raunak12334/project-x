@@ -8,6 +8,7 @@ import {
   premiumProcedure,
   protectedProcedure,
 } from "@/trpc/init";
+import { validateCredential } from "./validators";
 
 export const credentialsRouter = createTRPCRouter({
   create: premiumProcedure
@@ -138,5 +139,15 @@ export const credentialsRouter = createTRPCRouter({
           updatedAt: "desc",
         },
       });
+    }),
+  test: protectedProcedure
+    .input(
+      z.object({
+        type: z.enum(CredentialType),
+        value: z.string().min(1, "Value is required"),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      return await validateCredential(input.type, input.value);
     }),
 });

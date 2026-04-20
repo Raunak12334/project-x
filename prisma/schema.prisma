@@ -37,12 +37,13 @@ model Organization {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
   deletedAt    DateTime?
-  credentials  Credential[]
-  subscription Subscription?
-  teamInvites  TeamInvite[]
-  users        User[]
-  workflows    Workflow[]
-  supportTickets SupportTicket[]
+  credentials           Credential[]
+  composioIntegrations  ComposioIntegration[]
+  subscription          Subscription?
+  teamInvites           TeamInvite[]
+  users                 User[]
+  workflows             Workflow[]
+  supportTickets        SupportTicket[]
 
   @@map("organization")
 }
@@ -406,6 +407,30 @@ model WorkflowTemplate {
   updatedAt   DateTime @updatedAt
 
   @@map("workflow_template")
+}
+
+model ComposioIntegration {
+  id                String       @id @default(cuid())
+  organizationId    String
+  toolkitSlug       String
+  name              String
+  logo              String?
+  accountName       String?
+  authToken         String       // Encrypted Composio token
+  connectionId      String?      // Composio connection ID
+  isConnected       Boolean      @default(false)
+  lastSyncedAt      DateTime?
+  expiresAt         DateTime?
+  metadata          Json?        // Store additional integration-specific data
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, toolkitSlug])
+  @@index([organizationId])
+  @@index([organizationId, isConnected])
+  @@map("composio_integration")
 }
 
 enum Role {
