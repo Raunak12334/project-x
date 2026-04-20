@@ -2,8 +2,8 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
-import { useReactFlow } from "@xyflow/react";
-import { Boxes, SearchIcon } from "lucide-react";
+import { useNodes, useReactFlow } from "@xyflow/react";
+import { Boxes, SearchIcon, XIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -53,6 +53,7 @@ export function NodeSelector({
   onOpenChange,
   children,
 }: NodeSelectorProps) {
+  const nodes = useNodes();
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -92,6 +93,22 @@ export function NodeSelector({
       }))
       .filter((group) => group.items.length > 0);
   }, [deferredSearch, composioApps]);
+
+  const hasConfiguredTrigger = useMemo(() => {
+    return nodes.some(
+      (node) =>
+        typeof node.type === "string" &&
+        node.type !== NodeType.INITIAL &&
+        isTriggerNodeType(node.type as NodeType),
+    );
+  }, [nodes]);
+
+  const isTriggerOnboardingMode = !hasConfiguredTrigger;
+
+  const triggerNodes = useMemo(() => {
+    const triggerGroup = groupedNodes.find((group) => group.id === "triggers");
+    return triggerGroup?.items ?? [];
+  }, [groupedNodes]);
 
   const filteredNodeCount = useMemo(
     () =>
@@ -158,26 +175,81 @@ export function NodeSelector({
         className="w-full overflow-y-auto border-l bg-background p-0 sm:max-w-2xl"
       >
         <SheetHeader className="border-b bg-muted/20 px-6 py-5">
-          <SheetTitle>Add a node</SheetTitle>
-          <SheetDescription>Search or pick a group below.</SheetDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <SheetTitle>
+                {isTriggerOnboardingMode
+                  ? "What triggers this workflow?"
+                  : "Add a node"}
+              </SheetTitle>
+              <SheetDescription>
+                {isTriggerOnboardingMode
+                  ? "A trigger is a step that starts your workflow."
+                  : "Search or pick a group below."}
+              </SheetDescription>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="rounded-md border p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label="Close node selector"
+            >
+              <XIcon className="size-4" />
+            </button>
+          </div>
         </SheetHeader>
 
-        <div className="sticky top-0 z-10 border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-          <div className="relative max-w-lg">
-            <SearchIcon className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search nodes"
-              className="h-11 rounded-2xl border-border/60 bg-card pl-9 shadow-sm"
-            />
+        {!isTriggerOnboardingMode && (
+          <div className="sticky top-0 z-10 border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+            <div className="relative max-w-lg">
+              <SearchIcon className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search nodes"
+                className="h-11 rounded-2xl border-border/60 bg-card pl-9 shadow-sm"
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {filteredNodeCount} result{filteredNodeCount === 1 ? "" : "s"}
+            </p>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {filteredNodeCount} result{filteredNodeCount === 1 ? "" : "s"}
-          </p>
-        </div>
+        )}
 
-        <div className="space-y-7 px-6 py-6">
+        {isTriggerOnboardingMode ? (
+          <div className="px-0 py-1">
+            {triggerNodes.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  type="button"
+                  key={`trigger-${item.type}`}
+                  className="flex w-full items-start gap-4 border-b px-6 py-5 text-left transition hover:bg-accent/40"
+                  onClick={() => handleNodeSelect(item)}
+                >
+                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+                    {typeof Icon === "string" ? (
+                      <BrandLogo
+                        src={Icon}
+                        alt={`${item.label} logo`}
+                        className="size-4"
+                      />
+                    ) : (
+                      <Icon className="size-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold leading-none">{item.label}</p>
+                    <p className="mt-1.5 text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-7 px-6 py-6">
           {groupedNodes.length === 0 && (
             <div className="rounded-3xl border border-dashed bg-card px-4 py-12 text-center">
               <p className="text-sm font-medium">No nodes found</p>
@@ -265,7 +337,8 @@ export function NodeSelector({
               </section>
             );
           })}
-        </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
