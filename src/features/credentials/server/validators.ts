@@ -1,12 +1,11 @@
-import { OpenAI } from "openai";
-import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { CredentialType } from "@prisma/client";
 
 /**
  * Validates an OpenAI API key by making a test API call
  */
 export async function validateOpenAIKey(apiKey: string): Promise<boolean> {
   try {
+    const { OpenAI } = await import("openai");
     const client = new OpenAI({ apiKey });
     await client.models.list();
     return true;
@@ -20,6 +19,7 @@ export async function validateOpenAIKey(apiKey: string): Promise<boolean> {
  */
 export async function validateAnthropicKey(apiKey: string): Promise<boolean> {
   try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic({ apiKey });
     // Test by creating a messages object (doesn't make an actual call)
     await client.messages.create({
@@ -38,6 +38,7 @@ export async function validateAnthropicKey(apiKey: string): Promise<boolean> {
  */
 export async function validateGeminiKey(apiKey: string): Promise<boolean> {
   try {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     await model.generateContent("test");
