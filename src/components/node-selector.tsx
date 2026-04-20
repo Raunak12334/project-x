@@ -94,16 +94,15 @@ export function NodeSelector({
       .filter((group) => group.items.length > 0);
   }, [deferredSearch, composioApps]);
 
-  const hasConfiguredTrigger = useMemo(() => {
+  const hasConfiguredNode = useMemo(() => {
     return nodes.some(
       (node) =>
         typeof node.type === "string" &&
-        node.type !== NodeType.INITIAL &&
-        isTriggerNodeType(node.type as NodeType),
+        node.type !== NodeType.INITIAL,
     );
   }, [nodes]);
 
-  const isTriggerOnboardingMode = !hasConfiguredTrigger;
+  const isTriggerOnboardingMode = !hasConfiguredNode;
 
 
   const filteredNodeCount = useMemo(

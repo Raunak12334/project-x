@@ -5,6 +5,8 @@ export const triggerNodeTypes = [
   NodeType.WEBHOOK_TRIGGER,
   NodeType.GOOGLE_FORM_TRIGGER,
   NodeType.STRIPE_TRIGGER,
+  NodeType.SCHEDULE,
+  NodeType.COMPOSIO,
 ] as const;
 
 const triggerNodeTypeSet = new Set<NodeType>(triggerNodeTypes);
