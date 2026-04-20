@@ -86,7 +86,7 @@ export const AdminSidebar = () => {
                   height={34}
                   className="shrink-0 drop-shadow-sm"
                 />
-                <span className="font-black text-xl tracking-tighter uppercase text-slate-900 dark:text-white">
+                <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
                   Otogent
                 </span>
               </div>

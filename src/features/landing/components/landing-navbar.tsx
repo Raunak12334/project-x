@@ -23,7 +23,7 @@ export function LandingNavbar() {
         <Link href="/" className="flex items-center gap-2.5">
           <Image src="/logo.svg" alt="Otogent" width={28} height={28} />
           <span className="font-brand text-2xl font-bold tracking-tight">
-            otogent
+            Otogent
           </span>
         </Link>
 
