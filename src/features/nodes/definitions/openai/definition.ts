@@ -26,8 +26,10 @@ export const openAiDefinition: NodeDefinition<typeof openAiSchema> = {
     },
   ],
   getSummary: (config) =>
-    config.userPrompt.substring(0, 50) +
-    (config.userPrompt.length > 50 ? "..." : ""),
+    config.userPrompt
+      ? config.userPrompt.substring(0, 50) +
+        (config.userPrompt.length > 50 ? "..." : "")
+      : "No prompt set",
   realtimeStatus: {
     channel: OPENAI_CHANNEL_NAME,
     topic: "status",

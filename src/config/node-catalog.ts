@@ -547,6 +547,13 @@ export const nodeCatalog: NodeCatalogItem[] = [
       "Test the API configuration.",
     ],
     testAction: "executeHttpRequest",
+    defaultData: {
+      method: "GET",
+      url: "https://api.example.com",
+      variableName: "httpResponse",
+      authMode: "none",
+      bodyMode: "none",
+    },
   },
   {
     type: NodeType.SET_VARIABLE,
@@ -969,6 +976,11 @@ export const nodeCatalog: NodeCatalogItem[] = [
       "Ensure temperature maps to creativity need.",
     ],
     testAction: "executeOpenai",
+    defaultData: {
+      userPrompt: "You are a helpful assistant. Summarize: {{payload}}",
+      variableName: "openaiResponse",
+      systemPrompt: "You are a helpful assistant.",
+    },
   },
   {
     type: NodeType.ANTHROPIC,

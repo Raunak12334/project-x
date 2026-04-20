@@ -23,6 +23,7 @@ export const httpRequestDefinition: NodeDefinition<typeof httpRequestSchema> = {
       required: false,
     },
   ],
-  getSummary: (config) => `${config.method} ${config.url}`,
+  getSummary: (config) =>
+    `${config.method || "GET"} ${config.url || "https://..."}`,
   execute: (ctx) => import("./executor").then((m) => m.executeHttpRequest(ctx)),
 };
