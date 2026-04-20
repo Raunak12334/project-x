@@ -1,3 +1,4 @@
+import { Composio } from "@composio/core";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
@@ -134,7 +135,7 @@ export const composioRouter = createTRPCRouter({
               name,
               description,
             };
-          })),
+          }),
         };
       } catch (error) {
         console.error("Error fetching Composio actions:", error);
