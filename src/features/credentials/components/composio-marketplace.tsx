@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SearchIcon, CheckCircle } from "lucide-react";
+import { SearchIcon, CheckCircle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
