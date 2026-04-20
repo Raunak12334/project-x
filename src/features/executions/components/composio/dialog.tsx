@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { CredentialType } from "@prisma/client";
 import { Plug } from "lucide-react";
 import { useEffect } from "react";
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { useTRPC } from "@/trpc/client";
 
 const formSchema = z.object({
   variableName: z
@@ -43,9 +45,13 @@ const formSchema = z.object({
       message:
         "Variable name must start with a letter or underscore and container only letters, numbers, and underscores",
     }),
-  credentialId: z.string().min(1, "Credential is required"),
-  toolSlug: z.string().min(1, "Tool slug is required"),
+  credentialId: z.string().optional(),
+  integrationId: z.string().optional(),
+  toolSlug: z.string().min(1, "Composio action is required"),
   argumentsJson: z.string().optional(),
+}).refine((value) => Boolean(value.integrationId || value.credentialId), {
+  message: "Select a connected integration or Composio API credential",
+  path: ["integrationId"],
 });
 
 export type ComposioFormValues = z.infer<typeof formSchema>;
@@ -63,14 +69,19 @@ export const ComposioDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
+  const trpc = useTRPC();
   const { data: credentials, isLoading: isLoadingCredentials } =
     useCredentialsByType(CredentialType.COMPOSIO);
+  const { data: integrations, isLoading: isLoadingIntegrations } = useQuery(
+    trpc.composio.listConnectedAccounts.queryOptions(),
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       variableName: defaultValues.variableName || "",
-      credentialId: defaultValues.credentialId || "",
+      credentialId: defaultValues.credentialId || undefined,
+      integrationId: defaultValues.integrationId || undefined,
       toolSlug: defaultValues.toolSlug || "",
       argumentsJson: defaultValues.argumentsJson || "{}",
     },
@@ -80,7 +91,8 @@ export const ComposioDialog = ({
     if (open) {
       form.reset({
         variableName: defaultValues.variableName || "",
-        credentialId: defaultValues.credentialId || "",
+        credentialId: defaultValues.credentialId || undefined,
+        integrationId: defaultValues.integrationId || undefined,
         toolSlug: defaultValues.toolSlug || "",
         argumentsJson: defaultValues.argumentsJson || "{}",
       });
@@ -95,7 +107,7 @@ export const ComposioDialog = ({
       try {
         // Attempt to parse to see if it's generally valid JSON, ignoring interpolation blocks since they could make JSON technically invalid until runtime.
         // For simplicity we just accept the string, as Handlebars templating might break strict JSON parsing.
-      } catch (e) {
+      } catch (_e) {
         // We'll let it pass because of Handlebars
       }
     }
@@ -137,13 +149,46 @@ export const ComposioDialog = ({
 
             <FormField
               control={form.control}
+              name="integrationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Connected App Account</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value)}
+                    value={field.value}
+                    disabled={isLoadingIntegrations || !integrations?.items?.length}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select connected integration (recommended)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {integrations?.items?.map((integration) => (
+                        <SelectItem key={integration.id} value={integration.id}>
+                          {integration.name}
+                          {integration.accountName ? ` (${integration.accountName})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Uses OAuth connections created from Integrations Marketplace.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="credentialId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Composio API Credential</FormLabel>
+                  <FormLabel>Composio API Credential (fallback)</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(value) => field.onChange(value)}
+                    value={field.value}
                     disabled={isLoadingCredentials || !credentials?.length}
                   >
                     <FormControl>
@@ -162,6 +207,9 @@ export const ComposioDialog = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Use only if you are executing with a direct API key flow.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -174,10 +222,10 @@ export const ComposioDialog = ({
                 <FormItem>
                   <FormLabel>Tool Slug</FormLabel>
                   <FormControl>
-                    <Input placeholder="GITHUB_STAR_REPO" {...field} />
+                    <Input placeholder="GITHUB_STAR_REPO or SLACK_SEND_MESSAGE" {...field} />
                   </FormControl>
                   <FormDescription>
-                    The specific action to perform. Consult Composio docs for slugs.
+                    Composio action slug to execute for the selected integration.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

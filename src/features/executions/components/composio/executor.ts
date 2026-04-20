@@ -1,10 +1,11 @@
-import { Composio } from "@composio/core";
 import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
 import type { NodeExecutor } from "@/features/executions/types";
 import { composioChannel } from "@/inngest/channels/composio";
 import prisma from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
+import { executeComposioAction } from "@/lib/integrations/composio";
+import { logger } from "@/lib/logger";
 
 Handlebars.registerHelper("json", (context) => {
   const jsonString = JSON.stringify(context, null, 2);
@@ -16,6 +17,7 @@ Handlebars.registerHelper("json", (context) => {
 type ComposioData = {
   variableName?: string;
   credentialId?: string;
+  integrationId?: string;
   toolSlug?: string;
   argumentsJson?: string;
 };
@@ -45,14 +47,16 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     throw new NonRetriableError("Composio node: Variable name is missing");
   }
 
-  if (!data.credentialId) {
+  if (!data.credentialId && !data.integrationId) {
     await publish(
       composioChannel().status({
         nodeId,
         status: "error",
       }),
     );
-    throw new NonRetriableError("Composio node: Credential is required");
+    throw new NonRetriableError(
+      "Composio node: Credential or connected integration is required",
+    );
   }
 
   if (!data.toolSlug) {
@@ -71,7 +75,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
   let parsedArguments = {};
   try {
     parsedArguments = JSON.parse(compiledArgsJsonString);
-  } catch (err) {
+  } catch (_err) {
     await publish(
       composioChannel().status({
         nodeId,
@@ -81,16 +85,18 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     throw new NonRetriableError("Composio node: Failed to parse arguments JSON");
   }
 
-  const credential = await step.run("get-credential", () => {
-    return prisma.credential.findFirst({
-      where: {
-        id: data.credentialId,
-        organizationId,
-      },
-    });
-  });
+  const credential = data.credentialId
+    ? await step.run("get-credential", () =>
+        prisma.credential.findFirst({
+          where: {
+            id: data.credentialId,
+            organizationId,
+          },
+        }),
+      )
+    : null;
 
-  if (!credential) {
+  if (data.credentialId && !credential) {
     await publish(
       composioChannel().status({
         nodeId,
@@ -100,8 +106,10 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     throw new NonRetriableError("Composio node: Credential not found");
   }
 
-  const credentialValue = credential.valueEncrypted || credential.value;
-  if (!credentialValue) {
+  const credentialValue = credential
+    ? credential.valueEncrypted || credential.value
+    : null;
+  if (data.credentialId && !credentialValue) {
     await publish(
       composioChannel().status({
         nodeId,
@@ -111,23 +119,66 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     throw new NonRetriableError("Composio node: Credential value is empty");
   }
 
+  const integration = data.integrationId
+    ? await step.run("get-composio-integration", () =>
+        prisma.composioIntegration.findFirst({
+          where: {
+            id: data.integrationId,
+            organizationId,
+            isConnected: true,
+          },
+        }),
+      )
+    : null;
+
+  if (data.integrationId && !integration) {
+    await publish(
+      composioChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError("Composio node: Connected integration not found");
+  }
+
   try {
     const outputData = await step.run("composio-execute", async () => {
-       const composio = new Composio({
-           apiKey: decrypt(credentialValue),
-       });
-       
-       // Try catching potential format needs of the sdk
-       try {
-         // Some versions require { userId, arguments: {} } wrapper
-         return await (composio.tools.execute as any)(data.toolSlug, {
-            user: "system",
-            arguments: parsedArguments
-         });
-       } catch(e) {
-           // Fallback to passing raw args depending on sdk version
-           return await (composio.tools.execute as any)(data.toolSlug, parsedArguments);
-       }
+      const connectionId = integration?.connectionId;
+
+      // Preferred flow: org-level Composio API key + persisted OAuth connection.
+      if (connectionId && process.env.COMPOSIO_API_KEY) {
+        return executeComposioAction({
+          organizationId,
+          action: data.toolSlug,
+          input: parsedArguments as Record<string, unknown>,
+          connectionId,
+        });
+      }
+
+      // Backward compatible fallback: execute via credential-supplied Composio API key.
+      if (!credentialValue) {
+        throw new NonRetriableError(
+          "Composio node: No executable auth path found for action",
+        );
+      }
+
+      const apiKey = decrypt(credentialValue);
+      const originalApiKey = process.env.COMPOSIO_API_KEY;
+
+      try {
+        process.env.COMPOSIO_API_KEY = apiKey;
+        return executeComposioAction({
+          organizationId,
+          action: data.toolSlug,
+          input: parsedArguments as Record<string, unknown>,
+        });
+      } finally {
+        if (originalApiKey === undefined) {
+          delete process.env.COMPOSIO_API_KEY;
+        } else {
+          process.env.COMPOSIO_API_KEY = originalApiKey;
+        }
+      }
     });
 
     await publish(
@@ -144,6 +195,13 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
       },
     };
   } catch (error) {
+    logger.error("composio.node.execution.failed", {
+      nodeId,
+      organizationId,
+      integrationId: data.integrationId ?? null,
+      action: data.toolSlug,
+      error,
+    });
     await publish(
       composioChannel().status({
         nodeId,

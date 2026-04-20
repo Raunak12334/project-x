@@ -30,6 +30,15 @@ export function getPolarSuccessBaseUrl() {
   return process.env.POLAR_SUCCESS_URL || getAppUrl();
 }
 
+export function getComposioApiKey() {
+  return requireEnv("COMPOSIO_API_KEY");
+}
+
+export function getComposioCallbackUrl(organizationId: string) {
+  const appUrl = getAppUrl();
+  return `${appUrl}/api/integrations/composio/callback?orgId=${organizationId}`;
+}
+
 export function getProductionEnvReport() {
   const required = [
     "DATABASE_URL",
@@ -43,6 +52,7 @@ export function getProductionEnvReport() {
     "POLAR_SERVER",
     "RESEND_API_KEY",
     "RESEND_FROM_EMAIL",
+    "COMPOSIO_API_KEY",
   ];
 
   return required.map((name) => ({

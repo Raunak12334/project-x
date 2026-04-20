@@ -1,8 +1,24 @@
-import { Composio } from "@composio/core";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
+import { getComposioCallbackUrl } from "@/lib/env";
+import {
+  createComposioConnection,
+  listComposioActions,
+  listComposioApps,
+} from "@/lib/integrations/composio";
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+type ComposioToolkitMeta = {
+  description?: string;
+  categories?: string[];
+  authScheme?: string;
+  auth_type?: string;
+};
+
+function asToolkitMeta(toolkit: unknown): ComposioToolkitMeta {
+  return toolkit as ComposioToolkitMeta;
+}
 
 export const composioRouter = createTRPCRouter({
   listApps: protectedProcedure
@@ -12,16 +28,8 @@ export const composioRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const apiKey = process.env.COMPOSIO_API_KEY;
-      if (!apiKey) return { items: [] };
-
       try {
-        const composio = new Composio({ apiKey });
-        const session = await composio.create(ctx.auth.organizationId);
-
-        const response = await session.toolkits({
-          limit: 100,
-        });
+        const response = await listComposioApps(ctx.auth.organizationId);
 
         // Get connected integrations for this organization
         const connectedIntegrations = await prisma.composioIntegration.findMany(
@@ -53,12 +61,12 @@ export const composioRouter = createTRPCRouter({
               slug: toolkit.slug,
               name: toolkit.name,
               logo: toolkit.logo,
-              description: (toolkit as any).description,
+              description: asToolkitMeta(toolkit).description,
               isConnected: connectedSlugs.has(toolkit.slug),
-              categories: (toolkit as any).categories || ["Other"],
+              categories: asToolkitMeta(toolkit).categories || ["Other"],
               authType:
-                (toolkit as any).authScheme ||
-                (toolkit as any).auth_type ||
+                asToolkitMeta(toolkit).authScheme ||
+                asToolkitMeta(toolkit).auth_type ||
                 "OAUTH2",
             })),
         };
@@ -75,22 +83,13 @@ export const composioRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const apiKey = process.env.COMPOSIO_API_KEY;
-      if (!apiKey)
-        throw new Error("Composio API Key not configured in environment");
-
       try {
-        const composio = new Composio({ apiKey });
-        const session = await composio.create(ctx.auth.organizationId);
-
-        const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/credentials/composio/callback?orgId=${ctx.auth.organizationId}`;
-
-        const connectionRequest = await session.authorize(
-          input.toolkitSlug,
-          {
-            callbackUrl,
-          },
-        );
+        const callbackUrl = getComposioCallbackUrl(ctx.auth.organizationId);
+        const connectionRequest = await createComposioConnection({
+          organizationId: ctx.auth.organizationId,
+          toolkitSlug: input.toolkitSlug,
+          callbackUrl,
+        });
 
         return {
           url: connectionRequest.redirectUrl,
@@ -98,6 +97,48 @@ export const composioRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error getting Composio connect URL:", error);
         throw new Error("Failed to get connection URL");
+      }
+    }),
+  listAvailableActions: protectedProcedure
+    .input(
+      z.object({
+        toolkitSlug: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const actions = await listComposioActions(
+          ctx.auth.organizationId,
+          input.toolkitSlug,
+        );
+
+        return {
+          items: actions.map((action) => {
+            const meta = action as Record<string, unknown>;
+            const slug =
+              typeof meta.slug === "string"
+                ? meta.slug
+                : typeof meta.name === "string"
+                  ? meta.name
+                  : "";
+            const name =
+              typeof meta.name === "string"
+                ? meta.name
+                : typeof meta.slug === "string"
+                  ? meta.slug
+                  : "";
+            const description =
+              typeof meta.description === "string" ? meta.description : null;
+            return {
+              slug,
+              name,
+              description,
+            };
+          })),
+        };
+      } catch (error) {
+        console.error("Error fetching Composio actions:", error);
+        return { items: [] };
       }
     }),
 
@@ -209,6 +250,36 @@ export const composioRouter = createTRPCRouter({
         console.error("Error saving connection data:", error);
         throw new Error("Failed to save integration connection");
       }
+    }),
+  getConnectionStatus: protectedProcedure
+    .input(
+      z.object({
+        toolkitSlug: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const integration = await prisma.composioIntegration.findUnique({
+        where: {
+          organizationId_toolkitSlug: {
+            organizationId: ctx.auth.organizationId,
+            toolkitSlug: input.toolkitSlug,
+          },
+        },
+      });
+
+      if (!integration) {
+        return {
+          connected: false,
+          connectionId: null,
+          lastSyncedAt: null,
+        };
+      }
+
+      return {
+        connected: integration.isConnected,
+        connectionId: integration.connectionId ?? null,
+        lastSyncedAt: integration.lastSyncedAt,
+      };
     }),
 });
 

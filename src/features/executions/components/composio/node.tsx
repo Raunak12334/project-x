@@ -11,6 +11,7 @@ import { ComposioDialog, type ComposioFormValues } from "./dialog";
 type ComposioNodeData = {
   variableName?: string;
   credentialId?: string;
+  integrationId?: string;
   toolSlug?: string;
   argumentsJson?: string;
 };
