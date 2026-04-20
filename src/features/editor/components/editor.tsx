@@ -36,8 +36,6 @@ import { nodeComponents } from "@/config/node-components";
 import { editorAtom } from "../store/atoms";
 import { AddNodeButton } from "./add-node-button";
 import { ExecuteWorkflowButton } from "./execute-workflow-button";
-import { WorkflowSidebar } from "./workflow-sidebar";
-import { selectedNodeIdAtom } from "../store/atoms";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -62,16 +60,6 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     [],
   );
 
-  const setSelectedNodeId = useSetAtom(selectedNodeIdAtom);
-
-  const onSelectionChange = useCallback(
-    ({ nodes }: { nodes: Node[] }) => {
-      if (nodes.length > 0) {
-        setSelectedNodeId(nodes[0].id);
-      }
-    },
-    [setSelectedNodeId],
-  );
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) =>
       setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
@@ -175,7 +163,6 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onSelectionChange={onSelectionChange}
           nodeTypes={nodeComponents}
           onInit={setEditor}
           fitView={!isInitialOnlyWorkflow}
@@ -198,7 +185,6 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           )}
         </ReactFlow>
       </div>
-      <WorkflowSidebar />
     </div>
   );
 };
