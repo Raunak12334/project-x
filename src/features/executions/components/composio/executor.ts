@@ -68,6 +68,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     );
     throw new NonRetriableError("Composio node: Tool slug is missing");
   }
+  const toolSlug = data.toolSlug;
 
   const argumentsTemplate = data.argumentsJson || "{}";
   const compiledArgsJsonString = Handlebars.compile(argumentsTemplate)(context);
@@ -149,7 +150,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
       if (connectionId && process.env.COMPOSIO_API_KEY) {
         return executeComposioAction({
           organizationId,
-          action: data.toolSlug,
+          action: toolSlug,
           input: parsedArguments as Record<string, unknown>,
           connectionId,
         });
@@ -169,7 +170,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
         process.env.COMPOSIO_API_KEY = apiKey;
         return executeComposioAction({
           organizationId,
-          action: data.toolSlug,
+          action: toolSlug,
           input: parsedArguments as Record<string, unknown>,
         });
       } finally {
@@ -199,7 +200,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
       nodeId,
       organizationId,
       integrationId: data.integrationId ?? null,
-      action: data.toolSlug,
+      action: toolSlug,
       error,
     });
     await publish(
