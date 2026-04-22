@@ -65,18 +65,18 @@ export function NodeSelector({
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
     // Map Composio apps to individual tools in the catalog
-    const dynamicComposioNodes: NodeCatalogItem[] = (composioApps?.items || []).map(app => ({
+    const dynamicComposioNodes: NodeCatalogItem[] = (composioApps?.items || []).map((app: any) => ({
       type: NodeType.COMPOSIO,
       label: app.name,
       description: app.description || `Integration for ${app.name} via Composio.`,
       icon: app.logo || Boxes,
       group: "integrations",
-      keywords: ["composio", app.slug, app.name.toLowerCase()],
+      keywords: ["composio", app.slug, (app.name || "").toLowerCase()],
       inputs: [], // Dynamic nodes use their own data
       outputs: [{ key: "data", type: "object", description: "Response data" }],
       setupGuide: ["Ensure your account is connected in the marketplace."],
       defaultData: {
-        toolSlug: `${app.slug.toUpperCase()}_GET_INFO`, // Default to a safe action or list
+        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`, // Default to a safe action or list
         name: `${app.name} Action`
       }
     }));
