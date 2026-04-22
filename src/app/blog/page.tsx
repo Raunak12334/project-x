@@ -54,7 +54,7 @@ export default async function BlogPage() {
   const remainingPosts = posts.slice(1);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="landing-theme min-h-screen bg-background text-foreground">
       <LandingNavbar />
 
       <section className="relative overflow-hidden border-b border-border pt-32 pb-20">

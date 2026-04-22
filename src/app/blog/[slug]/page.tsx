@@ -122,7 +122,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="landing-theme min-h-screen bg-background text-foreground">
       <LandingNavbar />
 
       <article className="pt-28">

@@ -1,9 +1,10 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BrandLockup } from "@/components/brand-lockup";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -17,32 +18,27 @@ const links = [
 
 export function LandingNavbar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo.svg"
-            alt="Otogent"
-            width={24}
-            height={24}
-            className="opacity-80"
-          />
-          <span className="text-xl font-semibold tracking-tight text-foreground">
-            Otogent
-          </span>
-        </Link>
+        <BrandLockup imageSize={24} imageClassName="opacity-80" />
 
         <div className="hidden items-center gap-10 md:flex">
           {links.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={cn(
+                "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+                pathname.startsWith("/blog") && link.href === "/blog"
+                  ? "text-foreground"
+                  : "",
+              )}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -87,14 +83,19 @@ export function LandingNavbar() {
         <div className="absolute inset-x-0 top-16 border-b border-border bg-background/95 p-6 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-5">
             {links.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
-                className="text-base font-medium text-muted-foreground"
+                className={cn(
+                  "text-base font-medium text-muted-foreground",
+                  pathname.startsWith("/blog") && link.href === "/blog"
+                    ? "text-foreground"
+                    : "",
+                )}
                 onClick={() => setOpen(false)}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             <div className="flex flex-col gap-3 pt-4">
               <Link

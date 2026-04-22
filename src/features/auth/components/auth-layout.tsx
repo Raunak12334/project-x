@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLockup } from "@/components/brand-lockup";
 
 export const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -13,13 +13,11 @@ export const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
           Back to home
         </Link>
-        <Link
-          href="https://otogent.com"
-          className="flex items-center gap-2 self-center font-medium"
-        >
-          <Image src="/logo.svg" alt="otogent" width={30} height={30} />
-          otogent
-        </Link>
+        <BrandLockup
+          href="/"
+          imageSize={30}
+          className="self-center font-medium"
+        />
         {children}
       </div>
     </div>

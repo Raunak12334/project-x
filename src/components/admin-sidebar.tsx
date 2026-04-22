@@ -11,9 +11,9 @@ import {
   SettingsIcon,
   UsersIcon,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { BrandLockup } from "@/components/brand-lockup";
 import {
   Sidebar,
   SidebarContent,
@@ -83,20 +83,11 @@ export const AdminSidebar = () => {
             asChild
             className="gap-x-3 h-10 px-2 justify-start hover:bg-transparent"
           >
-            <Link href="/super-admin">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/logo.svg"
-                  alt="otogent"
-                  width={34}
-                  height={34}
-                  className="shrink-0 drop-shadow-sm"
-                />
-                <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
-                  Otogent
-                </span>
-              </div>
-            </Link>
+            <BrandLockup
+              href="/super-admin"
+              imageSize={34}
+              textClassName="font-bold text-slate-900 dark:text-white"
+            />
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarHeader>
