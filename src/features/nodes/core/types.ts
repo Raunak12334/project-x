@@ -59,7 +59,7 @@ export type FieldType =
   | "code"
   | "credential";
 
-export interface NodeFieldDefinition {
+export interface NodeField {
   name: string;
   label: string;
   type: FieldType;
@@ -67,12 +67,15 @@ export interface NodeFieldDefinition {
   description?: string;
   options?: { label: string; value: string }[]; // For selects
   defaultValue?: unknown;
+  required?: boolean;
   visibleIf?: {
     field: string;
     operator: "eq" | "neq" | "includes" | "exists";
     value?: unknown;
   };
 }
+
+export type NodeFieldDefinition = NodeField;
 
 // --- NODE DEFINITION ---
 export interface NodeDefinition<
