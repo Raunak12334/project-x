@@ -11,6 +11,16 @@ import { SetupSidebar } from "./setup-sidebar";
 import { IntegrationCard } from "./integration-card";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface ComposioApp {
+  slug: string;
+  name: string;
+  logo: string | null;
+  description: string;
+  isConnected: boolean;
+  categories: string[];
+  authType: string;
+}
+
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
   const [search, setSearch] = useState("");
@@ -54,10 +64,10 @@ export const ComposioMarketplace = () => {
     );
   };
 
-  const filteredApps = useMemo(() => {
-    const apps = data?.items || [];
+  const filteredApps = useMemo<ComposioApp[]>(() => {
+    const apps = (data?.items as ComposioApp[]) || [];
     
-    return apps.filter((app: any) => {
+    return apps.filter((app: ComposioApp) => {
       const matchesSearch = (app.name || "").toLowerCase().includes(search.toLowerCase()) ||
                            (app.slug || "").toLowerCase().includes(search.toLowerCase());
       
@@ -148,7 +158,7 @@ export const ComposioMarketplace = () => {
               className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5"
             >
               <AnimatePresence mode="popLayout">
-                {filteredApps.map((app, index) => (
+                {filteredApps.map((app: ComposioApp, index: number) => (
                   <motion.div
                     key={app.slug}
                     initial={{ opacity: 0, y: 20 }}
