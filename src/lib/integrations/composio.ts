@@ -93,17 +93,34 @@ export async function listComposioApps(organizationId: string) {
   try {
     const composio = new Composio({ apiKey: getApiKey() });
     
-    // First, try a direct list call if available (best for global marketplace)
+    // Tier 1: Try the standard toolkits.get() method (recommended for v0.6+)
+    try {
+        const response = await (composio as any).toolkits?.get?.({ limit: 100 });
+        if (response && Array.isArray(response.items) && response.items.length > 0) {
+            return response;
+        }
+        // If items is not array but the response itself is an array
+        if (Array.isArray(response) && response.length > 0) {
+            return { items: response };
+        }
+    } catch (e) {
+        logger.warn("composio.listApps.tier1.failed", { error: e });
+    }
+
+    // Tier 2: Try calling toolkits directly as a function
     try {
         const directList = await (composio as any).toolkits?.({ limit: 100 });
         if (directList && directList.items && directList.items.length > 0) {
             return directList;
         }
+        if (Array.isArray(directList) && directList.length > 0) {
+            return { items: directList };
+        }
     } catch (e) {
-        // ignore and try next method
+        logger.warn("composio.listApps.tier2.failed", { error: e });
     }
 
-    // Next, try to get toolkits via session (entity-specific)
+    // Tier 3: Try to get toolkits via session (entity-specific)
     try {
         const session = await composio.create(organizationId || "default-org");
         const response = await session.toolkits({ limit: 100 });
@@ -112,19 +129,34 @@ export async function listComposioApps(organizationId: string) {
             return response;
         }
     } catch (e) {
-        // ignore and try next method
+        logger.warn("composio.listApps.tier3.failed", { error: e });
     }
 
-    // Final fallback: Try tools surface
-    const globalResponse = await (composio as any).tools?.getToolkits?.({ limit: 100 });
-    if (globalResponse && globalResponse.items) {
-      return globalResponse;
+    // Tier 4: Fallback to tools surface
+    try {
+        const globalResponse = await (composio as any).tools?.getToolkits?.({ limit: 100 });
+        if (globalResponse && globalResponse.items) {
+          return globalResponse;
+        }
+    } catch (e) {
+        logger.warn("composio.listApps.tier4.failed", { error: e });
     }
 
+    // Tier 5: Final desperate fallback to tools.list
+    try {
+        const toolsList = await (composio as any).tools?.list?.({ limit: 100 });
+        if (toolsList && Array.isArray(toolsList.items)) {
+            return toolsList;
+        }
+    } catch (e) {
+        logger.warn("composio.listApps.tier5.failed", { error: e });
+    }
+
+    logger.error("composio.listApps.all_tiers_failed", { organizationId });
     return { items: [] };
   } catch (error) {
-    logger.error("composio.listApps.error", { organizationId, error });
-    return { items: [] }; // Return empty instead of throwing to prevent UI crash
+    logger.error("composio.listApps.outer_catch", { organizationId, error });
+    return { items: [] };
   }
 }
 
