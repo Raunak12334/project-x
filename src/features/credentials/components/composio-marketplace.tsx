@@ -11,6 +11,49 @@ import { SetupSidebar } from "./setup-sidebar";
 import { IntegrationCard } from "./integration-card";
 import { motion, AnimatePresence } from "framer-motion";
 
+export const ComposioMarketplace = () => {
+  const trpc = useTRPC();
+  const [search, setSearch] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  const { data, isLoading } = useQuery(
+    trpc.composio.listApps.queryOptions({ 
+        search 
+    })
+  );
+
+  const connectMutation = useMutation(
+    trpc.composio.getConnectUrl.mutationOptions({
+        onSuccess: (data) => {
+            if (data.url) {
+                window.open(data.url, "_blank");
+                toast.success("Opening connection portal...");
+            } else {
+                toast.error("Connect URL is missing");
+            }
+        },
+        onError: (error) => {
+            toast.error(`Failed to get connect URL: ${error.message}`);
+        }
+    })
+  );
+
+  const handleConnect = (slug: string) => {
+    connectMutation.mutate({ toolkitSlug: slug });
+  };
+
+  const handleCategoryChange = (category: string) => {
+    if (category === "All") {
+      setSelectedCategories([]);
+      return;
+    }
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category) 
+        : [...prev, category]
+    );
+  };
+
   const filteredApps = useMemo(() => {
     const apps = data?.items || [];
     

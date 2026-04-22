@@ -1,6 +1,38 @@
+import { z } from "zod";
+import prisma from "@/lib/db";
+import { encrypt } from "@/lib/encryption";
+import { getComposioCallbackUrl } from "@/lib/env";
+import {
+  createComposioConnection,
+  listComposioActions,
+  listComposioApps,
+} from "@/lib/integrations/composio";
+import { createTRPCRouter, protectedProcedure } from "../init";
 import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 
-// ... in the query
+type ComposioToolkitMeta = {
+  description?: string;
+  categories?: string[];
+  authScheme?: string;
+  auth_type?: string;
+};
+
+function asToolkitMeta(toolkit: unknown): ComposioToolkitMeta {
+  return toolkit as ComposioToolkitMeta;
+}
+
+export const composioRouter = createTRPCRouter({
+  listApps: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const response = await listComposioApps(ctx.auth.organizationId);
+        let toolkitItems = Array.isArray(response?.items) ? response.items : [];
+
         // If the marketplace is empty, provide a fallback of common integrations
         // to ensure the UI remains functional while the SDK/API might be empty.
         if (toolkitItems.length === 0) {
@@ -98,171 +130,40 @@ import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
         return {
           items: actions.map((action) => {
             const meta = action as Record<string, unknown>;
-            const slug =
-              typeof meta.slug === "string"
-                ? meta.slug
-                : typeof meta.name === "string"
-                  ? meta.name
-                  : "";
-            const name =
-              typeof meta.name === "string"
-                ? meta.name
-                : typeof meta.slug === "string"
-                  ? meta.slug
-                  : "";
-            const description =
-              typeof meta.description === "string" ? meta.description : null;
             return {
-              slug,
-              name,
-              description,
+              slug: (meta.name as string) || (meta.slug as string),
+              name: (meta.name as string) || (meta.slug as string),
+              description: (meta.description as string) || "",
+              parameters: (meta.parameters as any) || {},
             };
           }),
         };
       } catch (error) {
-        console.error("Error fetching Composio actions:", error);
+        console.error("Error listing available actions:", error);
         return { items: [] };
       }
     }),
-
-  listConnectedAccounts: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      const integrations = await prisma.composioIntegration.findMany({
-        where: {
-          organizationId: ctx.auth.organizationId,
-          isConnected: true,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      });
-
-      return {
-        items: integrations.map((i) => ({
-          id: i.id,
-          slug: i.toolkitSlug,
-          name: i.name,
-          logo: i.logo,
-          accountName: i.accountName,
-          connectedAt: i.createdAt,
-          lastSyncedAt: i.lastSyncedAt,
-        })),
-      };
-    } catch (error) {
-      console.error("Error fetching connected accounts:", error);
-      return { items: [] };
-    }
-  }),
-
-  disconnectIntegration: protectedProcedure
+  disconnect: protectedProcedure
     .input(
       z.object({
-        integrationId: z.string(),
+        toolkitSlug: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Delete the integration
-        await prisma.composioIntegration.delete({
+        await prisma.composioIntegration.updateMany({
           where: {
-            id: input.integrationId,
             organizationId: ctx.auth.organizationId,
+            toolkitSlug: input.toolkitSlug,
+          },
+          data: {
+            isConnected: false,
           },
         });
-
         return { success: true };
       } catch (error) {
         console.error("Error disconnecting integration:", error);
         throw new Error("Failed to disconnect integration");
       }
     }),
-
-  saveConnectionData: protectedProcedure
-    .input(
-      z.object({
-        toolkitSlug: z.string(),
-        connectionId: z.string(),
-        accountName: z.string().optional(),
-        metadata: z.record(z.string(), z.any()).optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const apiKey = process.env.COMPOSIO_API_KEY;
-        if (!apiKey)
-          throw new Error("Composio API Key not configured in environment");
-
-        // Get toolkit details to store name and logo
-        const composio = new Composio({ apiKey });
-        const session = await composio.create(ctx.auth.organizationId);
-        const response = await session.toolkits({ limit: 100 });
-        const toolkit = response.items.find((t) => t.slug === input.toolkitSlug);
-
-        if (!toolkit) throw new Error("Toolkit not found");
-
-        // Upsert the integration
-        await prisma.composioIntegration.upsert({
-          where: {
-            organizationId_toolkitSlug: {
-              organizationId: ctx.auth.organizationId,
-              toolkitSlug: input.toolkitSlug,
-            },
-          },
-          update: {
-            connectionId: input.connectionId,
-            accountName: input.accountName,
-            isConnected: true,
-            lastSyncedAt: new Date(),
-            metadata: input.metadata,
-          },
-          create: {
-            organizationId: ctx.auth.organizationId,
-            toolkitSlug: input.toolkitSlug,
-            name: toolkit.name,
-            logo: toolkit.logo,
-            connectionId: input.connectionId,
-            accountName: input.accountName,
-            isConnected: true,
-            authToken: encrypt(input.connectionId), // Store connection ID securely
-            metadata: input.metadata,
-          },
-        });
-
-        return { success: true };
-      } catch (error) {
-        console.error("Error saving connection data:", error);
-        throw new Error("Failed to save integration connection");
-      }
-    }),
-  getConnectionStatus: protectedProcedure
-    .input(
-      z.object({
-        toolkitSlug: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const integration = await prisma.composioIntegration.findUnique({
-        where: {
-          organizationId_toolkitSlug: {
-            organizationId: ctx.auth.organizationId,
-            toolkitSlug: input.toolkitSlug,
-          },
-        },
-      });
-
-      if (!integration) {
-        return {
-          connected: false,
-          connectionId: null,
-          lastSyncedAt: null,
-        };
-      }
-
-      return {
-        connected: integration.isConnected,
-        connectionId: integration.connectionId ?? null,
-        lastSyncedAt: integration.lastSyncedAt,
-      };
-    }),
 });
-
