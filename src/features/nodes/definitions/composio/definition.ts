@@ -28,8 +28,4 @@ export const composioDefinition: NodeDefinition<typeof composioSchema> = {
     config.toolSlug
       ? `${config.toolSlug}${config.actionSlug ? `: ${config.actionSlug}` : ""}`
       : "No integration selected",
-  realtimeStatus: {
-    channel: COMPOSIO_CHANNEL_NAME as any,
-    topic: "status",
-  },
 };

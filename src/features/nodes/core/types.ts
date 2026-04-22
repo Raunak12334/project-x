@@ -92,7 +92,7 @@ export interface NodeDefinition<
   credentials: CredentialRequirement[];
 
   // Methods
-  execute: (
+  execute?: (
     ctx: NodeExecutionContext<z.infer<TSchema>>,
   ) => Promise<NodeExecutionResult>;
   getSummary?: (data: z.infer<TSchema>) => string;
