@@ -64,8 +64,8 @@ export const ComposioMarketplace = () => {
   }
 
   const apps = data?.items || [];
-  const filteredApps = apps.filter(app => {
-    const matchesSearch = app.name.toLowerCase().includes(search.toLowerCase()) ||
+  const filteredApps = apps.filter((app: any) => {
+    const matchesSearch = (app.name || "").toLowerCase().includes(search.toLowerCase()) ||
                          app.slug.toLowerCase().includes(search.toLowerCase());
     
     const matchesCategory = selectedCategories.length === 0 || 
@@ -116,7 +116,7 @@ export const ComposioMarketplace = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredApps.map((app) => (
+          {filteredApps.map((app: any) => (
             <IntegrationCard
               key={app.slug}
               name={app.name}
