@@ -90,9 +90,42 @@ function sanitizePayload(payload: JsonObject) {
 }
 
 export async function listComposioApps(organizationId: string) {
-  const composio = new Composio({ apiKey: getApiKey() });
-  const session = await composio.create(organizationId);
-  return session.toolkits({ limit: 100 });
+  try {
+    const composio = new Composio({ apiKey: getApiKey() });
+    
+    // First, try a direct list call if available (best for global marketplace)
+    try {
+        const directList = await (composio as any).toolkits?.({ limit: 100 });
+        if (directList && directList.items && directList.items.length > 0) {
+            return directList;
+        }
+    } catch (e) {
+        // ignore and try next method
+    }
+
+    // Next, try to get toolkits via session (entity-specific)
+    try {
+        const session = await composio.create(organizationId || "default-org");
+        const response = await session.toolkits({ limit: 100 });
+        
+        if (response && response.items && response.items.length > 0) {
+            return response;
+        }
+    } catch (e) {
+        // ignore and try next method
+    }
+
+    // Final fallback: Try tools surface
+    const globalResponse = await (composio as any).tools?.getToolkits?.({ limit: 100 });
+    if (globalResponse && globalResponse.items) {
+      return globalResponse;
+    }
+
+    return { items: [] };
+  } catch (error) {
+    logger.error("composio.listApps.error", { organizationId, error });
+    return { items: [] }; // Return empty instead of throwing to prevent UI crash
+  }
 }
 
 export async function createComposioConnection(input: CreateConnectionInput) {

@@ -31,6 +31,7 @@ export const composioRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         const response = await listComposioApps(ctx.auth.organizationId);
+        const toolkitItems = Array.isArray(response?.items) ? response.items : [];
 
         // Get connected integrations for this organization
         const connectedIntegrations = await prisma.composioIntegration.findMany(
@@ -47,29 +48,36 @@ export const composioRouter = createTRPCRouter({
         );
 
         return {
-          items: response.items
+          items: toolkitItems
             .filter(
-              (toolkit) =>
+              (toolkit: any) =>
                 !input.search ||
-                toolkit.name
+                (toolkit.name || "")
                   .toLowerCase()
                   .includes(input.search.toLowerCase()) ||
-                toolkit.slug
+                (toolkit.slug || "")
                   .toLowerCase()
                   .includes(input.search.toLowerCase()),
             )
-            .map((toolkit) => ({
-              slug: toolkit.slug,
-              name: toolkit.name,
-              logo: toolkit.logo,
-              description: asToolkitMeta(toolkit).description,
-              isConnected: connectedSlugs.has(toolkit.slug),
-              categories: asToolkitMeta(toolkit).categories || ["Other"],
-              authType:
-                asToolkitMeta(toolkit).authScheme ||
-                asToolkitMeta(toolkit).auth_type ||
-                "OAUTH2",
-            })),
+            .map((toolkit: any) => {
+              const meta = asToolkitMeta(toolkit);
+              // Ensure we have fallback values for everything
+              return {
+                slug: toolkit.slug || "unknown",
+                name: toolkit.name || toolkit.slug || "Unknown Tool",
+                logo: toolkit.logo || null,
+                description: meta.description || `Connect ${toolkit.name || toolkit.slug} to power your agent workflows.`,
+                isConnected: connectedSlugs.has(toolkit.slug),
+                categories: Array.isArray(meta.categories) && meta.categories.length > 0 
+                  ? meta.categories 
+                  : (toolkit.tags || ["Other"]), // Try tags as fallback for categories
+                authType:
+                  meta.authScheme ||
+                  meta.auth_type ||
+                  (toolkit.authConfig?.auth_type) ||
+                  "OAUTH2",
+              };
+            }),
         };
       } catch (error) {
         console.error("Error fetching Composio apps:", error);
