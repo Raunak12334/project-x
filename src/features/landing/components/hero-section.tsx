@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Play, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Hero3DSceneClient } from "@/features/landing/components/hero-3d-scene-client";
 
 const fadeUp = (delay: number, y: number = 16, duration: number = 0.6) => ({
   initial: { opacity: 0, y },
@@ -15,10 +14,15 @@ const fadeUp = (delay: number, y: number = 16, duration: number = 0.6) => ({
 export function HeroSection() {
   return (
     <section className="relative flex flex-col items-center justify-start overflow-hidden h-screen pt-20 pb-10">
-      {/* Background 3D Scene */}
-      <div className="absolute inset-0 z-0 opacity-80">
-        <Hero3DSceneClient />
-      </div>
+      {/* Background Video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
+      />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center w-full pt-10 md:pt-16 px-4">
