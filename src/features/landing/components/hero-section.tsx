@@ -40,7 +40,7 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-4xl"
         >
-          The Future of <em className="not-italic font-display italic">Smarter</em> Automation
+          Automate your workflow with <br className="hidden md:block" /> multi-agent catalyst
         </motion.h1>
 
         {/* Subheadline */}
