@@ -79,14 +79,33 @@ export async function executeNode(params: {
   };
 
   // 3. Execute
-  const result = await definition.execute({
-    config: configWithMetadata,
-    context,
+  if (definition.execute) {
+    const result = await definition.execute({
+      config: configWithMetadata,
+      context,
+      organizationId,
+      credentials: resolvedCredentials,
+      step,
+      publish,
+    });
+
+    return result;
+  }
+
+  // If no execution function on definition, try legacy registry as fallback
+  const legacyExecutor = getLegacyExecutor(node.type);
+  const result = await legacyExecutor({
+    data: configWithMetadata,
+    nodeId: node.id,
     organizationId,
-    credentials: resolvedCredentials,
+    context,
     step,
     publish,
   });
 
-  return result;
+  return {
+    status: "SUCCESS",
+    data: result,
+    routeId: "main",
+  };
 }

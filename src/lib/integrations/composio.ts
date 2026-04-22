@@ -1,4 +1,3 @@
-import { Composio } from "@composio/core";
 import { logger } from "@/lib/logger";
 
 type JsonObject = Record<string, unknown>;
@@ -27,6 +26,18 @@ type ExecuteToolFn = (action: string, payload: unknown) => Promise<unknown>;
 
 const DEFAULT_TIMEOUT_MS = 20_000;
 const DEFAULT_RETRY_ATTEMPTS = 2;
+
+/**
+ * Lazy-load Composio to prevent Node.js built-in dependencies (fs, os, etc.)
+ * from breaking the client-side bundle.
+ */
+async function getComposioSDK() {
+  if (typeof window !== "undefined") {
+    throw new Error("Composio SDK cannot be used in the browser");
+  }
+  const { Composio } = await import("@composio/core");
+  return Composio;
+}
 
 function getApiKey() {
   const apiKey = process.env.COMPOSIO_API_KEY;
@@ -91,6 +102,7 @@ function sanitizePayload(payload: JsonObject) {
 
 export async function listComposioApps(organizationId: string) {
   try {
+    const Composio = await getComposioSDK();
     const composio = new Composio({ apiKey: getApiKey() });
     
     // Tier 1: Try the standard toolkits.get() method (recommended for v0.6+)
@@ -161,6 +173,7 @@ export async function listComposioApps(organizationId: string) {
 }
 
 export async function createComposioConnection(input: CreateConnectionInput) {
+  const Composio = await getComposioSDK();
   const composio = new Composio({ apiKey: getApiKey() });
   const session = await composio.create(input.organizationId);
 
@@ -173,6 +186,7 @@ export async function listComposioActions(
   organizationId: string,
   toolkitSlug: string,
 ) {
+  const Composio = await getComposioSDK();
   const composio = new Composio({ apiKey: getApiKey() });
   const session = await composio.create(organizationId);
   const sessionWithTools = session as unknown as ToolkitWithActionsFetcher;
@@ -190,6 +204,7 @@ export async function listComposioActions(
 }
 
 export async function executeComposioAction(input: ExecuteActionInput) {
+  const Composio = await getComposioSDK();
   const composio = new Composio({ apiKey: getApiKey() });
   const startTime = Date.now();
 

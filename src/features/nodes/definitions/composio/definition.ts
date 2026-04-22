@@ -32,5 +32,4 @@ export const composioDefinition: NodeDefinition<typeof composioSchema> = {
     channel: COMPOSIO_CHANNEL_NAME as any,
     topic: "status",
   },
-  execute: (ctx) => import("../../../executions/components/composio/executor").then((m) => m.composioExecutor(ctx as any)),
 };
