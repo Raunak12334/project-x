@@ -166,4 +166,26 @@ export const composioRouter = createTRPCRouter({
         throw new Error("Failed to disconnect integration");
       }
     }),
+
+  listConnectedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const integrations = await prisma.composioIntegration.findMany({
+        where: {
+          organizationId: ctx.auth.organizationId,
+          isConnected: true,
+        },
+      });
+
+      return {
+        items: integrations.map((integration) => ({
+          id: integration.id,
+          name: integration.name,
+          accountName: integration.accountName,
+        })),
+      };
+    } catch (error) {
+      console.error("Error listing connected accounts:", error);
+      return { items: [] };
+    }
+  }),
 });
