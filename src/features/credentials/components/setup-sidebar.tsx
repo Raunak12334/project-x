@@ -3,6 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Filter, Layers, Zap } from "lucide-react";
 
 export const CATEGORIES = [
   "Developer Tools & DevOps",
@@ -27,63 +28,75 @@ interface SetupSidebarProps {
 
 export const SetupSidebar = ({ selectedCategories, onCategoryChange }: SetupSidebarProps) => {
   return (
-    <div className="w-72 shrink-0 border-r border-slate-100 flex flex-col gap-8 pr-6 py-4 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-hide">
+    <div className="w-[300px] shrink-0 flex flex-col gap-10 py-2">
       <div>
-        <h3 className="text-sm font-bold text-slate-900 mb-6 px-3">
-          Categories
-        </h3>
+        <div className="flex items-center gap-2 mb-8 px-1">
+          <Filter className="size-4 text-slate-400" />
+          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Filter by Category
+          </h3>
+        </div>
         
-        <div className="space-y-4 px-3">
-          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => onCategoryChange("All")}>
-            <Checkbox 
-                id="cat-all" 
-                checked={selectedCategories.length === 0} 
-                onCheckedChange={() => onCategoryChange("All")}
-                className="rounded-md border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
-            />
-            <Label 
-                htmlFor="cat-all" 
-                className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors cursor-pointer"
-            >
-              All
-            </Label>
-          </div>
-
-          {CATEGORIES.map((category) => (
-            <div 
-                key={category} 
-                className="flex items-center gap-3 group cursor-pointer"
-                onClick={() => onCategoryChange(category)}
-            >
-              <Checkbox 
-                id={`cat-${category}`} 
-                checked={selectedCategories.includes(category)}
-                onCheckedChange={() => onCategoryChange(category)}
-                className="rounded-md border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
-              />
-              <Label 
-                htmlFor={`cat-${category}`} 
-                className={cn(
-                    "text-sm font-medium transition-colors cursor-pointer",
-                    selectedCategories.includes(category) ? "text-slate-900" : "text-slate-500 group-hover:text-slate-900"
-                )}
-              >
-                {category}
-              </Label>
+        <div className="space-y-1.5">
+          <button 
+            onClick={() => onCategoryChange("All")}
+            className={cn(
+                "w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 group text-left",
+                selectedCategories.length === 0 
+                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/10" 
+                  : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <Layers className={cn("size-4", selectedCategories.length === 0 ? "text-slate-400" : "text-slate-400 group-hover:text-slate-600")} />
+              <span className="text-sm font-bold tracking-tight">All Integrations</span>
             </div>
-          ))}
+            {selectedCategories.length === 0 && (
+                <div className="size-1.5 rounded-full bg-slate-400" />
+            )}
+          </button>
+
+          {CATEGORIES.map((category) => {
+            const isActive = selectedCategories.includes(category);
+            return (
+                <button 
+                  key={category} 
+                  onClick={() => onCategoryChange(category)}
+                  className={cn(
+                    "w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 group text-left",
+                    isActive 
+                      ? "bg-slate-100 text-slate-900" 
+                      : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={cn(
+                        "size-2 rounded-full transition-all",
+                        isActive ? "bg-slate-900 scale-100" : "bg-slate-200 scale-75 group-hover:bg-slate-300"
+                    )} />
+                    <span className="text-[13.5px] font-bold tracking-tight">{category}</span>
+                  </div>
+                </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="mt-auto border-t border-slate-100 pt-6 px-3">
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-            <h4 className="text-xs font-bold text-slate-900 mb-2">Request Integration</h4>
-            <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                Can't find what you're looking for? Let us know.
-            </p>
-            <button className="text-xs font-bold text-slate-900 hover:underline">
-                Submit Request →
-            </button>
+      <div className="mt-auto">
+        <div className="p-6 rounded-[32px] bg-slate-900 text-white shadow-2xl shadow-slate-900/10 relative overflow-hidden group">
+            <div className="absolute -top-12 -right-12 size-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors" />
+            <div className="relative z-10">
+                <div className="p-2 bg-white/10 rounded-xl w-fit mb-4">
+                    <Zap className="size-4 text-emerald-400 fill-emerald-400/20" />
+                </div>
+                <h4 className="text-base font-bold mb-2">Build Custom</h4>
+                <p className="text-xs text-slate-400 mb-6 leading-relaxed font-medium">
+                    Can't find an app? Our team can build it for you in 24 hours.
+                </p>
+                <button className="w-full py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black hover:bg-slate-50 transition-colors shadow-sm">
+                    REQUEST ACCESS
+                </button>
+            </div>
         </div>
       </div>
     </div>
