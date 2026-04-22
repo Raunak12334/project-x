@@ -1,6 +1,6 @@
-import type { NodeType } from "@prisma/client";
+import { NodeType } from "@prisma/client";
+import { composioDefinition } from "../definitions/composio/definition";
 import { httpRequestDefinition } from "../definitions/http-request/definition";
-
 import { openAiDefinition } from "../definitions/openai/definition";
 import type { NodeDefinition } from "./types";
 
@@ -44,3 +44,4 @@ export const isNodeSupported = (type: NodeType, version = 1) => {
 // Register initial nodes after function definitions to avoid hoisting issues
 registerNode(openAiDefinition);
 registerNode(httpRequestDefinition);
+registerNode(composioDefinition);

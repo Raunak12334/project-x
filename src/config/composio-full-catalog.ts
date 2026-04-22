@@ -1,0 +1,109 @@
+export interface ComposioAppMeta {
+  slug: string;
+  name: string;
+  logo: string;
+  description: string;
+  categories: string[];
+  authType: "OAUTH2" | "API_KEY";
+}
+
+export const COMPOSIO_FULL_CATALOG: ComposioAppMeta[] = [
+  // Communication & Collaboration
+  { slug: "slack", name: "Slack", logo: "https://cdn.simpleicons.org/slack/4A154B", description: "Seamless communication for teams and automated alerts.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "discord", name: "Discord", logo: "https://cdn.simpleicons.org/discord/5865F2", description: "Integrate chat communities and bot interactions.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "gmail", name: "Gmail", logo: "https://cdn.simpleicons.org/gmail/EA4335", description: "Send emails and manage inbox triggers for your agents.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "outlook", name: "Outlook", logo: "https://cdn.simpleicons.org/microsoftoutlook/0078D4", description: "Professional email and calendar management.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "microsoft-teams", name: "Microsoft Teams", logo: "https://cdn.simpleicons.org/microsoftteams/6264D1", description: "Enterprise communication and meetings.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "zoom", name: "Zoom", logo: "https://cdn.simpleicons.org/zoom/2D8CFF", description: "Video conferencing and meeting automation.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
+  { slug: "telegram", name: "Telegram", logo: "https://cdn.simpleicons.org/telegram/26A6E2", description: "Secure messaging and bot integrations.", categories: ["Collaboration & Communication"], authType: "API_KEY" },
+  { slug: "whatsapp", name: "WhatsApp", logo: "https://cdn.simpleicons.org/whatsapp/25D366", description: "Global messaging for business and personal use.", categories: ["Collaboration & Communication"], authType: "API_KEY" },
+
+  // Developer Tools & DevOps
+  { slug: "github", name: "GitHub", logo: "https://cdn.simpleicons.org/github/000", description: "Manage repositories, issues, and automated workflows.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "gitlab", name: "GitLab", logo: "https://cdn.simpleicons.org/gitlab/FC6D26", description: "DevOps platform for source code and CI/CD.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "bitbucket", name: "Bitbucket", logo: "https://cdn.simpleicons.org/bitbucket/0052CC", description: "Git repository management for professional teams.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "jira", name: "Jira", logo: "https://cdn.simpleicons.org/jira/0052CC", description: "Project tracking and issue management for agile teams.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "linear", name: "Linear", logo: "https://cdn.simpleicons.org/linear/5E6AD2", description: "Issue tracking and project management for software teams.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "supabase", name: "Supabase", logo: "https://cdn.simpleicons.org/supabase/3ECF8E", description: "Open source Firebase alternative with Postgres.", categories: ["Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "posthog", name: "PostHog", logo: "https://cdn.simpleicons.org/posthog/000", description: "Product analytics and feature flags for devs.", categories: ["Developer Tools & DevOps", "Analytics & Data"], authType: "API_KEY" },
+  { slug: "sentry", name: "Sentry", logo: "https://cdn.simpleicons.org/sentry/362D59", description: "Error tracking and performance monitoring.", categories: ["Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "vercel", name: "Vercel", logo: "https://cdn.simpleicons.org/vercel/000", description: "Frontend cloud platform for deployment and hosting.", categories: ["Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "digitalocean", name: "DigitalOcean", logo: "https://cdn.simpleicons.org/digitalocean/0080FF", description: "Cloud computing and infrastructure for developers.", categories: ["Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "aws", name: "AWS", logo: "https://cdn.simpleicons.org/amazonaws/232F3E", description: "Amazon Web Services infrastructure management.", categories: ["Developer Tools & DevOps"], authType: "API_KEY" },
+
+  // Productivity & Project Management
+  { slug: "notion", name: "Notion", logo: "https://cdn.simpleicons.org/notion/000000", description: "Connect to pages and databases for knowledge management.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "google-sheets", name: "Google Sheets", logo: "https://cdn.simpleicons.org/googlesheets/34A853", description: "Read, write and sync data with spreadsheets.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "google-docs", name: "Google Docs", logo: "https://cdn.simpleicons.org/googledocs/4285F4", description: "Create and edit documents collaboratively.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "google-calendar", name: "Google Calendar", logo: "https://cdn.simpleicons.org/googlecalendar/4285F4", description: "Schedule and manage events and meetings.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "google-drive", name: "Google Drive", logo: "https://cdn.simpleicons.org/googledrive/4285F4", description: "Cloud storage and file sharing for teams.", categories: ["Productivity & Project Management", "Document & File Management"], authType: "OAUTH2" },
+  { slug: "airtable", name: "Airtable", logo: "https://cdn.simpleicons.org/airtable/18BFFF", description: "No-code relational database and project tool.", categories: ["Productivity & Project Management", "Analytics & Data"], authType: "OAUTH2" },
+  { slug: "trello", name: "Trello", logo: "https://cdn.simpleicons.org/trello/0079BF", description: "Visual project management using boards and cards.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "asana", name: "Asana", logo: "https://cdn.simpleicons.org/asana/F064A4", description: "Track tasks and project progress for teams.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "clickup", name: "ClickUp", logo: "https://cdn.simpleicons.org/clickup/7B68EE", description: "The everything app for tasks, docs, and goals.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "monday", name: "Monday.com", logo: "https://cdn.simpleicons.org/mondaydotcom/FF3D57", description: "Work OS for managing teams and projects.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "basecamp", name: "Basecamp", logo: "https://cdn.simpleicons.org/basecamp/213023", description: "Simple project management and team communication.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+  { slug: "todoist", name: "Todoist", logo: "https://cdn.simpleicons.org/todoist/E44332", description: "Personal and team task management and to-do lists.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
+
+  // CRM & Sales
+  { slug: "salesforce", name: "Salesforce", logo: "https://cdn.simpleicons.org/salesforce/00A1E0", description: "The world's #1 CRM for sales and customer data.", categories: ["CRM"], authType: "OAUTH2" },
+  { slug: "hubspot", name: "HubSpot", logo: "https://cdn.simpleicons.org/hubspot/FF7A59", description: "Powerful marketing, sales, and service CRM.", categories: ["CRM"], authType: "OAUTH2" },
+  { slug: "pipedrive", name: "Pipedrive", logo: "https://cdn.simpleicons.org/pipedrive/3E3D3D", description: "Sales-focused CRM for tracking deals and leads.", categories: ["CRM"], authType: "OAUTH2" },
+  { slug: "zoho", name: "Zoho CRM", logo: "https://cdn.simpleicons.org/zoho/F44336", description: "Comprehensive business CRM and toolkit.", categories: ["CRM"], authType: "OAUTH2" },
+  { slug: "apollo", name: "Apollo", logo: "https://cdn.simpleicons.org/apollo/000", description: "Sales intelligence and lead generation platform.", categories: ["CRM"], authType: "API_KEY" },
+  { slug: "gong", name: "Gong", logo: "https://cdn.simpleicons.org/gong/000", description: "Revenue intelligence for sales teams.", categories: ["CRM"], authType: "API_KEY" },
+  { slug: "zendesk", name: "Zendesk", logo: "https://cdn.simpleicons.org/zendesk/03363D", description: "Customer support software and ticketing system.", categories: ["CRM"], authType: "OAUTH2" },
+  { slug: "intercom", name: "Intercom", logo: "https://cdn.simpleicons.org/intercom/0057FF", description: "Customer messaging and engagement platform.", categories: ["CRM"], authType: "OAUTH2" },
+
+  // AI & Machine Learning
+  { slug: "openai", name: "OpenAI", logo: "https://cdn.simpleicons.org/openai/412991", description: "Advanced language models and AI intelligence.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "anthropic", name: "Anthropic", logo: "https://cdn.simpleicons.org/anthropic/000", description: "Generative AI specializing in safety and ethics (Claude).", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "cohere", name: "Cohere", logo: "https://cdn.simpleicons.org/cohere/383935", description: "NLP platform for enterprise AI applications.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "huggingface", name: "Hugging Face", logo: "https://cdn.simpleicons.org/huggingface/FFD21E", description: "Community and platform for machine learning models.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "perplexityai", name: "Perplexity AI", logo: "https://cdn.simpleicons.org/perplexity/20B2AA", description: "AI-powered search engine and answer engine.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "tavily", name: "Tavily", logo: "https://cdn.simpleicons.org/tavily/000", description: "AI-optimized search and browsing for agents.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "exa", name: "Exa", logo: "https://cdn.simpleicons.org/exa/000", description: "Search engine for AI and LLM agents.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
+  { slug: "firecrawl", name: "Firecrawl", logo: "https://cdn.simpleicons.org/firecrawl/000", description: "Web scraping and content extraction for agents.", categories: ["AI & Machine Learning", "Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "pinecone", name: "Pinecone", logo: "https://cdn.simpleicons.org/pinecone/000", description: "Vector database for AI long-term memory.", categories: ["AI & Machine Learning", "Analytics & Data"], authType: "API_KEY" },
+
+  // Marketing & Social Media
+  { slug: "mailchimp", name: "Mailchimp", logo: "https://cdn.simpleicons.org/mailchimp/FFE333", description: "Email marketing and audience automation.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "klaviyo", name: "Klaviyo", logo: "https://cdn.simpleicons.org/klaviyo/202645", description: "E-commerce marketing automation for growth.", categories: ["Marketing & Social Media"], authType: "API_KEY" },
+  { slug: "shopify", name: "Shopify", logo: "https://cdn.simpleicons.org/shopify/7AB55C", description: "E-commerce platform for online stores.", categories: ["E-commerce", "Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "twitter", name: "Twitter / X", logo: "https://cdn.simpleicons.org/twitter/1DA1F2", description: "Social media platform for automated posts and alerts.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "instagram", name: "Instagram", logo: "https://cdn.simpleicons.org/instagram/E4405F", description: "Visual social media marketing and engagement.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "facebook", name: "Facebook", logo: "https://cdn.simpleicons.org/facebook/1877F2", description: "Global social network for automation.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "linkedin", name: "LinkedIn", logo: "https://cdn.simpleicons.org/linkedin/0A66C2", description: "Professional networking and content sharing.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "youtube", name: "YouTube", logo: "https://cdn.simpleicons.org/youtube/FF0000", description: "Video content management and insights.", categories: ["Marketing & Social Media", "Entertainment & Media"], authType: "OAUTH2" },
+  { slug: "reddit", name: "Reddit", logo: "https://cdn.simpleicons.org/reddit/FF4500", description: "Community-driven content and monitoring.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+  { slug: "buffer", name: "Buffer", logo: "https://cdn.simpleicons.org/buffer/000", description: "Social media scheduling and management tool.", categories: ["Marketing & Social Media"], authType: "OAUTH2" },
+
+  // Finance & E-commerce
+  { slug: "stripe", name: "Stripe", logo: "https://cdn.simpleicons.org/stripe/008CDD", description: "Financial infrastructure for global payments.", categories: ["E-commerce", "Analytics & Data"], authType: "API_KEY" },
+  { slug: "paypal", name: "PayPal", logo: "https://cdn.simpleicons.org/paypal/003087", description: "Digital payments and money management.", categories: ["E-commerce"], authType: "API_KEY" },
+  { slug: "quickbooks", name: "QuickBooks", logo: "https://cdn.simpleicons.org/quickbooks/2CA01C", description: "Accounting software for businesses.", categories: ["CRM", "E-commerce"], authType: "OAUTH2" },
+  { slug: "xero", name: "Xero", logo: "https://cdn.simpleicons.org/xero/13B5EA", description: "Cloud accounting for small business teams.", categories: ["E-commerce"], authType: "OAUTH2" },
+  { slug: "lemon-squeezy", name: "Lemon Squeezy", logo: "https://cdn.simpleicons.org/lemonsqueezy/D2FF3E", description: "Payments and subscriptions for digital products.", categories: ["E-commerce"], authType: "API_KEY" },
+  { slug: "woocommerce", name: "WooCommerce", logo: "https://cdn.simpleicons.org/woocommerce/96588A", description: "Open source e-commerce for WordPress.", categories: ["E-commerce"], authType: "API_KEY" },
+  { slug: "gumroad", name: "Gumroad", logo: "https://cdn.simpleicons.org/gumroad/FF90AD", description: "Simple e-commerce for digital creators.", categories: ["E-commerce"], authType: "API_KEY" },
+
+  // Design & Creative
+  { slug: "figma", name: "Figma", logo: "https://cdn.simpleicons.org/figma/F24E1E", description: "Collaborative interface design tool.", categories: ["Design & Creative Tools"], authType: "OAUTH2" },
+  { slug: "canva", name: "Canva", logo: "https://cdn.simpleicons.org/canva/00C4CC", description: "Design graphics and marketing materials easily.", categories: ["Design & Creative Tools"], authType: "API_KEY" },
+  { slug: "adobe", name: "Adobe", logo: "https://cdn.simpleicons.org/adobe/FF0000", description: "Professional creative cloud tools.", categories: ["Design & Creative Tools"], authType: "OAUTH2" },
+  { slug: "webflow", name: "Webflow", logo: "https://cdn.simpleicons.org/webflow/4353FF", description: "Professional website builder and hosting.", categories: ["Design & Creative Tools", "Developer Tools & DevOps"], authType: "OAUTH2" },
+  { slug: "framer", name: "Framer", logo: "https://cdn.simpleicons.org/framer/0055FF", description: "Interactive site design and publishing.", categories: ["Design & Creative Tools"], authType: "OAUTH2" },
+
+  // Analytics & Data
+  { slug: "google-analytics", name: "Google Analytics", logo: "https://cdn.simpleicons.org/googleanalytics/E37400", description: "Track website traffic and user behavior.", categories: ["Analytics & Data"], authType: "OAUTH2" },
+  { slug: "mixpanel", name: "Mixpanel", logo: "https://cdn.simpleicons.org/mixpanel/7856FF", description: "Deep product analytics for user journey tracking.", categories: ["Analytics & Data"], authType: "API_KEY" },
+  { slug: "datadog", name: "Datadog", logo: "https://cdn.simpleicons.org/datadog/632CA6", description: "Cloud-scale monitoring and observability.", categories: ["Analytics & Data", "Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "grafana", name: "Grafana", logo: "https://cdn.simpleicons.org/grafana/F46800", description: "Visualize and analyze metrics from any source.", categories: ["Analytics & Data", "Developer Tools & DevOps"], authType: "API_KEY" },
+  { slug: "tableau", name: "Tableau", logo: "https://cdn.simpleicons.org/tableau/E97627", description: "Visual analytics platform for business data.", categories: ["Analytics & Data"], authType: "OAUTH2" },
+
+  // Education & Other
+  { slug: "canvas-lms", name: "Canvas LMS", logo: "https://cdn.simpleicons.org/canvas/E13939", description: "Learning management system for students.", categories: ["Education & LMS"], authType: "API_KEY" },
+  { slug: "moodle", name: "Moodle", logo: "https://cdn.simpleicons.org/moodle/F8931F", description: "Flexible open-source learning platform.", categories: ["Education & LMS"], authType: "API_KEY" },
+  { slug: "ashby", name: "Ashby", logo: "https://cdn.simpleicons.org/ashby/000", description: "Modern recruiting and HR team tools.", categories: ["HR & Finance"], authType: "API_KEY" },
+  { slug: "bamboohr", name: "BambooHR", logo: "https://cdn.simpleicons.org/bamboohr/61A60E", description: "Comprehensive HR software for teams.", categories: ["HR & Finance"], authType: "API_KEY" },
+];

@@ -1,5 +1,3 @@
-"use client";
-
 import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
 import { useNodes, useReactFlow } from "@xyflow/react";
@@ -26,6 +24,7 @@ import {
 } from "@/config/node-catalog";
 import { isTriggerNodeType } from "@/features/workflows/lib/start-nodes";
 import { useTRPC } from "@/trpc/client";
+import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 
 interface NodeSelectorProps {
   open: boolean;
@@ -64,20 +63,30 @@ export function NodeSelector({
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
-    // Map Composio apps to individual tools in the catalog
-    const dynamicComposioNodes: NodeCatalogItem[] = (composioApps?.items || []).map((app: any) => ({
+    const sdkApps = composioApps?.items || [];
+    
+    // Merge SDK results with our comprehensive static catalog
+    // prioritizing SDK results (which might have live connection data)
+    const sdkSlugs = new Set(sdkApps.map((a: any) => a.slug));
+    const mergedApps = [
+        ...sdkApps,
+        ...COMPOSIO_FULL_CATALOG.filter(app => !sdkSlugs.has(app.slug))
+    ];
+
+    // Map merged apps to individual tools in the catalog
+    const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app: any) => ({
       type: NodeType.COMPOSIO,
       label: app.name,
       description: app.description || `Integration for ${app.name} via Composio.`,
       icon: app.logo || Boxes,
       group: "integrations",
-      keywords: ["composio", app.slug, (app.name || "").toLowerCase()],
+      keywords: ["composio", app.slug, (app.name || "").toLowerCase(), ...(app.categories || [])],
       inputs: [], // Dynamic nodes use their own data
       outputs: [{ key: "data", type: "object", description: "Response data" }],
       setupGuide: ["Ensure your account is connected in the marketplace."],
       defaultData: {
-        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`, // Default to a safe action or list
-        name: `${app.name} Action`
+        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`, 
+        name: `${app.name}`
       }
     }));
 

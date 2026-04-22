@@ -1,49 +1,10 @@
-import { Composio } from "@composio/core";
-import { z } from "zod";
-import prisma from "@/lib/db";
-import { encrypt } from "@/lib/encryption";
-import { getComposioCallbackUrl } from "@/lib/env";
-import {
-  createComposioConnection,
-  listComposioActions,
-  listComposioApps,
-} from "@/lib/integrations/composio";
-import { createTRPCRouter, protectedProcedure } from "../init";
+import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 
-type ComposioToolkitMeta = {
-  description?: string;
-  categories?: string[];
-  authScheme?: string;
-  auth_type?: string;
-};
-
-function asToolkitMeta(toolkit: unknown): ComposioToolkitMeta {
-  return toolkit as ComposioToolkitMeta;
-}
-
-export const composioRouter = createTRPCRouter({
-  listApps: protectedProcedure
-    .input(
-      z.object({
-        search: z.string().optional(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      try {
-        const response = await listComposioApps(ctx.auth.organizationId);
-        let toolkitItems = Array.isArray(response?.items) ? response.items : [];
-
+// ... in the query
         // If the marketplace is empty, provide a fallback of common integrations
         // to ensure the UI remains functional while the SDK/API might be empty.
         if (toolkitItems.length === 0) {
-          toolkitItems = [
-            { slug: "github", name: "GitHub", logo: "https://simpleicons.org/icons/github.svg", description: "Connect GitHub to manage repositories, issues and pull requests.", categories: ["Developer Tools & DevOps"] },
-            { slug: "slack", name: "Slack", logo: "https://simpleicons.org/icons/slack.svg", description: "Integrate Slack to send messages and manage channels.", categories: ["Collaboration & Communication"] },
-            { slug: "gmail", name: "Gmail", logo: "https://simpleicons.org/icons/gmail.svg", description: "Connect Gmail to send emails and manage your inbox.", categories: ["Collaboration & Communication"] },
-            { slug: "google-sheets", name: "Google Sheets", logo: "https://simpleicons.org/icons/googlesheets.svg", description: "Manage spreadsheets and data in Google Sheets.", categories: ["Productivity & Project Management"] },
-            { slug: "openai", name: "OpenAI", logo: "https://simpleicons.org/icons/openai.svg", description: "Use OpenAI to generate text and process information.", categories: ["AI & Machine Learning"] },
-            { slug: "notion", name: "Notion", logo: "https://simpleicons.org/icons/notion.svg", description: "Connect Notion to manage pages and databases.", categories: ["Productivity & Project Management"] }
-          ];
+          toolkitItems = COMPOSIO_FULL_CATALOG;
         }
 
         // Get connected integrations for this organization

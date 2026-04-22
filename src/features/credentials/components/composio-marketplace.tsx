@@ -11,76 +11,10 @@ import { SetupSidebar } from "./setup-sidebar";
 import { IntegrationCard } from "./integration-card";
 import { motion, AnimatePresence } from "framer-motion";
 
-// High-end fallback data to ensure marketplace is never empty
-const FALLBACK_TOOLKITS = [
-  { slug: "github", name: "GitHub", logo: "https://cdn.simpleicons.org/github/000", description: "Manage repositories, issues, and automated workflows.", categories: ["Developer Tools & DevOps"], authType: "OAUTH2" },
-  { slug: "slack", name: "Slack", logo: "https://cdn.simpleicons.org/slack/4A154B", description: "Seamless communication for teams and automated alerts.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
-  { slug: "gmail", name: "Gmail", logo: "https://cdn.simpleicons.org/gmail/EA4335", description: "Send emails and manage inbox triggers for your agents.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
-  { slug: "google-sheets", name: "Google Sheets", logo: "https://cdn.simpleicons.org/googlesheets/34A853", description: "Read, write and sync data with spreadsheets.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
-  { slug: "notion", name: "Notion", logo: "https://cdn.simpleicons.org/notion/000000", description: "Connect to pages and databases for knowledge management.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
-  { slug: "openai", name: "OpenAI", logo: "https://cdn.simpleicons.org/openai/412991", description: "Advanced language processing and intelligence tools.", categories: ["AI & Machine Learning"], authType: "API_KEY" },
-  { slug: "discord", name: "Discord", logo: "https://cdn.simpleicons.org/discord/5865F2", description: "Integrate chat communities and bot interactions.", categories: ["Collaboration & Communication"], authType: "OAUTH2" },
-  { slug: "trello", name: "Trello", logo: "https://cdn.simpleicons.org/trello/0079BF", description: "Manage boards and tasks for project coordination.", categories: ["Productivity & Project Management"], authType: "OAUTH2" },
-  { slug: "hubspot", name: "HubSpot", logo: "https://cdn.simpleicons.org/hubspot/FF7A59", description: "Powerful CRM tools for managing customer data.", categories: ["CRM"], authType: "OAUTH2" },
-];
-
-export const ComposioMarketplace = () => {
-  const trpc = useTRPC();
-  const [search, setSearch] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  
-  const { data, isLoading } = useQuery(
-    trpc.composio.listApps.queryOptions({ 
-        search 
-    })
-  );
-
-  const connectMutation = useMutation(
-    trpc.composio.getConnectUrl.mutationOptions({
-        onSuccess: (data) => {
-            if (data.url) {
-                window.open(data.url, "_blank");
-                toast.success("Opening connection portal...");
-            } else {
-                toast.error("Connect URL is missing");
-            }
-        },
-        onError: (error) => {
-            toast.error(`Failed to get connect URL: ${error.message}`);
-        }
-    })
-  );
-
-  const handleConnect = (slug: string) => {
-    connectMutation.mutate({ toolkitSlug: slug });
-  };
-
-  const handleCategoryChange = (category: string) => {
-    if (category === "All") {
-      setSelectedCategories([]);
-      return;
-    }
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category) 
-        : [...prev, category]
-    );
-  };
-
   const filteredApps = useMemo(() => {
-    // Combine SDK data with fallbacks, ensuring uniqueness by slug
-    const sdkApps = data?.items || [];
-    const allApps = [...sdkApps];
+    const apps = data?.items || [];
     
-    // Add fallbacks only if they don't exist in SDK apps
-    const sdkSlugs = new Set(sdkApps.map((a: any) => a.slug));
-    FALLBACK_TOOLKITS.forEach(fb => {
-      if (!sdkSlugs.has(fb.slug)) {
-        allApps.push(fb);
-      }
-    });
-
-    return allApps.filter((app: any) => {
+    return apps.filter((app: any) => {
       const matchesSearch = (app.name || "").toLowerCase().includes(search.toLowerCase()) ||
                            (app.slug || "").toLowerCase().includes(search.toLowerCase());
       
