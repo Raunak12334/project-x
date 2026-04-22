@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SearchIcon, X, LayoutGrid, Check, ExternalLink, Loader2 } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, LayoutGrid, SearchIcon, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { LoadingView } from "@/components/entity-components";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
-import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { LoadingView } from "@/components/entity-components";
-import { SetupSidebar } from "./setup-sidebar";
 import { IntegrationCard } from "./integration-card";
-import { motion, AnimatePresence } from "framer-motion";
+import { SetupSidebar } from "./setup-sidebar";
 
 interface ComposioApp {
   slug: string;
@@ -21,21 +21,25 @@ interface ComposioApp {
   authType: string;
 }
 
+type ConnectVariables = {
+  toolkitSlug?: string;
+};
+
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  
+
   const { data, isLoading, refetch } = useQuery(
-    trpc.composio.listApps.queryOptions({ 
-        search 
-    })
+    trpc.composio.listApps.queryOptions({
+      search,
+    }),
   );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      
+
       if (event.data?.type === "composio-connection-success") {
         const toolkit = event.data.toolkitSlug;
         toast.success(`Successfully connected to ${toolkit}!`);
@@ -47,30 +51,36 @@ export const ComposioMarketplace = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, [refetch]);
 
-  const openCenteredPopup = (url: string, title: string, w: number, h: number) => {
-    const y = window.top!.outerHeight / 2 + window.top!.screenY - h / 2;
-    const x = window.top!.outerWidth / 2 + window.top!.screenX - w / 2;
+  const openCenteredPopup = (
+    url: string,
+    title: string,
+    w: number,
+    h: number,
+  ) => {
+    const topWindow = window.top ?? window;
+    const y = topWindow.outerHeight / 2 + topWindow.screenY - h / 2;
+    const x = topWindow.outerWidth / 2 + topWindow.screenX - w / 2;
     return window.open(
       url,
       title,
-      `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${y}, left=${x}`
+      `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${y}, left=${x}`,
     );
   };
 
   const connectMutation = useMutation(
     trpc.composio.getConnectUrl.mutationOptions({
-        onSuccess: (data) => {
-            if (data.url) {
-                openCenteredPopup(data.url, "Connect Integration", 600, 750);
-                toast.success("Opening connection portal...");
-            } else {
-                toast.error("Connect URL is missing");
-            }
-        },
-        onError: (error) => {
-            toast.error(`Failed to get connect URL: ${error.message}`);
+      onSuccess: (data) => {
+        if (data.url) {
+          openCenteredPopup(data.url, "Connect Integration", 600, 750);
+          toast.success("Opening connection portal...");
+        } else {
+          toast.error("Connect URL is missing");
         }
-    })
+      },
+      onError: (error) => {
+        toast.error(`Failed to get connect URL: ${error.message}`);
+      },
+    }),
   );
 
   const handleConnect = (slug: string) => {
@@ -82,43 +92,46 @@ export const ComposioMarketplace = () => {
       setSelectedCategories([]);
       return;
     }
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category) 
-        : [...prev, category]
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
     );
   };
 
   const filteredApps = useMemo<ComposioApp[]>(() => {
     const apps = (data?.items as ComposioApp[]) || [];
-    
+
     return apps.filter((app: ComposioApp) => {
-      const matchesSearch = (app.name || "").toLowerCase().includes(search.toLowerCase()) ||
-                           (app.slug || "").toLowerCase().includes(search.toLowerCase());
-      
-      const matchesCategory = selectedCategories.length === 0 || 
-                             (app.categories || []).some((cat: string) => selectedCategories.includes(cat));
-      
+      const matchesSearch =
+        (app.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (app.slug || "").toLowerCase().includes(search.toLowerCase());
+
+      const matchesCategory =
+        selectedCategories.length === 0 ||
+        (app.categories || []).some((cat: string) =>
+          selectedCategories.includes(cat),
+        );
+
       return matchesSearch && matchesCategory;
     });
   }, [data, search, selectedCategories]);
 
   if (isLoading && !data) {
     return (
-        <div className="flex h-[600px] items-center justify-center">
-            <LoadingView message="Initializing marketplace..." />
-        </div>
+      <div className="flex h-[600px] items-center justify-center">
+        <LoadingView message="Initializing marketplace..." />
+      </div>
     );
   }
 
   return (
     <div className="flex min-h-screen w-full bg-[#fbfbfc]">
       <div className="max-w-[1600px] w-full mx-auto flex gap-10 px-8 py-10">
-        
         {/* Sidebar Section */}
-        <SetupSidebar 
-          selectedCategories={selectedCategories} 
-          onCategoryChange={handleCategoryChange} 
+        <SetupSidebar
+          selectedCategories={selectedCategories}
+          onCategoryChange={handleCategoryChange}
         />
 
         {/* Main Content Section */}
@@ -130,17 +143,23 @@ export const ComposioMarketplace = () => {
                   <div className="p-2 bg-slate-900 rounded-xl">
                     <LayoutGrid className="size-5 text-white" />
                   </div>
-                  <h1 className="text-3xl font-black tracking-tight text-slate-900">Integrations</h1>
+                  <h1 className="text-3xl font-black tracking-tight text-slate-900">
+                    Integrations
+                  </h1>
                 </div>
                 <p className="text-slate-500 font-medium max-w-xl leading-relaxed">
-                  Power your agents with specialized tools. Securely connect your favorite apps to automate complex workflows.
+                  Power your agents with specialized tools. Securely connect
+                  your favorite apps to automate complex workflows.
                 </p>
               </div>
-              
+
               <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-white border border-slate-200/60 rounded-2xl shadow-sm">
                 <div className="flex -space-x-2">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="size-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="size-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center"
+                    >
                       <Check className="size-3 text-slate-400" />
                     </div>
                   ))}
@@ -160,7 +179,8 @@ export const ComposioMarketplace = () => {
                 className="pl-16 h-16 bg-white border-slate-200/60 rounded-[28px] focus-visible:ring-4 focus-visible:ring-slate-900/5 focus-visible:border-slate-300 transition-all text-base font-medium shadow-sm hover:shadow-md"
               />
               {search && (
-                <button 
+                <button
+                  type="button"
                   onClick={() => setSearch("")}
                   className="absolute right-6 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
                 >
@@ -172,13 +192,13 @@ export const ComposioMarketplace = () => {
 
           <main className="space-y-6">
             <div className="flex items-center justify-between px-2">
-               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
-                 All Toolkits ({filteredApps.length})
-               </h2>
-               <div className="h-[1px] flex-1 mx-6 bg-slate-100" />
+              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
+                All Toolkits ({filteredApps.length})
+              </h2>
+              <div className="h-[1px] flex-1 mx-6 bg-slate-100" />
             </div>
 
-            <motion.div 
+            <motion.div
               layout
               className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5"
             >
@@ -194,35 +214,52 @@ export const ComposioMarketplace = () => {
                     <IntegrationCard
                       name={app.name}
                       logo={app.logo}
-                      description={app.description || `Integrate ${app.name} tools into your Otogent workflows.`}
+                      description={
+                        app.description ||
+                        `Integrate ${app.name} tools into your Otogent workflows.`
+                      }
                       isConnected={app.isConnected || false}
                       onConnect={() => handleConnect(app.slug)}
-                      isConnecting={connectMutation.isPending && (connectMutation.variables as any)?.toolkitSlug === app.slug}
-                      authType={(app as any).authType}
+                      isConnecting={
+                        connectMutation.isPending &&
+                        (
+                          connectMutation.variables as
+                            | ConnectVariables
+                            | undefined
+                        )?.toolkitSlug === app.slug
+                      }
+                      authType={app.authType}
                     />
                   </motion.div>
                 ))}
               </AnimatePresence>
 
               {filteredApps.length === 0 && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-[40px] bg-white ring-8 ring-slate-50/50"
                 >
-                    <div className="size-24 rounded-[32px] bg-slate-50 flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
-                        <SearchIcon className="size-10 text-slate-300" />
-                    </div>
-                    <h3 className="text-slate-900 text-2xl font-black mb-3">No toolkits found</h3>
-                    <p className="text-base text-slate-500 max-w-sm text-center font-medium leading-relaxed mb-10 px-6">
-                        We couldn't find any toolkits matching your search and category selection.
-                    </p>
-                    <button 
-                        onClick={() => {setSearch(""); setSelectedCategories([]);}}
-                        className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-95 transition-all"
-                    >
-                        Reset Application Filters
-                    </button>
+                  <div className="size-24 rounded-[32px] bg-slate-50 flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
+                    <SearchIcon className="size-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-slate-900 text-2xl font-black mb-3">
+                    No toolkits found
+                  </h3>
+                  <p className="text-base text-slate-500 max-w-sm text-center font-medium leading-relaxed mb-10 px-6">
+                    We couldn't find any toolkits matching your search and
+                    category selection.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch("");
+                      setSelectedCategories([]);
+                    }}
+                    className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-95 transition-all"
+                  >
+                    Reset Application Filters
+                  </button>
                 </motion.div>
               )}
             </motion.div>
@@ -236,9 +273,24 @@ export const ComposioMarketplace = () => {
               </span>
             </div>
             <div className="flex items-center gap-8">
-              <button className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors">Documentation</button>
-              <button className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors">Request App</button>
-              <button className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors">Support</button>
+              <button
+                type="button"
+                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
+              >
+                Documentation
+              </button>
+              <button
+                type="button"
+                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
+              >
+                Request App
+              </button>
+              <button
+                type="button"
+                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
+              >
+                Support
+              </button>
             </div>
           </footer>
         </div>

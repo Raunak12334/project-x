@@ -1,6 +1,29 @@
 import type { MetadataRoute } from "next";
+import { isMissingBlogTableError } from "@/features/blog/db";
+import prisma from "@/lib/db";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const posts = await prisma.blogPost
+    .findMany({
+      where: {
+        status: "PUBLISHED",
+        deletedAt: null,
+        publishedAt: { not: null },
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: { publishedAt: "desc" },
+    })
+    .catch((error) => {
+      if (isMissingBlogTableError(error)) {
+        return [];
+      }
+
+      throw error;
+    });
+
   return [
     {
       url: "https://otogent.com",
@@ -14,5 +37,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: "https://otogent.com/blog",
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    ...posts.map((post) => ({
+      url: `https://otogent.com/blog/${post.slug}`,
+      lastModified: post.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
   ];
 }

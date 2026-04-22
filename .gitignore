@@ -48,6 +48,7 @@ next-env.d.ts
 # logs and temp
 mprocs.log
 .codex-*.log
+.codex/
 *.err.log
 *.out.log
 /tmp/

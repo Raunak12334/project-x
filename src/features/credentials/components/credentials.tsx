@@ -18,12 +18,12 @@ import {
 } from "@/components/entity-components";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEntitySearch } from "@/hooks/use-entity-search";
-import { ComposioMarketplace } from "./composio-marketplace";
 import {
   useRemoveCredential,
   useSuspenseCredentials,
 } from "../hooks/use-credentials";
 import { useCredentialsParams } from "../hooks/use-credentials-params";
+import { ComposioMarketplace } from "./composio-marketplace";
 
 export const CredentialsSearch = () => {
   const [params, setParams] = useCredentialsParams();
@@ -85,7 +85,7 @@ export const CredentialsContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [activeTab, setActiveTab ] = useState("managed");
+  const [activeTab, setActiveTab] = useState("managed");
 
   return (
     <EntityContainer
@@ -93,30 +93,34 @@ export const CredentialsContainer = ({
       search={activeTab === "managed" ? <CredentialsSearch /> : null}
       pagination={activeTab === "managed" ? <CredentialsPagination /> : null}
     >
-      <Tabs defaultValue="managed" className="w-full" onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue="managed"
+        className="w-full"
+        onValueChange={setActiveTab}
+      >
         <div className="px-6 border-b">
-            <TabsList className="h-12 bg-transparent gap-8 p-0">
-                <TabsTrigger 
-                    value="managed" 
-                    className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
-                >
-                    API Credentials
-                </TabsTrigger>
-                <TabsTrigger 
-                    value="marketplace" 
-                    className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
-                >
-                    Integrations Marketplace
-                </TabsTrigger>
-            </TabsList>
+          <TabsList className="h-12 bg-transparent gap-8 p-0">
+            <TabsTrigger
+              value="managed"
+              className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+            >
+              API Credentials
+            </TabsTrigger>
+            <TabsTrigger
+              value="marketplace"
+              className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+            >
+              Integrations Marketplace
+            </TabsTrigger>
+          </TabsList>
         </div>
-        
+
         <TabsContent value="managed" className="mt-0 outline-none">
-            {children}
+          {children}
         </TabsContent>
-        
+
         <TabsContent value="marketplace" className="mt-0 p-8 outline-none">
-            <ComposioMarketplace />
+          <ComposioMarketplace />
         </TabsContent>
       </Tabs>
     </EntityContainer>

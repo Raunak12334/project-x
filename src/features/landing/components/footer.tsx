@@ -4,8 +4,8 @@ const columns = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
+      { label: "Features", href: "/#features" },
+      { label: "Pricing", href: "/#pricing" },
       { label: "Integrations", href: "/signup" },
       { label: "Changelog", href: "/signup" },
     ],
@@ -13,16 +13,16 @@ const columns = [
   {
     title: "Resources",
     links: [
-      { label: "Documentation", href: "#how-it-works" },
-      { label: "Tutorials", href: "#faqs" },
-      { label: "Blog", href: "/signup" },
+      { label: "Documentation", href: "/#how-it-works" },
+      { label: "Tutorials", href: "/#faqs" },
+      { label: "Blog", href: "/blog" },
       { label: "Community", href: "/signup" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About", href: "#features" },
+      { label: "About", href: "/#features" },
       { label: "Careers", href: "/signup" },
       { label: "Contact", href: "mailto:hello@otogent.com" },
       { label: "Privacy Policy", href: "/signup" },

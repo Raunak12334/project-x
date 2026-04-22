@@ -1,5 +1,4 @@
 import { CredentialType, NodeType } from "@prisma/client";
-import { COMPOSIO_CHANNEL_NAME } from "@/inngest/channels/composio";
 import type { NodeDefinition } from "../../core/types";
 import { composioFields, composioSchema } from "./schema";
 

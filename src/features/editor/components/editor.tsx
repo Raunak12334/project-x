@@ -1,5 +1,6 @@
 "use client";
 
+import { NodeType } from "@prisma/client";
 import {
   addEdge,
   applyEdgeChanges,
@@ -15,15 +16,8 @@ import {
   Panel,
   ReactFlow,
 } from "@xyflow/react";
-import { NodeType } from "@prisma/client";
 import { useSetAtom } from "jotai";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
 import {

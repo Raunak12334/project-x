@@ -2,11 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CredentialType } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,15 +36,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
+import { useTRPC } from "@/trpc/client";
 import {
   useCreateCredential,
   useSuspenseCredential,
   useUpdateCredential,
 } from "../hooks/use-credentials";
-import { useTRPC } from "@/trpc/client";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -268,9 +268,9 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
               {/* Test Credential Section */}
               <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-slate-700">
                     Test Credential
-                  </label>
+                  </span>
                   <Button
                     type="button"
                     variant="outline"
@@ -322,8 +322,8 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
 
                 {selectedType === CredentialType.GENERIC && (
                   <p className="text-xs text-slate-500">
-                    Generic credentials cannot be automatically validated. Please
-                    ensure your API key is correct.
+                    Generic credentials cannot be automatically validated.
+                    Please ensure your API key is correct.
                   </p>
                 )}
               </div>

@@ -4,14 +4,15 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "#features", label: "Features" },
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faqs", label: "FAQs" },
+  { href: "/#features", label: "Features" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
+  { href: "/#faqs", label: "FAQs" },
 ];
 
 export function LandingNavbar() {
@@ -21,7 +22,13 @@ export function LandingNavbar() {
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="Otogent" width={24} height={24} className="opacity-80" />
+          <Image
+            src="/logo.svg"
+            alt="Otogent"
+            width={24}
+            height={24}
+            className="opacity-80"
+          />
           <span className="text-xl font-semibold tracking-tight text-foreground">
             Otogent
           </span>

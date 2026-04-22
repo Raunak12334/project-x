@@ -10,11 +10,32 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const orgId = searchParams.get("orgId");
     const toolkitSlug = searchParams.get("toolkit_slug");
-    const connectionId = searchParams.get("connection_id");
+    const connectionId =
+      searchParams.get("connection_id") ||
+      searchParams.get("connected_account_id") ||
+      searchParams.get("connectedAccountId") ||
+      searchParams.get("id");
     const status = searchParams.get("status");
     const accountName = searchParams.get("account_name");
 
-    if (!orgId || !toolkitSlug || !connectionId || status !== "success") {
+    if (!orgId || !toolkitSlug || (status && status !== "success")) {
+      return NextResponse.redirect(
+        new URL("/credentials?integration_status=failed", appUrl),
+      );
+    }
+
+    const existingIntegration = await prisma.composioIntegration.findUnique({
+      where: {
+        organizationId_toolkitSlug: {
+          organizationId: orgId,
+          toolkitSlug,
+        },
+      },
+    });
+    const resolvedConnectionId =
+      connectionId || existingIntegration?.connectionId;
+
+    if (!resolvedConnectionId) {
       return NextResponse.redirect(
         new URL("/credentials?integration_status=failed", appUrl),
       );
@@ -28,9 +49,9 @@ export async function GET(request: NextRequest) {
         },
       },
       update: {
-        connectionId,
+        connectionId: resolvedConnectionId,
         accountName: accountName || undefined,
-        authToken: encrypt(connectionId),
+        authToken: encrypt(resolvedConnectionId),
         isConnected: true,
         lastSyncedAt: new Date(),
       },
@@ -38,15 +59,18 @@ export async function GET(request: NextRequest) {
         organizationId: orgId,
         toolkitSlug,
         name: toolkitSlug,
-        connectionId,
+        connectionId: resolvedConnectionId,
         accountName: accountName || undefined,
         isConnected: true,
-        authToken: encrypt(connectionId),
+        authToken: encrypt(resolvedConnectionId),
       },
     });
 
     return NextResponse.redirect(
-      new URL(`/integrations/callback/success?toolkit_slug=${toolkitSlug ?? "Integration"}`, appUrl),
+      new URL(
+        `/integrations/callback/success?toolkit_slug=${toolkitSlug ?? "Integration"}`,
+        appUrl,
+      ),
     );
   } catch (error) {
     console.error("Composio callback error:", error);

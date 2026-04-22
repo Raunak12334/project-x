@@ -12,6 +12,7 @@ const bundledWindowsNode = join(
   "node-v22.22.2-win-x64",
   "node.exe",
 );
+const DEFAULT_NODE_OPTIONS = "--max-old-space-size=4096";
 
 function resolveNodeBinary() {
   if (process.version === REQUIRED_NODE_TAG) {
@@ -39,9 +40,23 @@ if (!nodeBinary) {
   process.exit(1);
 }
 
+function withDefaultNodeOptions(env) {
+  const existingOptions = env.NODE_OPTIONS || "";
+  if (existingOptions.includes("--max-old-space-size")) {
+    return env;
+  }
+
+  return {
+    ...env,
+    NODE_OPTIONS: [existingOptions, DEFAULT_NODE_OPTIONS]
+      .filter(Boolean)
+      .join(" "),
+  };
+}
+
 const result = spawnSync(nodeBinary, [nextBin, ...process.argv.slice(2)], {
   cwd: repoRoot,
-  env: process.env,
+  env: withDefaultNodeOptions(process.env),
   stdio: "inherit",
 });
 

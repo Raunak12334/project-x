@@ -1,4 +1,4 @@
-import { NodeType } from "@prisma/client";
+import type { NodeType } from "@prisma/client";
 import { composioDefinition } from "../definitions/composio/definition";
 import { httpRequestDefinition } from "../definitions/http-request/definition";
 import { openAiDefinition } from "../definitions/openai/definition";

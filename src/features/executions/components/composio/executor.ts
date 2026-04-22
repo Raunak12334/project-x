@@ -72,7 +72,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
 
   const argumentsTemplate = data.argumentsJson || "{}";
   const compiledArgsJsonString = Handlebars.compile(argumentsTemplate)(context);
-  
+
   let parsedArguments = {};
   try {
     parsedArguments = JSON.parse(compiledArgsJsonString);
@@ -83,7 +83,9 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
         status: "error",
       }),
     );
-    throw new NonRetriableError("Composio node: Failed to parse arguments JSON");
+    throw new NonRetriableError(
+      "Composio node: Failed to parse arguments JSON",
+    );
   }
 
   const credential = data.credentialId
@@ -139,7 +141,9 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
         status: "error",
       }),
     );
-    throw new NonRetriableError("Composio node: Connected integration not found");
+    throw new NonRetriableError(
+      "Composio node: Connected integration not found",
+    );
   }
 
   try {

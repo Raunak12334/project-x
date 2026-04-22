@@ -3,6 +3,7 @@
 import {
   Building2Icon,
   CreditCardIcon,
+  FileTextIcon,
   HistoryIcon,
   LayoutTemplateIcon,
   LogOutIcon,
@@ -45,6 +46,11 @@ export const AdminSidebar = () => {
           title: "Support Tickets",
           icon: MessageSquareIcon,
           url: "/super-admin/tickets",
+        },
+        {
+          title: "Blog Studio",
+          icon: FileTextIcon,
+          url: "/super-admin/blog",
         },
       ],
     },

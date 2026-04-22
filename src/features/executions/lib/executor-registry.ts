@@ -62,7 +62,7 @@ export const executorRegistry: Record<NodeType, RegistryExecutor> = {
   [NodeType.GEMINI]: geminiExecutor,
   [NodeType.ANTHROPIC]: anthropicExecutor,
   [NodeType.OPENAI]: openAiExecutor,
-  [NodeType.COMPOSIO]: composioExecutor as any,
+  [NodeType.COMPOSIO]: asRegistryExecutor(composioExecutor),
   [NodeType.HUGGINGFACE]: huggingFaceExecutor,
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,

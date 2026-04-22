@@ -24,6 +24,43 @@ type ToolkitWithActionsFetcher = {
 
 type ExecuteToolFn = (action: string, payload: unknown) => Promise<unknown>;
 
+type ComposioListResponse = {
+  items?: unknown[];
+};
+
+type ComposioToolkitSurface = {
+  get?: (args: { limit: number }) => Promise<unknown>;
+};
+
+type ComposioToolsSurface = {
+  execute: ExecuteToolFn;
+  getToolkits?: (args: { limit: number }) => Promise<unknown>;
+  list?: (args: { limit: number }) => Promise<unknown>;
+};
+
+type ComposioSdk = {
+  create: (organizationId: string) => Promise<{
+    authorize: (
+      toolkitSlug: string,
+      options: { callbackUrl: string },
+    ) => Promise<{ id: string; redirectUrl?: string | null; status?: string }>;
+    toolkits?: (args: { limit: number }) => Promise<ComposioListResponse>;
+    tools?: ToolkitWithActionsFetcher["tools"];
+  }>;
+  toolkits?:
+    | ComposioToolkitSurface
+    | ((args: { limit: number }) => Promise<unknown>);
+  tools: ComposioToolsSurface;
+};
+
+function hasItems(response: unknown): response is { items: unknown[] } {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    Array.isArray((response as { items?: unknown }).items)
+  );
+}
+
 const DEFAULT_TIMEOUT_MS = 20_000;
 const DEFAULT_RETRY_ATTEMPTS = 2;
 
@@ -92,7 +129,11 @@ function sanitizePayload(payload: JsonObject) {
 
   const clone = { ...payload };
   for (const key of Object.keys(clone)) {
-    if (redactedKeys.some((item) => key.toLowerCase().includes(item.toLowerCase()))) {
+    if (
+      redactedKeys.some((item) =>
+        key.toLowerCase().includes(item.toLowerCase()),
+      )
+    ) {
       clone[key] = "[REDACTED]";
     }
   }
@@ -103,65 +144,76 @@ function sanitizePayload(payload: JsonObject) {
 export async function listComposioApps(organizationId: string) {
   try {
     const Composio = await getComposioSDK();
-    const composio = new Composio({ apiKey: getApiKey() });
-    
+    const composio = new Composio({ apiKey: getApiKey() }) as ComposioSdk;
+
     // Tier 1: Try the standard toolkits.get() method (recommended for v0.6+)
     try {
-        const response = await (composio as any).toolkits?.get?.({ limit: 100 });
-        if (response && Array.isArray(response.items) && response.items.length > 0) {
-            return response;
-        }
-        // If items is not array but the response itself is an array
-        if (Array.isArray(response) && response.length > 0) {
-            return { items: response };
-        }
+      const toolkits = composio.toolkits;
+      const response =
+        typeof toolkits === "object"
+          ? await toolkits.get?.({ limit: 100 })
+          : undefined;
+      if (hasItems(response) && response.items.length > 0) {
+        return response;
+      }
+      // If items is not array but the response itself is an array
+      if (Array.isArray(response) && response.length > 0) {
+        return { items: response };
+      }
     } catch (e) {
-        logger.warn("composio.listApps.tier1.failed", { error: e });
+      logger.warn("composio.listApps.tier1.failed", { error: e });
     }
 
     // Tier 2: Try calling toolkits directly as a function
     try {
-        const directList = await (composio as any).toolkits?.({ limit: 100 });
-        if (directList && directList.items && directList.items.length > 0) {
-            return directList;
-        }
-        if (Array.isArray(directList) && directList.length > 0) {
-            return { items: directList };
-        }
+      const toolkits = composio.toolkits;
+      const directList =
+        typeof toolkits === "function"
+          ? await toolkits({ limit: 100 })
+          : undefined;
+      if (hasItems(directList) && directList.items.length > 0) {
+        return directList;
+      }
+      if (Array.isArray(directList) && directList.length > 0) {
+        return { items: directList };
+      }
     } catch (e) {
-        logger.warn("composio.listApps.tier2.failed", { error: e });
+      logger.warn("composio.listApps.tier2.failed", { error: e });
     }
 
     // Tier 3: Try to get toolkits via session (entity-specific)
     try {
-        const session = await composio.create(organizationId || "default-org");
-        const response = await session.toolkits({ limit: 100 });
-        
-        if (response && response.items && response.items.length > 0) {
-            return response;
-        }
+      const session = await composio.create(organizationId || "default-org");
+      const response =
+        typeof session.toolkits === "function"
+          ? await session.toolkits({ limit: 100 })
+          : undefined;
+
+      if (response?.items && response.items.length > 0) {
+        return response;
+      }
     } catch (e) {
-        logger.warn("composio.listApps.tier3.failed", { error: e });
+      logger.warn("composio.listApps.tier3.failed", { error: e });
     }
 
     // Tier 4: Fallback to tools surface
     try {
-        const globalResponse = await (composio as any).tools?.getToolkits?.({ limit: 100 });
-        if (globalResponse && globalResponse.items) {
-          return globalResponse;
-        }
+      const globalResponse = await composio.tools.getToolkits?.({ limit: 100 });
+      if (hasItems(globalResponse)) {
+        return globalResponse;
+      }
     } catch (e) {
-        logger.warn("composio.listApps.tier4.failed", { error: e });
+      logger.warn("composio.listApps.tier4.failed", { error: e });
     }
 
     // Tier 5: Final desperate fallback to tools.list
     try {
-        const toolsList = await (composio as any).tools?.list?.({ limit: 100 });
-        if (toolsList && Array.isArray(toolsList.items)) {
-            return toolsList;
-        }
+      const toolsList = await composio.tools.list?.({ limit: 100 });
+      if (hasItems(toolsList)) {
+        return toolsList;
+      }
     } catch (e) {
-        logger.warn("composio.listApps.tier5.failed", { error: e });
+      logger.warn("composio.listApps.tier5.failed", { error: e });
     }
 
     logger.error("composio.listApps.all_tiers_failed", { organizationId });
@@ -174,7 +226,7 @@ export async function listComposioApps(organizationId: string) {
 
 export async function createComposioConnection(input: CreateConnectionInput) {
   const Composio = await getComposioSDK();
-  const composio = new Composio({ apiKey: getApiKey() });
+  const composio = new Composio({ apiKey: getApiKey() }) as ComposioSdk;
   const session = await composio.create(input.organizationId);
 
   return session.authorize(input.toolkitSlug, {
@@ -187,7 +239,7 @@ export async function listComposioActions(
   toolkitSlug: string,
 ) {
   const Composio = await getComposioSDK();
-  const composio = new Composio({ apiKey: getApiKey() });
+  const composio = new Composio({ apiKey: getApiKey() }) as ComposioSdk;
   const session = await composio.create(organizationId);
   const sessionWithTools = session as unknown as ToolkitWithActionsFetcher;
 
@@ -205,7 +257,7 @@ export async function listComposioActions(
 
 export async function executeComposioAction(input: ExecuteActionInput) {
   const Composio = await getComposioSDK();
-  const composio = new Composio({ apiKey: getApiKey() });
+  const composio = new Composio({ apiKey: getApiKey() }) as ComposioSdk;
   const startTime = Date.now();
 
   logger.info("composio.action.start", {
@@ -219,14 +271,17 @@ export async function executeComposioAction(input: ExecuteActionInput) {
   const retries = DEFAULT_RETRY_ATTEMPTS;
 
   const execute = async () => {
-    const executeTool = composio.tools.execute as unknown as ExecuteToolFn;
+    const executeTool = composio.tools.execute;
     const payloadBase = {
       user: input.organizationId,
       userId: input.organizationId,
       arguments: input.input,
       input: input.input,
       connectedAccountId: input.connectionId ?? undefined,
-      connectedAccountIds: input.connectionId ? [input.connectionId] : undefined,
+      connectedAccountIds: input.connectionId
+        ? [input.connectionId]
+        : undefined,
+      dangerouslySkipVersionCheck: true,
     };
 
     try {

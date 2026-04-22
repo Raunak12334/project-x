@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/dashboard/", "/onboarding/"],
+      disallow: ["/api/", "/dashboard/", "/super-admin/", "/onboarding/"],
     },
     sitemap: "https://otogent.com/sitemap.xml",
   };

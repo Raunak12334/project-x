@@ -1,13 +1,13 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
   const latestExecution = await prisma.execution.findFirst({
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     where: {
-      status: 'FAILED',
+      status: "FAILED",
     },
-    take: 1
+    take: 1,
   });
 
   if (latestExecution) {

@@ -1,13 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 import { useNodes, useReactFlow } from "@xyflow/react";
 import { Boxes, SearchIcon, XIcon } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand-logo";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -17,20 +16,30 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+  COMPOSIO_FULL_CATALOG,
+  type ComposioAppMeta,
+} from "@/config/composio-full-catalog";
+import {
   getNodeIconByGroup,
   type NodeCatalogItem,
   nodeCatalog,
   nodeCatalogGroups,
 } from "@/config/node-catalog";
 import { isTriggerNodeType } from "@/features/workflows/lib/start-nodes";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
-import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 
 interface NodeSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
 }
+
+type DynamicComposioApp = Omit<ComposioAppMeta, "authType"> & {
+  authType?: string;
+  tags?: string[];
+  logo?: string | null;
+};
 
 const matchesSearch = (item: NodeCatalogItem, query: string) => {
   if (!query) {
@@ -58,36 +67,44 @@ export function NodeSelector({
   const deferredSearch = useDeferredValue(search);
 
   const trpc = useTRPC();
-  const { data: composioApps } = useQuery(trpc.composio.listApps.queryOptions({ search: deferredSearch }));
+  const { data: composioApps } = useQuery(
+    trpc.composio.listApps.queryOptions({ search: deferredSearch }),
+  );
 
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
-    const sdkApps = composioApps?.items || [];
-    
+    const sdkApps = (composioApps?.items ?? []) as DynamicComposioApp[];
+
     // Merge SDK results with our comprehensive static catalog
     // prioritizing SDK results (which might have live connection data)
-    const sdkSlugs = new Set(sdkApps.map((a: any) => a.slug));
-    const mergedApps = [
-        ...sdkApps,
-        ...COMPOSIO_FULL_CATALOG.filter(app => !sdkSlugs.has(app.slug))
+    const sdkSlugs = new Set(sdkApps.map((app) => app.slug));
+    const mergedApps: DynamicComposioApp[] = [
+      ...sdkApps,
+      ...COMPOSIO_FULL_CATALOG.filter((app) => !sdkSlugs.has(app.slug)),
     ];
 
     // Map merged apps to individual tools in the catalog
-    const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app: any) => ({
+    const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app) => ({
       type: NodeType.COMPOSIO,
       label: app.name,
-      description: app.description || `Integration for ${app.name} via Composio.`,
+      description:
+        app.description || `Integration for ${app.name} via Composio.`,
       icon: app.logo || Boxes,
       group: "integrations",
-      keywords: ["composio", app.slug, (app.name || "").toLowerCase(), ...(app.categories || [])],
+      keywords: [
+        "composio",
+        app.slug,
+        (app.name || "").toLowerCase(),
+        ...(app.categories || app.tags || []),
+      ],
       inputs: [], // Dynamic nodes use their own data
       outputs: [{ key: "data", type: "object", description: "Response data" }],
       setupGuide: ["Ensure your account is connected in the marketplace."],
       defaultData: {
-        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`, 
-        name: `${app.name}`
-      }
+        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`,
+        name: `${app.name}`,
+      },
     }));
 
     const allNodes = [...nodeCatalog, ...dynamicComposioNodes];
@@ -105,14 +122,11 @@ export function NodeSelector({
 
   const hasConfiguredNode = useMemo(() => {
     return nodes.some(
-      (node) =>
-        typeof node.type === "string" &&
-        node.type !== NodeType.INITIAL,
+      (node) => typeof node.type === "string" && node.type !== NodeType.INITIAL,
     );
   }, [nodes]);
 
   const isTriggerOnboardingMode = !hasConfiguredNode;
-
 
   const filteredNodeCount = useMemo(
     () =>
@@ -218,7 +232,7 @@ export function NodeSelector({
           </p>
         </div>
 
-          <div className="space-y-7 px-6 py-6">
+        <div className="space-y-7 px-6 py-6">
           {groupedNodes.length === 0 && (
             <div className="rounded-3xl border border-dashed bg-card px-4 py-12 text-center">
               <p className="text-sm font-medium">No nodes found</p>
@@ -260,10 +274,12 @@ export function NodeSelector({
                     return (
                       <button
                         type="button"
-                        key={item.type}
+                        key={`${item.type}-${item.label}`}
                         className={cn(
                           "group relative flex flex-col items-center text-center gap-4 rounded-[24px] border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-accent/10 hover:shadow-lg",
-                          isIntegration ? "bg-gradient-to-b from-card to-slate-50/50" : ""
+                          isIntegration
+                            ? "bg-gradient-to-b from-card to-slate-50/50"
+                            : "",
                         )}
                         onClick={() => handleNodeSelect(item)}
                       >
@@ -290,9 +306,9 @@ export function NodeSelector({
                               </span>
                             )}
                             {isIntegration && (
-                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100">
-                                    Integration
-                                </span>
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100">
+                                Integration
+                              </span>
                             )}
                           </div>
                           <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">
@@ -306,7 +322,7 @@ export function NodeSelector({
               </section>
             );
           })}
-          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

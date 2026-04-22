@@ -1,5 +1,3 @@
-import { CredentialType } from "@prisma/client";
-
 /**
  * Validates an OpenAI API key by making a test API call
  */
@@ -9,7 +7,7 @@ export async function validateOpenAIKey(apiKey: string): Promise<boolean> {
     const client = new OpenAI({ apiKey });
     await client.models.list();
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -28,7 +26,7 @@ export async function validateAnthropicKey(apiKey: string): Promise<boolean> {
       messages: [{ role: "user", content: "test" }],
     });
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -43,7 +41,7 @@ export async function validateGeminiKey(apiKey: string): Promise<boolean> {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     await model.generateContent("test");
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -53,11 +51,14 @@ export async function validateGeminiKey(apiKey: string): Promise<boolean> {
  */
 export async function validateHuggingFaceKey(apiKey: string): Promise<boolean> {
   try {
-    const response = await fetch("https://api-inference.huggingface.co/status", {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/status",
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      },
+    );
     return response.ok;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }

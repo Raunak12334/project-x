@@ -44,8 +44,10 @@ export const composioFields: NodeField[] = [
     name: "argumentsJson",
     label: "Arguments (JSON)",
     type: "textarea",
-    placeholder: '{\n  "owner": "owner-name",\n  "repo": "repo-name",\n  "title": "Issue Title"\n}',
-    description: "JSON payload for the action. Supports {{handlebar}} variables.",
+    placeholder:
+      '{\n  "owner": "owner-name",\n  "repo": "repo-name",\n  "title": "Issue Title"\n}',
+    description:
+      "JSON payload for the action. Supports {{handlebar}} variables.",
     required: false,
   },
 ];

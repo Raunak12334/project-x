@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   devIndicators: false,
+  allowedDevOrigins: ["localhost:3000", "127.0.0.1:3000", "192.168.29.23:3000"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {

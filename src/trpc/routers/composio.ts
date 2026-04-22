@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
 import { getComposioCallbackUrl } from "@/lib/env";
@@ -8,7 +9,6 @@ import {
   listComposioApps,
 } from "@/lib/integrations/composio";
 import { createTRPCRouter, protectedProcedure } from "../init";
-import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
 
 type ComposioToolkitMeta = {
   description?: string;
@@ -17,9 +17,17 @@ type ComposioToolkitMeta = {
   auth_type?: string;
 };
 
-function asToolkitMeta(toolkit: unknown): ComposioToolkitMeta {
-  return toolkit as ComposioToolkitMeta;
-}
+type ComposioToolkit = ComposioToolkitMeta & {
+  slug?: string;
+  name?: string;
+  logo?: string | null;
+  tags?: string[];
+  authConfig?: {
+    auth_type?: string;
+  };
+};
+
+type ComposioActionParameters = Record<string, unknown>;
 
 export const composioRouter = createTRPCRouter({
   listApps: protectedProcedure
@@ -31,7 +39,9 @@ export const composioRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         const response = await listComposioApps(ctx.auth.organizationId);
-        let toolkitItems = Array.isArray(response?.items) ? response.items : [];
+        let toolkitItems: ComposioToolkit[] = Array.isArray(response?.items)
+          ? (response.items as ComposioToolkit[])
+          : [];
 
         // If the marketplace is empty, provide a fallback of common integrations
         // to ensure the UI remains functional while the SDK/API might be empty.
@@ -56,7 +66,7 @@ export const composioRouter = createTRPCRouter({
         return {
           items: toolkitItems
             .filter(
-              (toolkit: any) =>
+              (toolkit) =>
                 !input.search ||
                 (toolkit.name || "")
                   .toLowerCase()
@@ -65,22 +75,28 @@ export const composioRouter = createTRPCRouter({
                   .toLowerCase()
                   .includes(input.search.toLowerCase()),
             )
-            .map((toolkit: any) => {
-              const meta = asToolkitMeta(toolkit);
+            .map((toolkit) => {
+              const slug = toolkit.slug || "unknown";
+              const name = toolkit.name || slug || "Unknown Tool";
+
               // Ensure we have fallback values for everything
               return {
-                slug: toolkit.slug || "unknown",
-                name: toolkit.name || toolkit.slug || "Unknown Tool",
+                slug,
+                name,
                 logo: toolkit.logo || null,
-                description: meta.description || `Connect ${toolkit.name || toolkit.slug} to power your agent workflows.`,
-                isConnected: connectedSlugs.has(toolkit.slug),
-                categories: Array.isArray(meta.categories) && meta.categories.length > 0 
-                  ? meta.categories 
-                  : (toolkit.tags || ["Other"]), // Try tags as fallback for categories
+                description:
+                  toolkit.description ||
+                  `Connect ${name} to power your agent workflows.`,
+                isConnected: connectedSlugs.has(slug),
+                categories:
+                  Array.isArray(toolkit.categories) &&
+                  toolkit.categories.length > 0
+                    ? toolkit.categories
+                    : toolkit.tags || ["Other"], // Try tags as fallback for categories
                 authType:
-                  meta.authScheme ||
-                  meta.auth_type ||
-                  (toolkit.authConfig?.auth_type) ||
+                  toolkit.authScheme ||
+                  toolkit.auth_type ||
+                  toolkit.authConfig?.auth_type ||
                   "OAUTH2",
               };
             }),
@@ -106,8 +122,32 @@ export const composioRouter = createTRPCRouter({
           callbackUrl,
         });
 
+        await prisma.composioIntegration.upsert({
+          where: {
+            organizationId_toolkitSlug: {
+              organizationId: ctx.auth.organizationId,
+              toolkitSlug: input.toolkitSlug,
+            },
+          },
+          update: {
+            connectionId: connectionRequest.id,
+            authToken: encrypt(connectionRequest.id),
+            isConnected: false,
+            lastSyncedAt: new Date(),
+          },
+          create: {
+            organizationId: ctx.auth.organizationId,
+            toolkitSlug: input.toolkitSlug,
+            name: input.toolkitSlug,
+            connectionId: connectionRequest.id,
+            authToken: encrypt(connectionRequest.id),
+            isConnected: false,
+          },
+        });
+
         return {
           url: connectionRequest.redirectUrl,
+          connectionId: connectionRequest.id,
         };
       } catch (error) {
         console.error("Error getting Composio connect URL:", error);
@@ -134,7 +174,8 @@ export const composioRouter = createTRPCRouter({
               slug: (meta.name as string) || (meta.slug as string),
               name: (meta.name as string) || (meta.slug as string),
               description: (meta.description as string) || "",
-              parameters: (meta.parameters as any) || {},
+              parameters:
+                (meta.parameters as ComposioActionParameters | undefined) || {},
             };
           }),
         };

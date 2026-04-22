@@ -40,7 +40,8 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-4xl"
         >
-          Automate your workflow with <br className="hidden md:block" /> multi-agent catalyst
+          Automate your workflow with <br className="hidden md:block" />{" "}
+          multi-agent catalyst
         </motion.h1>
 
         {/* Subheadline */}
@@ -48,7 +49,8 @@ export function HeroSection() {
           {...fadeUp(0.2, 16, 0.6)}
           className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed font-body"
         >
-          Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.
+          Automate your busywork with intelligent agents that learn, adapt, and
+          execute—so your team can focus on what matters most.
         </motion.p>
 
         {/* CTA Buttons */}

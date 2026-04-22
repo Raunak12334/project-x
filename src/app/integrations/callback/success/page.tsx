@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -17,7 +17,7 @@ function SuccessContent() {
           type: "composio-connection-success",
           toolkitSlug,
         },
-        window.location.origin
+        window.location.origin,
       );
     }
 
@@ -54,7 +54,8 @@ function SuccessContent() {
             Connection Successful
           </h1>
           <p className="text-slate-500 font-medium leading-relaxed">
-            Your <span className="text-slate-900 font-bold">{toolkitSlug}</span> account has been securely connected to Otogent.
+            Your <span className="text-slate-900 font-bold">{toolkitSlug}</span>{" "}
+            account has been securely connected to Otogent.
           </p>
         </div>
 
@@ -64,8 +65,9 @@ function SuccessContent() {
             Closing window automatically...
           </div>
         </div>
-        
-        <button 
+
+        <button
+          type="button"
           onClick={() => window.close()}
           className="w-full text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-[0.2em]"
         >
@@ -78,11 +80,13 @@ function SuccessContent() {
 
 export default function SuccessPage() {
   return (
-    <Suspense fallback={
+    <Suspense
+      fallback={
         <div className="min-h-screen bg-white flex items-center justify-center">
-            <Loader2 className="size-8 text-slate-200 animate-spin" />
+          <Loader2 className="size-8 text-slate-200 animate-spin" />
         </div>
-    }>
+      }
+    >
       <SuccessContent />
     </Suspense>
   );

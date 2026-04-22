@@ -20,6 +20,7 @@ model User {
   updatedAt           DateTime      @default(now()) @updatedAt
   deletedAt           DateTime?
   accounts            Account[]
+  blogPosts           BlogPost[]
   sessions            Session[]
   invitesSent         TeamInvite[]  @relation("InvitedBy")
   organization        Organization? @relation(fields: [organizationId], references: [id])
@@ -433,10 +434,36 @@ model ComposioIntegration {
   @@map("composio_integration")
 }
 
+model BlogPost {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  excerpt     String
+  content     String
+  coverImage  String?
+  status      BlogPostStatus @default(DRAFT)
+  publishedAt DateTime?
+  authorId    String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+  @@map("blog_post")
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN
   USER
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 enum Plan {
