@@ -26,17 +26,42 @@ export const ComposioMarketplace = () => {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
-  const { data, isLoading } = useQuery(
+  const { data, isLoading, refetch } = useQuery(
     trpc.composio.listApps.queryOptions({ 
         search 
     })
   );
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data?.type === "composio-connection-success") {
+        const toolkit = event.data.toolkitSlug;
+        toast.success(`Successfully connected to ${toolkit}!`);
+        refetch();
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [refetch]);
+
+  const openCenteredPopup = (url: string, title: string, w: number, h: number) => {
+    const y = window.top!.outerHeight / 2 + window.top!.screenY - h / 2;
+    const x = window.top!.outerWidth / 2 + window.top!.screenX - w / 2;
+    return window.open(
+      url,
+      title,
+      `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${y}, left=${x}`
+    );
+  };
+
   const connectMutation = useMutation(
     trpc.composio.getConnectUrl.mutationOptions({
         onSuccess: (data) => {
             if (data.url) {
-                window.open(data.url, "_blank");
+                openCenteredPopup(data.url, "Connect Integration", 600, 750);
                 toast.success("Opening connection portal...");
             } else {
                 toast.error("Connect URL is missing");

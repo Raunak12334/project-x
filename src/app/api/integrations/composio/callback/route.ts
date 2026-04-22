@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(
-      new URL("/credentials?integration_status=success", appUrl),
+      new URL(`/integrations/callback/success?toolkit_slug=${toolkitSlug ?? "Integration"}`, appUrl),
     );
   } catch (error) {
     console.error("Composio callback error:", error);
