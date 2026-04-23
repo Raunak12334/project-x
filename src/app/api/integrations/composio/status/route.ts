@@ -1,14 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { getAuthenticatedRouteOrganization } from "@/lib/route-auth";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const organizationId = searchParams.get("organizationId");
   const toolkitSlug = searchParams.get("toolkitSlug");
+  const authContext = await getAuthenticatedRouteOrganization();
 
-  if (!organizationId || !toolkitSlug) {
+  if (!authContext) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!toolkitSlug) {
     return NextResponse.json(
-      { error: "organizationId and toolkitSlug are required" },
+      { error: "toolkitSlug is required" },
       { status: 400 },
     );
   }
@@ -16,7 +21,7 @@ export async function GET(request: NextRequest) {
   const integration = await prisma.composioIntegration.findUnique({
     where: {
       organizationId_toolkitSlug: {
-        organizationId,
+        organizationId: authContext.organizationId,
         toolkitSlug,
       },
     },
@@ -24,7 +29,6 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     connected: integration?.isConnected ?? false,
-    connectionId: integration?.connectionId ?? null,
     lastSyncedAt: integration?.lastSyncedAt ?? null,
   });
 }

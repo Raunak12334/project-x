@@ -101,7 +101,7 @@ export const gemmaExecutor: NodeExecutor<GemmaData> = async ({
     throw new NonRetriableError("Gemma node: Credential not found");
   }
 
-  const credentialValue = credential.valueEncrypted || credential.value;
+  const credentialValue = credential.valueEncrypted;
   if (!credentialValue) {
     await publish(
       gemmaChannel().status({

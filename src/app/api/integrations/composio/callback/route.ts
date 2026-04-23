@@ -1,15 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { verifyComposioOAuthState } from "@/lib/composio-oauth-state";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
 import { getAppUrl } from "@/lib/env";
+import { getAuthenticatedRouteOrganization } from "@/lib/route-auth";
 
 export async function GET(request: NextRequest) {
   const appUrl = getAppUrl();
 
   try {
     const { searchParams } = new URL(request.url);
-    const orgId = searchParams.get("orgId");
     const toolkitSlug = searchParams.get("toolkit_slug");
+    const state = verifyComposioOAuthState(searchParams.get("state"));
     const connectionId =
       searchParams.get("connection_id") ||
       searchParams.get("connected_account_id") ||
@@ -17,8 +19,16 @@ export async function GET(request: NextRequest) {
       searchParams.get("id");
     const status = searchParams.get("status");
     const accountName = searchParams.get("account_name");
+    const authContext = await getAuthenticatedRouteOrganization();
 
-    if (!orgId || !toolkitSlug || (status && status !== "success")) {
+    if (
+      !authContext ||
+      !state ||
+      state.organizationId !== authContext.organizationId ||
+      !toolkitSlug ||
+      state.toolkitSlug !== toolkitSlug ||
+      (status && status !== "success")
+    ) {
       return NextResponse.redirect(
         new URL("/credentials?integration_status=failed", appUrl),
       );
@@ -27,7 +37,7 @@ export async function GET(request: NextRequest) {
     const existingIntegration = await prisma.composioIntegration.findUnique({
       where: {
         organizationId_toolkitSlug: {
-          organizationId: orgId,
+          organizationId: authContext.organizationId,
           toolkitSlug,
         },
       },
@@ -44,7 +54,7 @@ export async function GET(request: NextRequest) {
     await prisma.composioIntegration.upsert({
       where: {
         organizationId_toolkitSlug: {
-          organizationId: orgId,
+          organizationId: authContext.organizationId,
           toolkitSlug,
         },
       },
@@ -56,7 +66,7 @@ export async function GET(request: NextRequest) {
         lastSyncedAt: new Date(),
       },
       create: {
-        organizationId: orgId,
+        organizationId: authContext.organizationId,
         toolkitSlug,
         name: toolkitSlug,
         connectionId: resolvedConnectionId,

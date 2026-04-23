@@ -41,7 +41,7 @@ export const googleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     });
   });
 
-  const credentialValue = credential.valueEncrypted || credential.value;
+  const credentialValue = credential.valueEncrypted;
   if (!credentialValue) {
     await publish(
       googleSheetsChannel().status({

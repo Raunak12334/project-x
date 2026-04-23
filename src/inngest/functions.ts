@@ -13,6 +13,11 @@ import { resolveWorkflowStartNodeIds } from "@/features/workflows/lib/start-node
 import { isLangGraphEnabled } from "@/langgraph/config";
 import { runWorkflowGraph } from "@/langgraph/run-graph";
 import prisma from "@/lib/db";
+import {
+  executionScalarSelect,
+  supportsExecutionWorkflowVersionId,
+  withExecutionWorkflowVersionId,
+} from "@/lib/execution-schema-compat";
 import { logger } from "@/lib/logger";
 import { anthropicChannel } from "./channels/anthropic";
 import { dbQueryChannel } from "./channels/db-query";
@@ -523,6 +528,7 @@ export const executeWorkflow = inngest.createFunction(
       // Find execution by inngestEventId (non-unique index)
       const execution = await prisma.execution.findFirst({
         where: { inngestEventId: originalEvent.id },
+        select: executionScalarSelect,
       });
 
       if (!execution) {
@@ -539,6 +545,7 @@ export const executeWorkflow = inngest.createFunction(
           error: error.message,
           errorStack: error.stack,
         },
+        select: executionScalarSelect,
       });
     },
   },
@@ -601,6 +608,7 @@ export const executeWorkflow = inngest.createFunction(
         async () => {
           return prisma.execution.findFirst({
             where: { idempotencyKey },
+            select: executionScalarSelect,
           });
         },
       );
@@ -616,32 +624,41 @@ export const executeWorkflow = inngest.createFunction(
     }
 
     const execution = await step.run("create-execution", async () => {
+      const canStoreWorkflowVersionId =
+        await supportsExecutionWorkflowVersionId();
+
       if (resumeExecutionId) {
         return prisma.execution.update({
           where: {
             id: resumeExecutionId,
             workflowId,
           },
-          data: {
-            status: ExecutionStatus.RUNNING,
-            error: null,
-            errorStack: null,
-            completedAt: null,
-            inngestEventId,
-            workflowVersionId: eventWorkflowVersionId,
-            output: Prisma.JsonNull,
-          },
+          data: withExecutionWorkflowVersionId(
+            {
+              status: ExecutionStatus.RUNNING,
+              error: null,
+              errorStack: null,
+              completedAt: null,
+              inngestEventId,
+              output: Prisma.JsonNull,
+            },
+            canStoreWorkflowVersionId ? eventWorkflowVersionId : null,
+          ),
+          select: executionScalarSelect,
         });
       }
 
       try {
         return await prisma.execution.create({
-          data: {
-            workflowId,
-            workflowVersionId: eventWorkflowVersionId,
-            inngestEventId,
-            idempotencyKey,
-          },
+          data: withExecutionWorkflowVersionId(
+            {
+              workflowId,
+              inngestEventId,
+              idempotencyKey,
+            },
+            canStoreWorkflowVersionId ? eventWorkflowVersionId : null,
+          ),
+          select: executionScalarSelect,
         });
       } catch (error) {
         if (
@@ -653,6 +670,7 @@ export const executeWorkflow = inngest.createFunction(
         ) {
           const existingExecution = await prisma.execution.findFirstOrThrow({
             where: { idempotencyKey },
+            select: executionScalarSelect,
           });
           logger.warn("workflow.execution.concurrent_replay_skipped", {
             workflowId,
@@ -715,13 +733,24 @@ export const executeWorkflow = inngest.createFunction(
             },
           });
 
-          await prisma.execution.update({
-            where: { id: execution.id },
-            data: {
-              workflowVersionId: workflowVersion.id,
-              versionUsed: workflowVersion.version,
-            },
-          });
+          if (await supportsExecutionWorkflowVersionId()) {
+            await prisma.execution.update({
+              where: { id: execution.id },
+              data: {
+                workflowVersionId: workflowVersion.id,
+                versionUsed: workflowVersion.version,
+              },
+              select: executionScalarSelect,
+            });
+          } else {
+            await prisma.execution.update({
+              where: { id: execution.id },
+              data: {
+                versionUsed: workflowVersion.version,
+              },
+              select: executionScalarSelect,
+            });
+          }
 
           workflowVersionId = workflowVersion.id;
         }
@@ -795,6 +824,7 @@ export const executeWorkflow = inngest.createFunction(
             status: ExecutionStatus.WAITING_APPROVAL,
             output: context as Prisma.InputJsonValue,
           },
+          select: executionScalarSelect,
         });
       });
 
@@ -813,6 +843,7 @@ export const executeWorkflow = inngest.createFunction(
           completedAt: new Date(),
           output: context as Prisma.InputJsonValue,
         },
+        select: executionScalarSelect,
       });
     });
 

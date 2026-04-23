@@ -3,7 +3,6 @@ import { NodeType } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
-import { shouldEnforceWorkflowWebhookSecrets } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { verifyWebhookSecret } from "@/lib/webhook-security";
 
@@ -45,19 +44,12 @@ export async function POST(request: NextRequest) {
         verifyWebhookSecret(workflow.webhookSecret, secret),
     );
 
-    if (!hasValidSecret && (secret || shouldEnforceWorkflowWebhookSecrets())) {
+    if (!hasValidSecret) {
       logger.warn("webhook.google_form.invalid_secret", { workflowId, nodeId });
       return NextResponse.json(
         { success: false, error: "Invalid webhook secret" },
         { status: 401 },
       );
-    }
-
-    if (!hasValidSecret) {
-      logger.warn("webhook.google_form.legacy_unsigned_request_allowed", {
-        workflowId,
-        nodeId,
-      });
     }
 
     const triggerNodes = await prisma.node.findMany({

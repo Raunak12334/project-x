@@ -16,6 +16,11 @@ import {
 import { validateWorkflow } from "@/features/workflows/lib/workflow-validator";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
+import {
+  executionScalarSelect,
+  supportsExecutionWorkflowVersionId,
+  withExecutionWorkflowVersionId,
+} from "@/lib/execution-schema-compat";
 import { createWebhookSecret } from "@/lib/webhook-security";
 import {
   createTRPCRouter,
@@ -327,19 +332,26 @@ export const workflowsRouter = createTRPCRouter({
         });
       }
 
+      const canStoreWorkflowVersionId =
+        await supportsExecutionWorkflowVersionId();
       const execution = await prisma.execution.create({
-        data: {
-          workflowId: input.id,
-          workflowVersionId: workflowVersion.id,
-          versionUsed: workflowVersion.version,
-          inngestEventId: createId(),
-          status: ExecutionStatus.RUNNING,
-        },
+        data: withExecutionWorkflowVersionId(
+          {
+            workflowId: input.id,
+            versionUsed: workflowVersion.version,
+            inngestEventId: createId(),
+            status: ExecutionStatus.RUNNING,
+          },
+          canStoreWorkflowVersionId ? workflowVersion.id : null,
+        ),
+        select: executionScalarSelect,
       });
 
       await sendWorkflowExecution({
         workflowId: input.id,
-        workflowVersionId: workflowVersion.id,
+        workflowVersionId: canStoreWorkflowVersionId
+          ? workflowVersion.id
+          : undefined,
         executionId: execution.id,
       });
 

@@ -110,9 +110,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
     throw new NonRetriableError("Composio node: Credential not found");
   }
 
-  const credentialValue = credential
-    ? credential.valueEncrypted || credential.value
-    : null;
+  const credentialValue = credential ? credential.valueEncrypted : null;
   if (data.credentialId && !credentialValue) {
     await publish(
       composioChannel().status({

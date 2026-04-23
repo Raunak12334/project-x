@@ -139,10 +139,8 @@ export async function executeNode(params: {
         },
       );
 
-      if (credential) {
-        resolvedCredentials[req.key] = decrypt(
-          credential.valueEncrypted || credential.value || "",
-        );
+      if (credential?.valueEncrypted) {
+        resolvedCredentials[req.key] = decrypt(credential.valueEncrypted);
       }
     }
   }

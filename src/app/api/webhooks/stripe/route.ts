@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
-import { shouldEnforceWorkflowWebhookSecrets } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { verifyWebhookSecret } from "@/lib/webhook-security";
 
@@ -100,21 +99,12 @@ export async function POST(request: NextRequest) {
         verifyWebhookSecret(workflow.webhookSecret, secret),
     );
 
-    if (
-      !hasValidWorkflowSecret &&
-      (secret || shouldEnforceWorkflowWebhookSecrets())
-    ) {
+    if (!hasValidWorkflowSecret) {
       logger.warn("stripe.webhook.workflow_secret_invalid", { workflowId });
       return NextResponse.json(
         { success: false, error: "Invalid webhook secret" },
         { status: 401 },
       );
-    }
-
-    if (!hasValidWorkflowSecret) {
-      logger.warn("stripe.webhook.legacy_unsigned_workflow_secret_allowed", {
-        workflowId,
-      });
     }
 
     const triggerNode = workflow.nodes[0];

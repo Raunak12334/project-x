@@ -7,6 +7,7 @@ import {
   updateExecutionCheckpointState,
 } from "@/langgraph/checkpoints";
 import prisma from "@/lib/db";
+import { executionScalarSelect } from "@/lib/execution-schema-compat";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const executionsRouter = createTRPCRouter({
@@ -20,6 +21,7 @@ export const executionsRouter = createTRPCRouter({
             organizationId: ctx.auth.organizationId,
           },
         },
+        select: executionScalarSelect,
       });
 
       if (execution.status !== ExecutionStatus.WAITING_APPROVAL) {
@@ -94,7 +96,8 @@ export const executionsRouter = createTRPCRouter({
             organizationId: ctx.auth.organizationId,
           },
         },
-        include: {
+        select: {
+          ...executionScalarSelect,
           checkpoints: true,
         },
       });
@@ -127,7 +130,8 @@ export const executionsRouter = createTRPCRouter({
             organizationId: ctx.auth.organizationId,
           },
         },
-        include: {
+        select: {
+          ...executionScalarSelect,
           checkpoints: {
             orderBy: {
               sequence: "desc",
@@ -161,46 +165,52 @@ export const executionsRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(({ ctx, input }) => {
-      return prisma.execution.findUniqueOrThrow({
-        where: {
-          id: input.id,
-          workflow: {
-            organizationId: ctx.auth.organizationId,
-          },
-        },
-        include: {
-          checkpoints: {
-            orderBy: {
-              sequence: "asc",
+      return prisma.execution
+        .findUniqueOrThrow({
+          where: {
+            id: input.id,
+            workflow: {
+              organizationId: ctx.auth.organizationId,
             },
           },
-          nodeExecutions: {
-            orderBy: [
-              {
-                startedAt: "asc",
+          select: {
+            ...executionScalarSelect,
+            checkpoints: {
+              orderBy: {
+                sequence: "asc",
               },
-              {
-                attempt: "asc",
-              },
-            ],
-            include: {
-              node: {
-                select: {
-                  id: true,
-                  name: true,
-                  type: true,
+            },
+            nodeExecutions: {
+              orderBy: [
+                {
+                  startedAt: "asc",
+                },
+                {
+                  attempt: "asc",
+                },
+              ],
+              include: {
+                node: {
+                  select: {
+                    id: true,
+                    name: true,
+                    type: true,
+                  },
                 },
               },
             },
-          },
-          workflow: {
-            select: {
-              id: true,
-              name: true,
+            workflow: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
-        },
-      });
+        })
+        .then((execution) => ({
+          ...execution,
+          workflowVersionId: null,
+        }));
     }),
   getMany: protectedProcedure
     .input(
@@ -228,7 +238,8 @@ export const executionsRouter = createTRPCRouter({
           orderBy: {
             startedAt: "desc",
           },
-          include: {
+          select: {
+            ...executionScalarSelect,
             workflow: {
               select: {
                 id: true,

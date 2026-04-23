@@ -101,7 +101,7 @@ export const huggingFaceExecutor: NodeExecutor<HuggingFaceData> = async ({
     throw new NonRetriableError("Hugging Face node: Credential not found");
   }
 
-  const credentialValue = credential.valueEncrypted || credential.value;
+  const credentialValue = credential.valueEncrypted;
   if (!credentialValue) {
     await publish(
       huggingFaceChannel().status({

@@ -34,16 +34,16 @@ export function getComposioApiKey() {
   return requireEnv("COMPOSIO_API_KEY");
 }
 
-export function getComposioCallbackUrl(
-  organizationId: string,
-  toolkitSlug?: string,
-) {
+export function getComposioCallbackUrl(toolkitSlug?: string, state?: string) {
   const appUrl = getAppUrl();
   const url = new URL("/api/integrations/composio/callback", appUrl);
-  url.searchParams.set("orgId", organizationId);
 
   if (toolkitSlug) {
     url.searchParams.set("toolkit_slug", toolkitSlug);
+  }
+
+  if (state) {
+    url.searchParams.set("state", state);
   }
 
   return url.toString();
@@ -69,8 +69,4 @@ export function getProductionEnvReport() {
     name,
     configured: Boolean(process.env[name]),
   }));
-}
-
-export function shouldEnforceWorkflowWebhookSecrets() {
-  return process.env.ENFORCE_WORKFLOW_WEBHOOK_SECRETS === "true";
 }

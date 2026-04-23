@@ -90,7 +90,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
     throw new NonRetriableError("Anthropic node: Credential not found");
   }
 
-  const credentialValue = credential.valueEncrypted || credential.value;
+  const credentialValue = credential.valueEncrypted;
   if (!credentialValue) {
     await publish(
       anthropicChannel().status({

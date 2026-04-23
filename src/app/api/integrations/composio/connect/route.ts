@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { createComposioOAuthState } from "@/lib/composio-oauth-state";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
 import { getComposioCallbackUrl } from "@/lib/env";
 import { createComposioConnection } from "@/lib/integrations/composio";
+import { getAuthenticatedRouteOrganization } from "@/lib/route-auth";
 
 const connectSchema = z.object({
-  organizationId: z.string().min(1),
   toolkitSlug: z.string().min(1),
 });
 
@@ -14,13 +15,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = connectSchema.parse(body);
+    const authContext = await getAuthenticatedRouteOrganization();
 
-    const callbackUrl = getComposioCallbackUrl(
-      input.organizationId,
-      input.toolkitSlug,
-    );
+    if (!authContext) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const state = createComposioOAuthState({
+      organizationId: authContext.organizationId,
+      toolkitSlug: input.toolkitSlug,
+    });
+    const callbackUrl = getComposioCallbackUrl(input.toolkitSlug, state);
     const connectionRequest = await createComposioConnection({
-      organizationId: input.organizationId,
+      organizationId: authContext.organizationId,
       toolkitSlug: input.toolkitSlug,
       callbackUrl,
     });
@@ -28,7 +35,7 @@ export async function POST(request: NextRequest) {
     await prisma.composioIntegration.upsert({
       where: {
         organizationId_toolkitSlug: {
-          organizationId: input.organizationId,
+          organizationId: authContext.organizationId,
           toolkitSlug: input.toolkitSlug,
         },
       },
@@ -39,7 +46,7 @@ export async function POST(request: NextRequest) {
         lastSyncedAt: new Date(),
       },
       create: {
-        organizationId: input.organizationId,
+        organizationId: authContext.organizationId,
         toolkitSlug: input.toolkitSlug,
         name: input.toolkitSlug,
         connectionId: connectionRequest.id,

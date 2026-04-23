@@ -27,7 +27,17 @@ export const credentialsRouter = createTRPCRouter({
           name,
           organizationId: ctx.auth.organizationId,
           type,
-          value: encrypt(value),
+          value: null,
+          valueEncrypted: encrypt(value),
+        },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          organizationId: true,
         },
       });
     }),
@@ -39,6 +49,10 @@ export const credentialsRouter = createTRPCRouter({
           id: input.id,
           organizationId: ctx.auth.organizationId,
         },
+        select: {
+          id: true,
+          name: true,
+        },
       });
     }),
   update: protectedProcedure
@@ -47,18 +61,33 @@ export const credentialsRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().min(1, "Name is required"),
         type: z.enum(CredentialType),
-        value: z.string().min(1, "Value is required"),
+        value: z.string().optional(),
       }),
     )
     .mutation(({ ctx, input }) => {
       const { id, name, type, value } = input;
+      const trimmedValue = value?.trim();
 
       return prisma.credential.update({
         where: { id, organizationId: ctx.auth.organizationId },
         data: {
           name,
           type,
-          value: encrypt(value),
+          ...(trimmedValue
+            ? {
+                value: null,
+                valueEncrypted: encrypt(trimmedValue),
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          organizationId: true,
         },
       });
     }),
@@ -67,6 +96,15 @@ export const credentialsRouter = createTRPCRouter({
     .query(({ ctx, input }) => {
       return prisma.credential.findUniqueOrThrow({
         where: { id: input.id, organizationId: ctx.auth.organizationId },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          organizationId: true,
+        },
       });
     }),
   getMany: protectedProcedure
@@ -191,6 +229,13 @@ export const credentialsRouter = createTRPCRouter({
 
       return prisma.credential.findMany({
         where: { type, organizationId: ctx.auth.organizationId },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         orderBy: {
           updatedAt: "desc",
         },

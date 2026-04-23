@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { COMPOSIO_FULL_CATALOG } from "@/config/composio-full-catalog";
+import { createComposioOAuthState } from "@/lib/composio-oauth-state";
 import prisma from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
 import { getComposioCallbackUrl } from "@/lib/env";
@@ -124,10 +125,11 @@ export const composioRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const callbackUrl = getComposioCallbackUrl(
-          ctx.auth.organizationId,
-          input.toolkitSlug,
-        );
+        const state = createComposioOAuthState({
+          organizationId: ctx.auth.organizationId,
+          toolkitSlug: input.toolkitSlug,
+        });
+        const callbackUrl = getComposioCallbackUrl(input.toolkitSlug, state);
         const connectionRequest = await createComposioConnection({
           organizationId: ctx.auth.organizationId,
           toolkitSlug: input.toolkitSlug,

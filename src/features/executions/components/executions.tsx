@@ -1,6 +1,5 @@
 "use client";
 
-import type { Execution } from "@prisma/client";
 import { ExecutionStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -21,6 +20,10 @@ import {
 } from "@/components/entity-components";
 import { useSuspenseExecutions } from "../hooks/use-executions";
 import { useExecutionsParams } from "../hooks/use-executions-params";
+
+type ExecutionListItem = ReturnType<
+  typeof useSuspenseExecutions
+>["data"]["items"][number];
 
 export const ExecutionsList = () => {
   const executions = useSuspenseExecutions();
@@ -106,16 +109,7 @@ const formatStatus = (status: ExecutionStatus) => {
   return status.charAt(0) + status.slice(1).toLowerCase();
 };
 
-export const ExecutionItem = ({
-  data,
-}: {
-  data: Execution & {
-    workflow: {
-      id: string;
-      name: string;
-    };
-  };
-}) => {
+export const ExecutionItem = ({ data }: { data: ExecutionListItem }) => {
   const duration = data.completedAt
     ? Math.round(
         (new Date(data.completedAt).getTime() -

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { executionScalarSelect } from "@/lib/execution-schema-compat";
 import {
   baseProcedure,
   createTRPCRouter,
@@ -83,10 +84,7 @@ export const superAdminRouter = createTRPCRouter({
       prisma.execution.findMany({
         where: { deletedAt: null },
         select: {
-          id: true,
-          status: true,
-          error: true,
-          startedAt: true,
+          ...executionScalarSelect,
           workflow: {
             select: { name: true, organization: { select: { name: true } } },
           },
@@ -256,7 +254,8 @@ export const superAdminRouter = createTRPCRouter({
         where: { deletedAt: null },
         take: 50,
         orderBy: { startedAt: "desc" },
-        include: {
+        select: {
+          ...executionScalarSelect,
           workflow: {
             select: { name: true, organization: { select: { name: true } } },
           },

@@ -90,7 +90,7 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
     throw new NonRetriableError("OpenAI node: Credential not found");
   }
 
-  const credentialValue = credential.valueEncrypted || credential.value;
+  const credentialValue = credential.valueEncrypted;
   if (!credentialValue) {
     await publish(
       openAiChannel().status({

@@ -38,13 +38,28 @@ import {
   useUpdateCredential,
 } from "../hooks/use-credentials";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  type: z.enum(CredentialType),
-  value: z.string().min(1, "API key is required"),
-});
+const createFormSchema = (isEdit: boolean) =>
+  z
+    .object({
+      name: z.string().min(1, "Name is required"),
+      type: z.enum(CredentialType),
+      value: z.string().optional(),
+    })
+    .superRefine((values, ctx) => {
+      if (!isEdit && !values.value?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["value"],
+          message: "API key is required",
+        });
+      }
+    });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  name: string;
+  type: CredentialType;
+  value?: string;
+};
 
 const credentialTypeOptions = [
   {
@@ -97,11 +112,12 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
   const isEdit = !!initialData?.id;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(isEdit)),
     defaultValues: initialData
       ? {
-          ...initialData,
-          value: initialData.value || "",
+          name: initialData.name,
+          type: initialData.type,
+          value: "",
         }
       : {
           name: "",
@@ -119,17 +135,26 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
     if (isEdit && initialData?.id) {
       await updateCredential.mutateAsync({
         id: initialData.id,
-        ...values,
+        name: values.name,
+        type: values.type,
+        ...(values.value?.trim() ? { value: values.value.trim() } : {}),
       });
     } else {
-      await createCredential.mutateAsync(values, {
-        onSuccess: (data) => {
-          router.push(`/credentials/${data.id}`);
+      await createCredential.mutateAsync(
+        {
+          name: values.name,
+          type: values.type,
+          value: values.value?.trim() ?? "",
         },
-        onError: (error) => {
-          handleError(error);
+        {
+          onSuccess: (data) => {
+            router.push(`/credentials/${data.id}`);
+          },
+          onError: (error) => {
+            handleError(error);
+          },
         },
-      });
+      );
     }
   };
 
@@ -208,7 +233,11 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder={valuePlaceholder}
+                        placeholder={
+                          isEdit
+                            ? "Leave blank to keep existing secret"
+                            : valuePlaceholder
+                        }
                         {...field}
                       />
                     </FormControl>

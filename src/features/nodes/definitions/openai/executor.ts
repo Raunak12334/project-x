@@ -72,8 +72,8 @@ export const executeOpenAi = async ({
         },
       );
 
-      if (credential) {
-        apiKey = decrypt(credential.valueEncrypted || credential.value || "");
+      if (credential?.valueEncrypted) {
+        apiKey = decrypt(credential.valueEncrypted);
       }
     }
 

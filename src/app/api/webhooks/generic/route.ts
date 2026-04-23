@@ -3,7 +3,6 @@ import { NodeType } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
-import { shouldEnforceWorkflowWebhookSecrets } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { verifyWebhookSecret } from "@/lib/webhook-security";
 
@@ -122,18 +121,11 @@ const handleWebhookRequest = async (request: NextRequest) => {
         verifyWebhookSecret(workflow.webhookSecret, secret),
     );
 
-    if (!hasValidSecret && (secret || shouldEnforceWorkflowWebhookSecrets())) {
+    if (!hasValidSecret) {
       logger.warn("webhook.generic.invalid_secret", { workflowId, nodeId });
       return createWebhookResponse(401, {
         success: false,
         error: "Invalid webhook secret",
-      });
-    }
-
-    if (!hasValidSecret) {
-      logger.warn("webhook.generic.legacy_unsigned_request_allowed", {
-        workflowId,
-        nodeId,
       });
     }
 
