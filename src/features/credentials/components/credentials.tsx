@@ -102,10 +102,10 @@ export const CredentialsContainer = ({
     >
       <Tabs
         defaultValue="managed"
-        className="w-full overflow-hidden rounded-lg border bg-card shadow-sm"
+        className="w-full overflow-hidden rounded-lg border bg-white shadow-sm"
         onValueChange={setActiveTab}
       >
-        <div className="border-b bg-muted/20 px-4">
+        <div className="border-b bg-white px-4">
           <TabsList className="h-11 gap-2 bg-transparent p-0">
             <TabsTrigger
               value="managed"

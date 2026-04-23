@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/pagination";
 import { useTRPC } from "@/trpc/client";
 import { IntegrationCard } from "./integration-card";
-import { DEFAULT_CATEGORIES, SetupSidebar } from "./setup-sidebar";
 
 const MARKETPLACE_PAGE_SIZE = 12;
 
@@ -36,113 +35,10 @@ type ConnectVariables = {
   toolkitSlug?: string;
 };
 
-const normalizeCategory = (category: string) => {
-  const value = category.trim();
-  const lower = value.toLowerCase();
-
-  if (
-    lower.includes("developer") ||
-    lower.includes("devops") ||
-    lower.includes("code") ||
-    lower.includes("engineering")
-  ) {
-    return "Developer Tools & DevOps";
-  }
-  if (
-    lower.includes("communication") ||
-    lower.includes("collaboration") ||
-    lower.includes("chat") ||
-    lower.includes("email")
-  ) {
-    return "Collaboration & Communication";
-  }
-  if (
-    lower.includes("ai") ||
-    lower.includes("machine") ||
-    lower.includes("llm") ||
-    lower.includes("artificial")
-  ) {
-    return "AI & Machine Learning";
-  }
-  if (
-    lower.includes("document") ||
-    lower.includes("file") ||
-    lower.includes("storage") ||
-    lower.includes("drive")
-  ) {
-    return "Document & File Management";
-  }
-  if (
-    lower.includes("productivity") ||
-    lower.includes("project") ||
-    lower.includes("task")
-  ) {
-    return "Productivity & Project Management";
-  }
-  if (lower.includes("crm") || lower.includes("sales")) {
-    return "CRM";
-  }
-  if (
-    lower.includes("analytics") ||
-    lower.includes("data") ||
-    lower.includes("database")
-  ) {
-    return "Analytics & Data";
-  }
-  if (lower.includes("entertainment") || lower.includes("media")) {
-    return "Entertainment & Media";
-  }
-  if (lower.includes("education") || lower.includes("lms")) {
-    return "Education & LMS";
-  }
-  if (lower.includes("design") || lower.includes("creative")) {
-    return "Design & Creative Tools";
-  }
-  if (
-    lower.includes("marketing") ||
-    lower.includes("social") ||
-    lower.includes("ads")
-  ) {
-    return "Marketing & Social Media";
-  }
-  if (
-    lower.includes("schedule") ||
-    lower.includes("booking") ||
-    lower.includes("calendar")
-  ) {
-    return "Scheduling & Booking";
-  }
-  if (
-    lower.includes("commerce") ||
-    lower.includes("ecommerce") ||
-    lower.includes("shop")
-  ) {
-    return "E-commerce";
-  }
-  if (
-    lower.includes("hr") ||
-    lower.includes("finance") ||
-    lower.includes("accounting")
-  ) {
-    return "HR & Finance";
-  }
-
-  return value || "Other";
-};
-
-const normalizeAppCategories = (categories?: string[]) => {
-  const normalized = new Set(
-    (categories || []).map(normalizeCategory).filter(Boolean),
-  );
-
-  return normalized.size > 0 ? [...normalized] : ["Other"];
-};
-
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [pendingToolkitSlug, setPendingToolkitSlug] = useState<string | null>(
     null,
@@ -236,62 +132,24 @@ export const ComposioMarketplace = () => {
     connectMutation.mutate({ toolkitSlug: slug });
   };
 
-  const handleCategoryChange = (category: string) => {
-    setPage(1);
-    if (category === "All") {
-      setSelectedCategories([]);
-      return;
-    }
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? [] : [category],
-    );
-  };
-
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
   };
 
-  const normalizedApps = useMemo<ComposioApp[]>(() => {
+  const filteredApps = useMemo<ComposioApp[]>(() => {
     const apps = (data?.items as ComposioApp[]) || [];
 
-    return apps.map((app) => ({
-      ...app,
-      categories: normalizeAppCategories(app.categories),
-    }));
-  }, [data]);
-
-  const availableCategories = useMemo(() => {
-    const presentCategories = new Set(
-      normalizedApps.flatMap((app) => app.categories || ["Other"]),
-    );
-    const orderedDefaults = DEFAULT_CATEGORIES.filter((category) =>
-      presentCategories.has(category),
-    );
-    const extraCategories = [...presentCategories]
-      .filter((category) => !DEFAULT_CATEGORIES.includes(category))
-      .sort((a, b) => a.localeCompare(b));
-
-    return [...orderedDefaults, ...extraCategories];
-  }, [normalizedApps]);
-
-  const filteredApps = useMemo<ComposioApp[]>(() => {
-    return normalizedApps.filter((app: ComposioApp) => {
+    return apps.filter((app: ComposioApp) => {
       const query = search.trim().toLowerCase();
       const matchesSearch =
         !query ||
         (app.name || "").toLowerCase().includes(query) ||
         (app.slug || "").toLowerCase().includes(query);
 
-      const matchesCategory =
-        selectedCategories.length === 0 ||
-        (app.categories || []).some((category: string) =>
-          selectedCategories.includes(category),
-        );
-
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
-  }, [normalizedApps, search, selectedCategories]);
+  }, [data, search]);
   const totalPages = Math.max(
     1,
     Math.ceil(filteredApps.length / MARKETPLACE_PAGE_SIZE),
@@ -330,23 +188,15 @@ export const ComposioMarketplace = () => {
   }
 
   return (
-    <div className="w-full bg-background">
-      <div className="grid w-full gap-5 p-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:p-5">
-        {/* Sidebar Section */}
-        <SetupSidebar
-          categories={availableCategories}
-          selectedCategories={selectedCategories}
-          onCategoryChange={handleCategoryChange}
-        />
-
-        {/* Main Content Section */}
+    <div className="w-full bg-white">
+      <div className="w-full p-4 lg:p-5">
         <div className="flex min-w-0 flex-col gap-5">
           <header className="space-y-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-foreground">
-                    <LayoutGrid className="size-4 text-background" />
+                  <div className="flex size-9 items-center justify-center rounded-lg border bg-white shadow-sm">
+                    <LayoutGrid className="size-4 text-muted-foreground" />
                   </div>
                   <h1 className="text-xl font-semibold tracking-tight text-foreground">
                     Integrations
@@ -437,19 +287,17 @@ export const ComposioMarketplace = () => {
                     No toolkits found
                   </h3>
                   <p className="mb-6 max-w-sm text-center text-sm leading-6 text-muted-foreground">
-                    We couldn't find any toolkits matching your search and
-                    category selection.
+                    We couldn't find any toolkits matching your search.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       handleSearchChange("");
-                      setSelectedCategories([]);
                       setPage(1);
                     }}
-                    className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-all active:scale-95"
+                    className="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-95"
                   >
-                    Reset filters
+                    Clear search
                   </button>
                 </motion.div>
               )}
