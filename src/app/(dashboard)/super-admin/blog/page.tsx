@@ -28,6 +28,8 @@ import { formatBlogDate, getReadingTime } from "@/features/blog/utils";
 import prisma from "@/lib/db";
 import { deleteBlogPost } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 function getStatusBadge(status: string) {
   if (status === "PUBLISHED") {
     return <Badge className="bg-emerald-500">Published</Badge>;

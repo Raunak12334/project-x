@@ -1,5 +1,10 @@
+"use client";
+
 import type { BlogPostStatus } from "@prisma/client";
 import Link from "next/link";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +16,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createBlogPost, updateBlogPost } from "./actions";
+import {
+  type BlogPostActionState,
+  createBlogPost,
+  updateBlogPost,
+} from "./actions";
 
 type EditableBlogPost = {
   id: string;
@@ -29,11 +38,27 @@ type BlogPostFormProps = {
 
 const statusOptions: BlogPostStatus[] = ["DRAFT", "PUBLISHED", "ARCHIVED"];
 
-export function BlogPostForm({ post }: BlogPostFormProps) {
-  const action = post ? updateBlogPost : createBlogPost;
+type BlogPostAction = (
+  previousState: BlogPostActionState,
+  formData: FormData,
+) => Promise<BlogPostActionState>;
+
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+  const { pending } = useFormStatus();
 
   return (
-    <form action={action} className="grid gap-6 xl:grid-cols-[1fr_340px]">
+    <Button type="submit" className="flex-1" disabled={pending}>
+      {pending ? "Saving..." : isEditing ? "Save changes" : "Create post"}
+    </Button>
+  );
+}
+
+export function BlogPostForm({ post }: BlogPostFormProps) {
+  const action: BlogPostAction = post ? updateBlogPost : createBlogPost;
+  const [state, formAction] = useActionState(action, {});
+
+  return (
+    <form action={formAction} className="grid gap-6 xl:grid-cols-[1fr_340px]">
       {post ? <input type="hidden" name="id" value={post.id} /> : null}
 
       <Card className="border-none shadow-sm">
@@ -44,6 +69,13 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
+          {state.error ? (
+            <Alert variant="destructive">
+              <AlertTitle>Blog post was not saved</AlertTitle>
+              <AlertDescription>{state.error}</AlertDescription>
+            </Alert>
+          ) : null}
+
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -136,9 +168,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
 
         <Card className="border-none shadow-sm">
           <CardContent className="flex gap-3 pt-6">
-            <Button type="submit" className="flex-1">
-              {post ? "Save changes" : "Create post"}
-            </Button>
+            <SubmitButton isEditing={Boolean(post)} />
             <Button asChild type="button" variant="outline">
               <Link href="/super-admin/blog">Cancel</Link>
             </Button>

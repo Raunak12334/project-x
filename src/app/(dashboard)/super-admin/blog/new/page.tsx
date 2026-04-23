@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BlogPostForm } from "../blog-post-form";
 
+export const dynamic = "force-dynamic";
+
 export default function NewBlogPostPage() {
   return (
     <div className="mx-auto max-w-[1600px] space-y-8 p-8">

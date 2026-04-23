@@ -16,10 +16,16 @@ const blogPostSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
 });
 
-function optionalUrl(value: string | undefined) {
-  if (!value) return null;
+export type BlogPostActionState = {
+  error?: string;
+};
 
-  return value;
+function optionalUrl(value: string | undefined) {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) return null;
+
+  return trimmedValue;
 }
 
 async function resolveUniqueSlug(baseSlug: string, currentPostId?: string) {
@@ -74,70 +80,109 @@ function parseBlogPostForm(formData: FormData) {
   };
 }
 
-function revalidateBlogPaths(slug?: string) {
+function getActionErrorMessage(error: unknown) {
+  if (error instanceof z.ZodError) {
+    return error.issues.at(0)?.message ?? "Please check the blog post fields.";
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Something went wrong while saving this blog post.";
+}
+
+function revalidateBlogPaths(slug?: string, id?: string) {
+  revalidatePath("/super-admin/blog");
   revalidatePath("/blog");
   revalidatePath("/sitemap.xml");
+
+  if (id) {
+    revalidatePath(`/super-admin/blog/${id}`);
+  }
 
   if (slug) {
     revalidatePath(`/blog/${slug}`);
   }
 }
 
-export async function createBlogPost(formData: FormData) {
-  const { user } = await requireSuperAdmin();
-  const input = parseBlogPostForm(formData);
-  const slug = await resolveUniqueSlug(input.slug);
+export async function createBlogPost(
+  _previousState: BlogPostActionState,
+  formData: FormData,
+): Promise<BlogPostActionState> {
+  let redirectPath = "/super-admin/blog";
 
-  const post = await prisma.blogPost.create({
-    data: {
-      title: input.title,
-      slug,
-      excerpt: input.excerpt,
-      content: input.content,
-      coverImage: input.coverImage,
-      status: input.status,
-      publishedAt: getPublishedAt(input.status),
-      authorId: user.id,
-    },
-    select: { id: true, slug: true },
-  });
+  try {
+    const { user } = await requireSuperAdmin();
+    const input = parseBlogPostForm(formData);
+    const slug = await resolveUniqueSlug(input.slug);
 
-  revalidateBlogPaths(post.slug);
-  redirect(`/super-admin/blog/${post.id}`);
-}
+    const post = await prisma.blogPost.create({
+      data: {
+        title: input.title,
+        slug,
+        excerpt: input.excerpt,
+        content: input.content,
+        coverImage: input.coverImage,
+        status: input.status,
+        publishedAt: getPublishedAt(input.status),
+        authorId: user.id,
+      },
+      select: { id: true, slug: true },
+    });
 
-export async function updateBlogPost(formData: FormData) {
-  await requireSuperAdmin();
-
-  const id = z.string().min(1).parse(formData.get("id"));
-  const existing = await prisma.blogPost.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, slug: true, publishedAt: true },
-  });
-
-  if (!existing) {
-    throw new Error("Blog post not found.");
+    revalidateBlogPaths(post.slug, post.id);
+    redirectPath = `/super-admin/blog/${post.id}?created=1`;
+  } catch (error) {
+    return { error: getActionErrorMessage(error) };
   }
 
-  const input = parseBlogPostForm(formData);
-  const slug = await resolveUniqueSlug(input.slug, existing.id);
+  redirect(redirectPath);
+}
 
-  await prisma.blogPost.update({
-    where: { id },
-    data: {
-      title: input.title,
-      slug,
-      excerpt: input.excerpt,
-      content: input.content,
-      coverImage: input.coverImage,
-      status: input.status,
-      publishedAt: getPublishedAt(input.status, existing.publishedAt),
-    },
-  });
+export async function updateBlogPost(
+  _previousState: BlogPostActionState,
+  formData: FormData,
+): Promise<BlogPostActionState> {
+  let redirectPath = "/super-admin/blog";
 
-  revalidateBlogPaths(existing.slug);
-  revalidateBlogPaths(slug);
-  redirect(`/super-admin/blog/${id}`);
+  try {
+    await requireSuperAdmin();
+
+    const id = z.string().min(1).parse(formData.get("id"));
+    const existing = await prisma.blogPost.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, slug: true, publishedAt: true },
+    });
+
+    if (!existing) {
+      throw new Error("Blog post not found.");
+    }
+
+    const input = parseBlogPostForm(formData);
+    const slug = await resolveUniqueSlug(input.slug, existing.id);
+
+    await prisma.blogPost.update({
+      where: { id },
+      data: {
+        title: input.title,
+        slug,
+        excerpt: input.excerpt,
+        content: input.content,
+        coverImage: input.coverImage,
+        status: input.status,
+        publishedAt: getPublishedAt(input.status, existing.publishedAt),
+      },
+    });
+
+    revalidateBlogPaths(existing.slug, existing.id);
+    revalidateBlogPaths(slug, existing.id);
+    redirectPath = `/super-admin/blog/${id}?updated=1`;
+  } catch (error) {
+    return { error: getActionErrorMessage(error) };
+  }
+
+  redirect(redirectPath);
 }
 
 export async function deleteBlogPost(formData: FormData) {
@@ -150,9 +195,9 @@ export async function deleteBlogPost(formData: FormData) {
       deletedAt: new Date(),
       status: "ARCHIVED",
     },
-    select: { slug: true },
+    select: { id: true, slug: true },
   });
 
-  revalidateBlogPaths(post.slug);
+  revalidateBlogPaths(post.slug, post.id);
   redirect("/super-admin/blog");
 }

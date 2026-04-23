@@ -1,17 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/db";
 import { BlogPostForm } from "../blog-post-form";
 
+export const dynamic = "force-dynamic";
+
 type EditBlogPostPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string; updated?: string }>;
 };
 
 export default async function EditBlogPostPage({
   params,
+  searchParams,
 }: EditBlogPostPageProps) {
   const { id } = await params;
+  const { created, updated } = await searchParams;
   const post = await prisma.blogPost.findFirst({
     where: { id, deletedAt: null },
     select: {
@@ -53,6 +59,24 @@ export default async function EditBlogPostPage({
           </Button>
         </div>
       </div>
+
+      {created ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+          <AlertTitle>Blog post created</AlertTitle>
+          <AlertDescription>
+            The post was saved successfully. You can keep editing it here.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {updated ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+          <AlertTitle>Blog post updated</AlertTitle>
+          <AlertDescription>
+            Your latest changes were saved successfully.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <BlogPostForm post={post} />
     </div>
