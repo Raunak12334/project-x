@@ -3,6 +3,7 @@
 import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { memo, useState } from "react";
 import { COMPOSIO_CHANNEL_NAME } from "@/inngest/channels/composio";
+import { getIntegrationLogo } from "@/lib/integration-logo";
 import { useNodeStatus } from "../../hooks/use-node-status";
 import { BaseExecutionNode } from "../base-execution-node";
 import { fetchComposioRealtimeToken } from "./actions";
@@ -56,9 +57,13 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
     ? `Action: ${nodeData.toolSlug.slice(0, 30)}`
     : nodeData?.toolkitSlug
       ? `App: ${nodeData.toolkitSlug}`
-    : "Not configured";
+      : "Not configured";
   const name = nodeData?.name || "Composio";
-  const icon = nodeData?.appLogo || "/logos/composio.svg";
+  const icon = getIntegrationLogo({
+    slug: nodeData?.toolkitSlug,
+    name,
+    logo: nodeData?.appLogo,
+  });
 
   return (
     <>

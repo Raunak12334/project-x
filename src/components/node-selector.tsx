@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { NodeType } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { Boxes, SearchIcon, XIcon } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand-logo";
@@ -26,6 +26,7 @@ import {
   nodeCatalogGroups,
 } from "@/config/node-catalog";
 import { isTriggerNodeType } from "@/features/workflows/lib/start-nodes";
+import { getIntegrationLogo } from "@/lib/integration-logo";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
@@ -106,46 +107,58 @@ export function NodeSelector({
     ];
 
     // Map merged apps to individual tools in the catalog
-    const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app) => ({
-      type: NodeType.COMPOSIO,
-      label: app.name,
-      description:
-        app.description || `Integration for ${app.name} via Composio.`,
-      icon: app.logo || Boxes,
-      group: "integrations",
-      keywords: [
-        "composio",
-        app.slug,
-        (app.name || "").toLowerCase(),
-        ...(app.categories || app.tags || []),
-      ],
-      inputs: [], // Dynamic nodes use their own data
-      outputs: [{ key: "data", type: "object", description: "Response data" }],
-      setupGuide: ["Ensure your account is connected in the marketplace."],
-      defaultData: {
-        argumentsJson: "{}",
-        appLogo: app.logo || undefined,
-        integrationId: app.integrationId || undefined,
-        name: `${app.name}`,
-        toolSlug: "",
-        toolkitSlug: app.slug,
-        variableName: toVariableName(app.slug || app.name || "composio"),
-      },
-    }));
+    const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app) => {
+      const appLogo = getIntegrationLogo({
+        slug: app.slug,
+        name: app.name,
+        logo: app.logo,
+      });
+
+      return {
+        type: NodeType.COMPOSIO,
+        label: app.name,
+        description:
+          app.description || `Integration for ${app.name} via Composio.`,
+        icon: appLogo,
+        group: "integrations",
+        keywords: [
+          "composio",
+          app.slug,
+          (app.name || "").toLowerCase(),
+          ...(app.categories || app.tags || []),
+        ],
+        inputs: [], // Dynamic nodes use their own data
+        outputs: [
+          { key: "data", type: "object", description: "Response data" },
+        ],
+        setupGuide: ["Ensure your account is connected in the marketplace."],
+        defaultData: {
+          argumentsJson: "{}",
+          appLogo,
+          integrationId: app.integrationId || undefined,
+          name: `${app.name}`,
+          toolSlug: "",
+          toolkitSlug: app.slug,
+          variableName: toVariableName(app.slug || app.name || "composio"),
+        },
+      };
+    });
 
     const allNodes = [...nodeCatalog, ...dynamicComposioNodes];
 
     return nodeCatalogGroups
       .map((group) => ({
         ...group,
-        items: allNodes.filter(
-          (item) =>
-            item.group === group.id && matchesSearch(item, normalizedSearch),
-        ).filter((item) =>
-          isTriggerOnboardingMode
-            ? isTriggerNodeType(item.type)
-            : !isTriggerNodeType(item.type),
-        ),
+        items: allNodes
+          .filter(
+            (item) =>
+              item.group === group.id && matchesSearch(item, normalizedSearch),
+          )
+          .filter((item) =>
+            isTriggerOnboardingMode
+              ? isTriggerNodeType(item.type)
+              : !isTriggerNodeType(item.type),
+          ),
       }))
       .filter((group) => group.items.length > 0);
   }, [deferredSearch, composioApps, isTriggerOnboardingMode]);
