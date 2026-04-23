@@ -3,13 +3,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { LayoutGrid, SearchIcon, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { LoadingView } from "@/components/entity-components";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useTRPC } from "@/trpc/client";
 import { IntegrationCard } from "./integration-card";
 import { SetupSidebar } from "./setup-sidebar";
+
+const MARKETPLACE_PAGE_SIZE = 12;
 
 interface ComposioApp {
   slug: string;
@@ -30,6 +41,7 @@ export const ComposioMarketplace = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [pendingToolkitSlug, setPendingToolkitSlug] = useState<string | null>(
     null,
   );
@@ -123,6 +135,7 @@ export const ComposioMarketplace = () => {
   };
 
   const handleCategoryChange = (category: string) => {
+    setPage(1);
     if (category === "All") {
       setSelectedCategories([]);
       return;
@@ -132,6 +145,11 @@ export const ComposioMarketplace = () => {
         ? prev.filter((c) => c !== category)
         : [...prev, category],
     );
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
   };
 
   const filteredApps = useMemo<ComposioApp[]>(() => {
@@ -151,6 +169,34 @@ export const ComposioMarketplace = () => {
       return matchesSearch && matchesCategory;
     });
   }, [data, search, selectedCategories]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredApps.length / MARKETPLACE_PAGE_SIZE),
+  );
+  const paginatedApps = useMemo(
+    () =>
+      filteredApps.slice(
+        (page - 1) * MARKETPLACE_PAGE_SIZE,
+        page * MARKETPLACE_PAGE_SIZE,
+      ),
+    [filteredApps, page],
+  );
+  const visiblePages = useMemo(() => {
+    const pages = new Set([1, totalPages, page - 1, page, page + 1]);
+    return [...pages]
+      .filter((item) => item >= 1 && item <= totalPages)
+      .sort((a, b) => a - b);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const goToPage = (nextPage: number) => {
+    setPage(Math.min(Math.max(nextPage, 1), totalPages));
+  };
 
   if (isLoading && !data) {
     return (
@@ -193,14 +239,14 @@ export const ComposioMarketplace = () => {
               <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-foreground" />
               <Input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search over 11,000+ integrations..."
                 className="h-10 rounded-lg border-border/70 bg-background pl-9 text-sm shadow-none transition-all focus-visible:ring-primary/15"
               />
               {search && (
                 <button
                   type="button"
-                  onClick={() => setSearch("")}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors hover:bg-muted"
                 >
                   <X className="size-4 text-muted-foreground" />
@@ -212,7 +258,8 @@ export const ComposioMarketplace = () => {
           <main className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                All Toolkits ({filteredApps.length})
+                All Toolkits ({filteredApps.length}) · Page {page} of{" "}
+                {totalPages}
               </h2>
               <div className="mx-4 h-px flex-1 bg-border/70" />
             </div>
@@ -222,7 +269,7 @@ export const ComposioMarketplace = () => {
               className="grid grid-cols-1 gap-3 xl:grid-cols-2"
             >
               <AnimatePresence mode="popLayout">
-                {filteredApps.map((app: ComposioApp, index: number) => (
+                {paginatedApps.map((app: ComposioApp, index: number) => (
                   <motion.div
                     key={app.slug}
                     initial={{ opacity: 0, y: 20 }}
@@ -272,7 +319,7 @@ export const ComposioMarketplace = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setSearch("");
+                      handleSearchChange("");
                       setSelectedCategories([]);
                     }}
                     className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-all active:scale-95"
@@ -282,6 +329,69 @@ export const ComposioMarketplace = () => {
                 </motion.div>
               )}
             </motion.div>
+
+            {filteredApps.length > MARKETPLACE_PAGE_SIZE && (
+              <Pagination className="justify-end border-t pt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      aria-disabled={page === 1}
+                      className={
+                        page === 1 ? "pointer-events-none opacity-50" : ""
+                      }
+                      onClick={(event) => {
+                        event.preventDefault();
+                        goToPage(page - 1);
+                      }}
+                    />
+                  </PaginationItem>
+                  {visiblePages.map((pageNumber, index) => {
+                    const previousPage = visiblePages[index - 1];
+                    const showGap =
+                      previousPage !== undefined &&
+                      pageNumber - previousPage > 1;
+
+                    return (
+                      <Fragment key={pageNumber}>
+                        {showGap && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        <PaginationItem>
+                          <PaginationLink
+                            href="#"
+                            isActive={pageNumber === page}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              goToPage(pageNumber);
+                            }}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </Fragment>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      aria-disabled={page === totalPages}
+                      className={
+                        page === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                      onClick={(event) => {
+                        event.preventDefault();
+                        goToPage(page + 1);
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </main>
         </div>
       </div>
