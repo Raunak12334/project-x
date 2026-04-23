@@ -1,12 +1,14 @@
 "use client";
 
-import { CheckCircle2, Link2, Loader2, Plug } from "lucide-react";
+import { CheckCircle2, Link2, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface IntegrationCardProps {
   name: string;
   logo?: string | null;
+  logoCandidates?: string[];
   description: string;
   isConnected: boolean;
   onConnect: () => void;
@@ -17,12 +19,30 @@ interface IntegrationCardProps {
 export const IntegrationCard = ({
   name,
   logo,
+  logoCandidates,
   description,
   isConnected,
   onConnect,
   isConnecting,
   authType = "OAUTH2",
 }: IntegrationCardProps) => {
+  const candidates = useMemo(
+    () =>
+      [...(logoCandidates || []), logo || ""].filter(
+        (candidate, index, array) =>
+          Boolean(candidate) && array.indexOf(candidate) === index,
+      ),
+    [logo, logoCandidates],
+  );
+  const [logoIndex, setLogoIndex] = useState(0);
+  const currentLogo = candidates[logoIndex];
+  const initials = name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div
       className={cn(
@@ -41,16 +61,24 @@ export const IntegrationCard = ({
               isConnected && "border-emerald-200",
             )}
           >
-            {logo ? (
+            {currentLogo ? (
               <Image
-                src={logo}
+                key={currentLogo}
+                src={currentLogo}
                 alt={name}
                 width={32}
                 height={32}
                 className="size-full object-contain"
+                onError={() => {
+                  setLogoIndex((current) =>
+                    current + 1 < candidates.length ? current + 1 : current,
+                  );
+                }}
               />
             ) : (
-              <Plug className="size-5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">
+                {initials || name[0] || "?"}
+              </span>
             )}
           </div>
           {isConnected && (

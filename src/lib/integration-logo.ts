@@ -47,8 +47,26 @@ const localIntegrationLogos: Record<string, string> = {
 };
 
 const simpleIconAliases: Record<string, string> = {
+  adobe: "adobe",
+  apollo: "apollo",
+  asana: "asana",
   amazonaws: "amazonaws",
   aws: "amazonaws",
+  basecamp: "basecamp",
+  bamboohr: "bamboohr",
+  bitbucket: "bitbucket",
+  buffer: "buffer",
+  canva: "canva",
+  clickup: "clickup",
+  cohere: "cohere",
+  datadog: "datadog",
+  digitalocean: "digitalocean",
+  exa: "exa",
+  figma: "figma",
+  firecrawl: "firecrawl",
+  framer: "framer",
+  gitlab: "gitlab",
+  gong: "gong",
   "google-analytics": "googleanalytics",
   googleanalytics: "googleanalytics",
   "google-doc": "googledocs",
@@ -57,9 +75,15 @@ const simpleIconAliases: Record<string, string> = {
   googledocs: "googledocs",
   "google-mail": "gmail",
   googlemail: "gmail",
+  grafana: "grafana",
+  gumroad: "gumroad",
+  intercom: "intercom",
   jira: "jira",
+  klaviyo: "klaviyo",
   "lemon-squeezy": "lemonsqueezy",
   lemonsqueezy: "lemonsqueezy",
+  mailchimp: "mailchimp",
+  mixpanel: "mixpanel",
   "microsoft-outlook": "microsoftoutlook",
   microsoftoutlook: "microsoftoutlook",
   "microsoft-teams": "microsoftteams",
@@ -67,17 +91,31 @@ const simpleIconAliases: Record<string, string> = {
   "monday-com": "mondaydotcom",
   monday: "mondaydotcom",
   mondaydotcom: "mondaydotcom",
+  moodle: "moodle",
+  paypal: "paypal",
+  pinecone: "pinecone",
+  pipedrive: "pipedrive",
+  posthog: "posthog",
   "quick-books": "quickbooks",
   quickbooks: "quickbooks",
+  reddit: "reddit",
   "sales-force": "salesforce",
   salesforce: "salesforce",
+  sentry: "sentry",
+  tableau: "tableau",
+  tavily: "tavily",
   "todo-ist": "todoist",
   todoist: "todoist",
+  trello: "trello",
+  vercel: "vercel",
+  webflow: "webflow",
   whatsapp: "whatsapp",
   "woo-commerce": "woocommerce",
   woocommerce: "woocommerce",
   xero: "xero",
+  youtube: "youtube",
   zendesk: "zendesk",
+  zoho: "zoho",
   zoom: "zoom",
 };
 
@@ -92,7 +130,20 @@ const normalizeLogoKey = (value?: string | null) =>
 const isGenericComposioLogo = (slugKey: string, logo?: string | null) =>
   slugKey !== "composio" && Boolean(logo?.toLowerCase().includes("composio"));
 
-export const getIntegrationLogo = ({
+const unique = (values: string[]) =>
+  values.filter(
+    (value, index, array) => value && array.indexOf(value) === index,
+  );
+
+const getLogoDomains = (slugKey: string, nameKey: string) =>
+  unique([
+    slugKey ? `${slugKey}.com` : "",
+    nameKey ? `${nameKey}.com` : "",
+    slugKey ? `${slugKey.replace(/-/g, "")}.com` : "",
+    nameKey ? `${nameKey.replace(/-/g, "")}.com` : "",
+  ]);
+
+export const getIntegrationLogoCandidates = ({
   slug,
   name,
   logo,
@@ -105,21 +156,30 @@ export const getIntegrationLogo = ({
   const nameKey = normalizeLogoKey(name);
   const localLogo =
     localIntegrationLogos[slugKey] || localIntegrationLogos[nameKey];
-
-  if (localLogo) {
-    return localLogo;
-  }
-
-  if (logo && !isGenericComposioLogo(slugKey, logo)) {
-    return logo;
-  }
-
   const simpleIconKey =
     simpleIconAliases[slugKey] || simpleIconAliases[nameKey] || slugKey;
+  const compactSlugKey = slugKey.replace(/-/g, "");
+  const compactNameKey = nameKey.replace(/-/g, "");
+  const domains = getLogoDomains(slugKey, nameKey);
 
-  return (
-    (simpleIconKey
-      ? `https://cdn.simpleicons.org/${simpleIconKey}/111827`
-      : "") || DEFAULT_INTEGRATION_LOGO
-  );
+  return unique([
+    localLogo,
+    logo && !isGenericComposioLogo(slugKey, logo) ? logo : "",
+    simpleIconKey ? `https://cdn.simpleicons.org/${simpleIconKey}` : "",
+    compactSlugKey ? `https://cdn.simpleicons.org/${compactSlugKey}` : "",
+    compactNameKey ? `https://cdn.simpleicons.org/${compactNameKey}` : "",
+    ...domains.map(
+      (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+    ),
+    ...domains.map(
+      (domain) => `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    ),
+    DEFAULT_INTEGRATION_LOGO,
+  ]);
 };
+
+export const getIntegrationLogo = (input: {
+  slug?: string | null;
+  name?: string | null;
+  logo?: string | null;
+}) => getIntegrationLogoCandidates(input)[0] || DEFAULT_INTEGRATION_LOGO;

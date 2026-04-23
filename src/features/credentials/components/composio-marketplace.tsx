@@ -16,7 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { getIntegrationLogo } from "@/lib/integration-logo";
+import { getIntegrationLogoCandidates } from "@/lib/integration-logo";
 import { useTRPC } from "@/trpc/client";
 import { IntegrationCard } from "./integration-card";
 
@@ -254,7 +254,7 @@ export const ComposioMarketplace = () => {
                   >
                     <IntegrationCard
                       name={app.name}
-                      logo={getIntegrationLogo({
+                      logoCandidates={getIntegrationLogoCandidates({
                         slug: app.slug,
                         name: app.name,
                         logo: app.logo,
