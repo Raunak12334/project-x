@@ -3,7 +3,7 @@
 import { Filter, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   "Developer Tools & DevOps",
   "Collaboration & Communication",
   "AI & Machine Learning",
@@ -17,14 +17,18 @@ export const CATEGORIES = [
   "Marketing & Social Media",
   "Scheduling & Booking",
   "E-commerce",
+  "HR & Finance",
+  "Other",
 ];
 
 interface SetupSidebarProps {
+  categories?: string[];
   selectedCategories: string[];
   onCategoryChange: (category: string) => void;
 }
 
 export const SetupSidebar = ({
+  categories = DEFAULT_CATEGORIES,
   selectedCategories,
   onCategoryChange,
 }: SetupSidebarProps) => {
@@ -67,7 +71,7 @@ export const SetupSidebar = ({
             )}
           </button>
 
-          {CATEGORIES.map((category) => {
+          {categories.map((category) => {
             const isActive = selectedCategories.includes(category);
             return (
               <button
