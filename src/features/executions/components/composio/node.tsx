@@ -9,6 +9,8 @@ import { fetchComposioRealtimeToken } from "./actions";
 import { ComposioDialog, type ComposioFormValues } from "./dialog";
 
 type ComposioNodeData = {
+  appLogo?: string;
+  name?: string;
   variableName?: string;
   credentialId?: string;
   integrationId?: string;
@@ -55,6 +57,8 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
     : nodeData?.toolkitSlug
       ? `App: ${nodeData.toolkitSlug}`
     : "Not configured";
+  const name = nodeData?.name || "Composio";
+  const icon = nodeData?.appLogo || "/logos/composio.svg";
 
   return (
     <>
@@ -67,6 +71,8 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
       <BaseExecutionNode
         {...props}
         id={props.id}
+        icon={icon}
+        name={name}
         status={nodeStatus}
         description={description}
         onSettings={handleOpenSettings}

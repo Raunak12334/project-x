@@ -124,6 +124,7 @@ export function NodeSelector({
       setupGuide: ["Ensure your account is connected in the marketplace."],
       defaultData: {
         argumentsJson: "{}",
+        appLogo: app.logo || undefined,
         integrationId: app.integrationId || undefined,
         name: `${app.name}`,
         toolSlug: "",
