@@ -1,9 +1,9 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { LayoutGrid, SearchIcon, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { LoadingView } from "@/components/entity-components";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ type ConnectVariables = {
 
 export const ComposioMarketplace = () => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [pendingToolkitSlug, setPendingToolkitSlug] = useState<string | null>(
@@ -47,6 +48,9 @@ export const ComposioMarketplace = () => {
       },
     ),
   );
+  const refreshCredentialsList = useCallback(() => {
+    queryClient.invalidateQueries(trpc.credentials.getMany.queryFilter());
+  }, [queryClient, trpc]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -57,12 +61,13 @@ export const ComposioMarketplace = () => {
         toast.success(`Successfully connected to ${toolkit}!`);
         setPendingToolkitSlug(null);
         refetch();
+        refreshCredentialsList();
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [refetch]);
+  }, [refetch, refreshCredentialsList]);
 
   useEffect(() => {
     if (!pendingToolkitSlug || !pendingConnectionStatus?.connected) {
@@ -72,7 +77,13 @@ export const ComposioMarketplace = () => {
     toast.success(`Successfully connected to ${pendingToolkitSlug}!`);
     setPendingToolkitSlug(null);
     refetch();
-  }, [pendingConnectionStatus, pendingToolkitSlug, refetch]);
+    refreshCredentialsList();
+  }, [
+    pendingConnectionStatus,
+    pendingToolkitSlug,
+    refetch,
+    refreshCredentialsList,
+  ]);
 
   const openCenteredPopup = (
     url: string,

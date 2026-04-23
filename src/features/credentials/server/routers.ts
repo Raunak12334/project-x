@@ -83,39 +83,95 @@ export const credentialsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { page, pageSize, search } = input;
+      const searchFilter = search.trim();
 
-      const [items, totalCount] = await Promise.all([
+      const [credentials, integrations] = await Promise.all([
         prisma.credential.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
           where: {
             organizationId: ctx.auth.organizationId,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
+            deletedAt: null,
+            ...(searchFilter
+              ? {
+                  name: {
+                    contains: searchFilter,
+                    mode: "insensitive" as const,
+                  },
+                }
+              : {}),
           },
           orderBy: {
             updatedAt: "desc",
           },
         }),
-        prisma.credential.count({
+        prisma.composioIntegration.findMany({
           where: {
             organizationId: ctx.auth.organizationId,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
+            deletedAt: null,
+            isConnected: true,
+            ...(searchFilter
+              ? {
+                  OR: [
+                    {
+                      name: {
+                        contains: searchFilter,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                    {
+                      toolkitSlug: {
+                        contains: searchFilter,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                    {
+                      accountName: {
+                        contains: searchFilter,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  ],
+                }
+              : {}),
+          },
+          orderBy: {
+            updatedAt: "desc",
           },
         }),
       ]);
 
+      const items = [
+        ...credentials.map((credential) => ({
+          id: credential.id,
+          source: "credential" as const,
+          name: credential.name,
+          type: credential.type,
+          createdAt: credential.createdAt,
+          updatedAt: credential.updatedAt,
+        })),
+        ...integrations.map((integration) => ({
+          id: integration.id,
+          source: "integration" as const,
+          name: integration.name || integration.toolkitSlug,
+          type: CredentialType.COMPOSIO,
+          toolkitSlug: integration.toolkitSlug,
+          accountName: integration.accountName,
+          logo: integration.logo,
+          createdAt: integration.createdAt,
+          updatedAt: integration.updatedAt,
+        })),
+      ].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+
+      const totalCount = items.length;
+      const paginatedItems = items.slice(
+        (page - 1) * pageSize,
+        page * pageSize,
+      );
       const totalPages = Math.ceil(totalCount / pageSize);
       const hasNextPage = page < totalPages;
       const hasPreviousPage = page > 1;
 
       return {
-        items,
+        items: paginatedItems,
         page,
         pageSize,
         totalCount,

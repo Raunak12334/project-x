@@ -1,7 +1,8 @@
 "use client";
 
-import type { Credential } from "@prisma/client";
+import { CredentialType } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
+import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,14 +17,20 @@ import {
   ErrorView,
   LoadingView,
 } from "@/components/entity-components";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEntitySearch } from "@/hooks/use-entity-search";
+import { getIntegrationLogo } from "@/lib/integration-logo";
 import {
   useRemoveCredential,
   useSuspenseCredentials,
 } from "../hooks/use-credentials";
 import { useCredentialsParams } from "../hooks/use-credentials-params";
 import { ComposioMarketplace } from "./composio-marketplace";
+
+type CredentialListItem = ReturnType<
+  typeof useSuspenseCredentials
+>["data"]["items"][number];
 
 export const CredentialsSearch = () => {
   const [params, setParams] = useCredentialsParams();
@@ -156,35 +163,69 @@ const credentialLogos: Record<string, string> = {
   GEMINI: "/logos/gemini.svg",
   GEMMA: "/logos/google.svg",
   HUGGINGFACE: "/logos/huggingface.svg",
+  COMPOSIO: "/logos/composio.svg",
   GENERIC: "/logos/google.svg",
 };
 
-export const CredentialItem = ({ data }: { data: Credential }) => {
+export const CredentialItem = ({ data }: { data: CredentialListItem }) => {
   const removeCredential = useRemoveCredential();
 
   const handleRemove = () => {
+    if (data.source !== "credential") {
+      return;
+    }
+
     removeCredential.mutate({ id: data.id });
   };
 
-  const logo = credentialLogos[data.type] || "/logos/openai.svg";
+  const logo =
+    data.source === "integration"
+      ? getIntegrationLogo({
+          slug: data.toolkitSlug,
+          name: data.name,
+          logo: data.logo,
+        })
+      : credentialLogos[data.type] || "/logos/openai.svg";
+  const isIntegration = data.source === "integration";
 
   return (
     <EntityItem
-      href={`/credentials/${data.id}`}
+      href={isIntegration ? "/credentials" : `/credentials/${data.id}`}
       title={data.name}
       subtitle={
-        <>
-          Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}{" "}
-          &bull; Created{" "}
-          {formatDistanceToNow(data.createdAt, { addSuffix: true })}
-        </>
+        isIntegration ? (
+          <>
+            Connected app
+            {data.accountName ? ` • ${data.accountName}` : ""} • Updated{" "}
+            {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
+          </>
+        ) : (
+          <>
+            Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}{" "}
+            &bull; Created{" "}
+            {formatDistanceToNow(data.createdAt, { addSuffix: true })}
+          </>
+        )
       }
       image={
-        <div className="size-8 flex items-center justify-center">
+        <div className="flex size-8 items-center justify-center">
           <Image src={logo} alt={data.type} width={20} height={20} />
         </div>
       }
-      onRemove={handleRemove}
+      actions={
+        isIntegration ? (
+          <Badge
+            variant="outline"
+            className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-700"
+          >
+            <CheckCircle2Icon className="size-3" />
+            Connected
+          </Badge>
+        ) : data.type === CredentialType.COMPOSIO ? (
+          <Badge variant="outline">Composio key</Badge>
+        ) : null
+      }
+      onRemove={isIntegration ? undefined : handleRemove}
       isRemoving={removeCredential.isPending}
     />
   );
