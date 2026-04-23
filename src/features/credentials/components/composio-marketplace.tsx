@@ -16,6 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { getIntegrationLogo } from "@/lib/integration-logo";
 import { useTRPC } from "@/trpc/client";
 import { IntegrationCard } from "./integration-card";
 
@@ -253,7 +254,11 @@ export const ComposioMarketplace = () => {
                   >
                     <IntegrationCard
                       name={app.name}
-                      logo={app.logo}
+                      logo={getIntegrationLogo({
+                        slug: app.slug,
+                        name: app.name,
+                        logo: app.logo,
+                      })}
                       description={
                         app.description ||
                         `Integrate ${app.name} tools into your Otogent workflows.`

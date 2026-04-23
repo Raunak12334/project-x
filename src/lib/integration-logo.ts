@@ -46,6 +46,41 @@ const localIntegrationLogos: Record<string, string> = {
   x: "/logos/Twitter.svg",
 };
 
+const simpleIconAliases: Record<string, string> = {
+  amazonaws: "amazonaws",
+  aws: "amazonaws",
+  "google-analytics": "googleanalytics",
+  googleanalytics: "googleanalytics",
+  "google-doc": "googledocs",
+  googledoc: "googledocs",
+  "google-docs": "googledocs",
+  googledocs: "googledocs",
+  "google-mail": "gmail",
+  googlemail: "gmail",
+  jira: "jira",
+  "lemon-squeezy": "lemonsqueezy",
+  lemonsqueezy: "lemonsqueezy",
+  "microsoft-outlook": "microsoftoutlook",
+  microsoftoutlook: "microsoftoutlook",
+  "microsoft-teams": "microsoftteams",
+  microsoftteams: "microsoftteams",
+  "monday-com": "mondaydotcom",
+  monday: "mondaydotcom",
+  mondaydotcom: "mondaydotcom",
+  "quick-books": "quickbooks",
+  quickbooks: "quickbooks",
+  "sales-force": "salesforce",
+  salesforce: "salesforce",
+  "todo-ist": "todoist",
+  todoist: "todoist",
+  whatsapp: "whatsapp",
+  "woo-commerce": "woocommerce",
+  woocommerce: "woocommerce",
+  xero: "xero",
+  zendesk: "zendesk",
+  zoom: "zoom",
+};
+
 const normalizeLogoKey = (value?: string | null) =>
   (value || "")
     .trim()
@@ -79,8 +114,12 @@ export const getIntegrationLogo = ({
     return logo;
   }
 
+  const simpleIconKey =
+    simpleIconAliases[slugKey] || simpleIconAliases[nameKey] || slugKey;
+
   return (
-    (slugKey ? `https://cdn.simpleicons.org/${slugKey}/111827` : "") ||
-    DEFAULT_INTEGRATION_LOGO
+    (simpleIconKey
+      ? `https://cdn.simpleicons.org/${simpleIconKey}/111827`
+      : "") || DEFAULT_INTEGRATION_LOGO
   );
 };
