@@ -1,7 +1,13 @@
 import type { Realtime } from "@inngest/realtime";
-import { ExecutionStatus, type NodeType, Prisma } from "@prisma/client";
+import {
+  ExecutionStatus,
+  NodeStatus,
+  type NodeType,
+  Prisma,
+} from "@prisma/client";
 import { NonRetriableError } from "inngest";
 import type { StepTools } from "@/features/executions/types";
+import type { NodeExecutionResult } from "@/features/nodes/core/types";
 import { executeNode } from "@/features/nodes/system/engine-adapter";
 import { resolveWorkflowStartNodeIds } from "@/features/workflows/lib/start-nodes";
 import { isLangGraphEnabled } from "@/langgraph/config";
@@ -47,6 +53,20 @@ type RuntimeConnection = {
   toNodeId: string;
   fromOutput: string;
 };
+
+const toJsonValue = (value: unknown): Prisma.InputJsonValue => {
+  if (value === undefined) {
+    return Prisma.JsonNull as unknown as Prisma.InputJsonValue;
+  }
+
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const getErrorStack = (error: unknown) =>
+  error instanceof Error ? error.stack : undefined;
 
 const getSelectedRouteForNode = (
   variables: Record<string, unknown>,
@@ -122,6 +142,7 @@ const runLegacyWorkflow = async (params: {
   orderedNodes: RuntimeNode[];
   connections: RuntimeConnection[];
   organizationId: string;
+  executionId: string;
   initialData: Record<string, unknown>;
   triggerNodeId?: string;
   step: StepTools;
@@ -181,22 +202,81 @@ const runLegacyWorkflow = async (params: {
       organizationId: params.organizationId,
     });
 
-    const result = await executeNode({
-      node: {
-        id: node.id,
-        type: node.type as NodeType,
-        data: (node.data as Record<string, unknown>) ?? {},
-      },
-      organizationId: params.organizationId,
-      context,
-      step: params.step,
-      publish: params.publish,
-    });
+    const nodeInput = context;
+    const nodeStartedAt = new Date();
+    const nodeExecution = await params.step.run(
+      `${node.id}-node-execution-start`,
+      async () => {
+        const attempt =
+          (await prisma.nodeExecution.count({
+            where: {
+              executionId: params.executionId,
+              nodeId: node.id,
+            },
+          })) + 1;
 
-    if (result.status === "FAILURE") {
-      throw new Error(
-        result.error?.message || `Node ${node.id} failed execution`,
-      );
+        return prisma.nodeExecution.create({
+          data: {
+            executionId: params.executionId,
+            nodeId: node.id,
+            status: NodeStatus.RUNNING,
+            startedAt: nodeStartedAt,
+            attempt,
+            output: toJsonValue({
+              nodeType: node.type,
+              input: nodeInput,
+              logs: [`Started ${node.type}`],
+            }),
+          },
+        });
+      },
+    );
+
+    let result: NodeExecutionResult;
+    try {
+      result = await executeNode({
+        node: {
+          id: node.id,
+          type: node.type as NodeType,
+          data: (node.data as Record<string, unknown>) ?? {},
+        },
+        organizationId: params.organizationId,
+        context,
+        step: params.step,
+        publish: params.publish,
+      });
+
+      if (result.status === "FAILURE") {
+        throw new Error(
+          result.error?.message || `Node ${node.id} failed execution`,
+        );
+      }
+    } catch (error) {
+      const completedAt = new Date();
+      const durationMs = completedAt.getTime() - nodeStartedAt.getTime();
+
+      await params.step.run(`${node.id}-node-execution-failed`, async () => {
+        return prisma.nodeExecution.update({
+          where: { id: nodeExecution.id },
+          data: {
+            status: NodeStatus.FAILED,
+            completedAt,
+            error: getErrorMessage(error),
+            output: toJsonValue({
+              nodeType: node.type,
+              input: nodeInput,
+              error: {
+                message: getErrorMessage(error),
+                stack: getErrorStack(error),
+              },
+              logs: [`Started ${node.type}`, `Failed ${node.type}`],
+              durationMs,
+            }),
+          },
+        });
+      });
+
+      throw error;
     }
 
     // CRITICAL FIX: Merge context instead of replacing it
@@ -235,6 +315,34 @@ const runLegacyWorkflow = async (params: {
       routeId: result.routeId,
       nextNodeCount: nextConnections.length,
     });
+
+    const nodeCompletedAt = new Date();
+    const durationMs = nodeCompletedAt.getTime() - nodeStartedAt.getTime();
+    await params.step.run(`${node.id}-node-execution-success`, async () => {
+      return prisma.nodeExecution.update({
+        where: { id: nodeExecution.id },
+        data: {
+          status: NodeStatus.SUCCESS,
+          completedAt: nodeCompletedAt,
+          output: toJsonValue({
+            nodeType: node.type,
+            input: nodeInput,
+            output: resultData,
+            routeId: result.routeId,
+            nextNodeIds: nextConnections.map(
+              (connection) => connection.toNodeId,
+            ),
+            logs: [
+              `Started ${node.type}`,
+              `Selected route ${result.routeId}`,
+              `Completed ${node.type}`,
+            ],
+            durationMs,
+          }),
+        },
+      });
+    });
+
     for (const connection of nextConnections) {
       logger.debug("workflow.node.activated", {
         fromNodeId: node.id,
@@ -411,7 +519,11 @@ export const executeWorkflow = inngest.createFunction(
         const workflow = await prisma.workflow.findUniqueOrThrow({
           where: { id: workflowId },
           include: {
-            nodes: true,
+            nodes: {
+              where: {
+                deletedAt: null,
+              },
+            },
             connections: true,
           },
         });
@@ -462,6 +574,7 @@ export const executeWorkflow = inngest.createFunction(
         orderedNodes: workflowDefinition.nodes,
         connections: workflowDefinition.connections,
         organizationId,
+        executionId: execution.id,
         initialData: (event.data.initialData || {}) as Record<string, unknown>,
         triggerNodeId,
         step,

@@ -106,24 +106,40 @@ const persistWorkflowGraph = async (params: {
     where: { workflowId },
   });
 
-  await tx.node.deleteMany({
-    where: { workflowId },
+  const activeNodeIds = nodes.map((node) => node.id);
+  await tx.node.updateMany({
+    where: {
+      workflowId,
+      id: { notIn: activeNodeIds },
+    },
+    data: { deletedAt: new Date() },
   });
 
-  await tx.node.createMany({
-    data: nodes.map((node) => {
+  await Promise.all(
+    nodes.map((node) => {
       const type = nodeTypeSchema.parse(node.type);
 
-      return {
-        id: node.id,
-        workflowId,
-        name: type,
-        type,
-        position: node.position,
-        data: node.data || {},
-      };
+      return tx.node.upsert({
+        where: { id: node.id },
+        create: {
+          id: node.id,
+          workflowId,
+          name: type,
+          type,
+          position: node.position,
+          data: node.data || {},
+          deletedAt: null,
+        },
+        update: {
+          name: type,
+          type,
+          position: node.position,
+          data: node.data || {},
+          deletedAt: null,
+        },
+      });
     }),
-  });
+  );
 
   const connections = normalizeAndDedupeWorkflowConnections(edges).map(
     (edge) => ({
@@ -196,7 +212,14 @@ export const workflowsRouter = createTRPCRouter({
             id: input.id,
             organizationId: ctx.auth.organizationId,
           },
-          include: { nodes: true, connections: true },
+          include: {
+            nodes: {
+              where: {
+                deletedAt: null,
+              },
+            },
+            connections: true,
+          },
         });
 
         await validateWorkflowOrThrow({
@@ -356,7 +379,14 @@ export const workflowsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const workflow = await prisma.workflow.findUniqueOrThrow({
         where: { id: input.id, organizationId: ctx.auth.organizationId },
-        include: { nodes: true, connections: true },
+        include: {
+          nodes: {
+            where: {
+              deletedAt: null,
+            },
+          },
+          connections: true,
+        },
       });
 
       // Transform server nodes to react-flow compatible nodes

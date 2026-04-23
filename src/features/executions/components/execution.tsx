@@ -1,6 +1,6 @@
 "use client";
 
-import { ExecutionStatus } from "@prisma/client";
+import { ExecutionStatus, NodeStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2Icon,
@@ -47,6 +47,44 @@ const getStatusIcon = (status: ExecutionStatus) => {
 
 const formatStatus = (status: ExecutionStatus) => {
   return status.charAt(0) + status.slice(1).toLowerCase();
+};
+
+const formatNodeStatus = (status: NodeStatus) => {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+};
+
+const getNodeStatusIcon = (status: NodeStatus) => {
+  switch (status) {
+    case NodeStatus.SUCCESS:
+      return <CheckCircle2Icon className="size-4 text-green-600" />;
+    case NodeStatus.FAILED:
+      return <XCircleIcon className="size-4 text-red-600" />;
+    case NodeStatus.RUNNING:
+      return <Loader2Icon className="size-4 animate-spin text-blue-600" />;
+    default:
+      return <ClockIcon className="size-4 text-muted-foreground" />;
+  }
+};
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const getMetaValue = (output: unknown, key: string) => {
+  const record = asRecord(output);
+  return record[key];
+};
+
+const formatDurationMs = (
+  startedAt: Date | string,
+  completedAt?: Date | string | null,
+) => {
+  if (!completedAt) {
+    return null;
+  }
+
+  return `${new Date(completedAt).getTime() - new Date(startedAt).getTime()}ms`;
 };
 
 export const ExecutionView = ({ executionId }: { executionId: string }) => {
@@ -208,6 +246,124 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
             </pre>
           </div>
         )}
+
+        <div className="mt-6 rounded-md border bg-background">
+          <div className="border-b p-4">
+            <p className="font-medium text-sm">Node timeline</p>
+            <p className="text-muted-foreground text-xs">
+              {execution.nodeExecutions.length} node
+              {execution.nodeExecutions.length === 1 ? "" : "s"} recorded for
+              this run
+            </p>
+          </div>
+
+          {execution.nodeExecutions.length === 0 ? (
+            <div className="p-4 text-muted-foreground text-sm">
+              No node-level records have been captured for this execution yet.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {execution.nodeExecutions.map((nodeExecution) => {
+                const routeId = getMetaValue(nodeExecution.output, "routeId");
+                const duration =
+                  typeof getMetaValue(nodeExecution.output, "durationMs") ===
+                  "number"
+                    ? `${getMetaValue(nodeExecution.output, "durationMs")}ms`
+                    : formatDurationMs(
+                        nodeExecution.startedAt,
+                        nodeExecution.completedAt,
+                      );
+
+                return (
+                  <Collapsible key={nodeExecution.id}>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-muted/60"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          {getNodeStatusIcon(nodeExecution.status)}
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-sm">
+                              {nodeExecution.node.name ||
+                                nodeExecution.node.type}
+                            </span>
+                            <span className="block truncate text-muted-foreground text-xs">
+                              {nodeExecution.node.type} / {nodeExecution.nodeId}
+                            </span>
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-3 text-muted-foreground text-xs">
+                          {routeId ? (
+                            <span>Route: {String(routeId)}</span>
+                          ) : null}
+                          {duration ? <span>{duration}</span> : null}
+                          <span>{formatNodeStatus(nodeExecution.status)}</span>
+                        </span>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="space-y-3 border-t bg-muted/30 p-4">
+                        <div className="grid gap-3 text-sm md:grid-cols-3">
+                          <div>
+                            <p className="font-medium text-muted-foreground text-xs">
+                              Started
+                            </p>
+                            <p>
+                              {new Date(
+                                nodeExecution.startedAt,
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-muted-foreground text-xs">
+                              Completed
+                            </p>
+                            <p>
+                              {nodeExecution.completedAt
+                                ? new Date(
+                                    nodeExecution.completedAt,
+                                  ).toLocaleString()
+                                : "Still running"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-muted-foreground text-xs">
+                              Attempt
+                            </p>
+                            <p>{nodeExecution.attempt}</p>
+                          </div>
+                        </div>
+
+                        {nodeExecution.error ? (
+                          <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                            <p className="font-medium text-red-900 text-xs">
+                              Error
+                            </p>
+                            <p className="mt-1 font-mono text-red-800 text-xs">
+                              {nodeExecution.error}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        {nodeExecution.output ? (
+                          <div className="rounded-md border bg-background p-3">
+                            <p className="mb-2 font-medium text-xs">
+                              Input, output, route, and logs
+                            </p>
+                            <pre className="max-h-96 overflow-auto text-xs">
+                              {JSON.stringify(nodeExecution.output, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {execution.checkpoints.length > 0 && (
           <div className="mt-6 p-4 bg-muted rounded-md space-y-3">

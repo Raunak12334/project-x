@@ -174,6 +174,25 @@ export const executionsRouter = createTRPCRouter({
               sequence: "asc",
             },
           },
+          nodeExecutions: {
+            orderBy: [
+              {
+                startedAt: "asc",
+              },
+              {
+                attempt: "asc",
+              },
+            ],
+            include: {
+              node: {
+                select: {
+                  id: true,
+                  name: true,
+                  type: true,
+                },
+              },
+            },
+          },
           workflow: {
             select: {
               id: true,
