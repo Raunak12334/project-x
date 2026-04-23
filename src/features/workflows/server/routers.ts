@@ -5,6 +5,7 @@ import type { Edge, Node } from "@xyflow/react";
 import { generateSlug } from "random-word-slugs";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
+import { getExecutor } from "@/features/executions/lib/executor-registry";
 import { getWorkflowTemplateById } from "@/features/templates/lib/workflow-templates";
 import {
   makeConnectionKey,
@@ -38,6 +39,8 @@ const workflowEdgeInputSchema = z.object({
 
 type WorkflowNodeInput = z.infer<typeof workflowNodeInputSchema>;
 type WorkflowEdgeInput = z.infer<typeof workflowEdgeInputSchema>;
+
+const testNodeSampleInputSchema = z.record(z.string(), z.any()).optional();
 
 const getValidationContext = async (organizationId: string) => {
   const [credentials, integrations] = await Promise.all([
@@ -249,6 +252,13 @@ const getCurrentWorkflowGraph = async (params: {
   };
 };
 
+const createImmediateStepTools = () =>
+  ({
+    run: async (_id: string, callback: () => unknown) => callback(),
+  }) as never;
+
+const createNoopPublisher = () => (async () => undefined) as never;
+
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
     .input(
@@ -338,6 +348,87 @@ export const workflowsRouter = createTRPCRouter({
         executionId: execution.id,
         workflowVersionId: workflowVersion.id,
       };
+    }),
+  testNode: protectedProcedure
+    .input(
+      z.object({
+        workflowId: z.string(),
+        nodeId: z.string(),
+        node: workflowNodeInputSchema,
+        nodes: z.array(workflowNodeInputSchema),
+        edges: z.array(workflowEdgeInputSchema),
+        sampleInput: testNodeSampleInputSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id: input.workflowId,
+          organizationId: ctx.auth.organizationId,
+        },
+        select: { id: true },
+      });
+
+      const nodeType = z.enum(NodeType).parse(input.node.type);
+      const executor = getExecutor(nodeType);
+      const startedAt = Date.now();
+      const logs: Array<Record<string, unknown>> = [
+        {
+          level: "info",
+          message: `Testing ${nodeType}`,
+          timestamp: new Date(startedAt).toISOString(),
+        },
+      ];
+
+      try {
+        const output = await executor({
+          data: (input.node.data ?? {}) as Record<string, unknown>,
+          nodeId: input.nodeId,
+          organizationId: ctx.auth.organizationId,
+          context: input.sampleInput ?? { trigger: {} },
+          step: createImmediateStepTools(),
+          publish: createNoopPublisher(),
+        });
+        const durationMs = Date.now() - startedAt;
+
+        logs.push({
+          level: "info",
+          message: `Test completed ${nodeType}`,
+          timestamp: new Date().toISOString(),
+          durationMs,
+        });
+
+        return {
+          ok: true,
+          status: "success" as const,
+          durationMs,
+          input: input.sampleInput ?? { trigger: {} },
+          output,
+          logs,
+        };
+      } catch (error) {
+        const durationMs = Date.now() - startedAt;
+        const message = error instanceof Error ? error.message : String(error);
+
+        logs.push({
+          level: "error",
+          message,
+          timestamp: new Date().toISOString(),
+          durationMs,
+        });
+
+        return {
+          ok: false,
+          status: "failed" as const,
+          durationMs,
+          input: input.sampleInput ?? { trigger: {} },
+          error: {
+            message,
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          logs,
+        };
+      }
     }),
   create: premiumProcedure.mutation(({ ctx }) => {
     return prisma.workflow.create({
