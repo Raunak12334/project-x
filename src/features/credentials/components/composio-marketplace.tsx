@@ -29,11 +29,23 @@ export const ComposioMarketplace = () => {
   const trpc = useTRPC();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [pendingToolkitSlug, setPendingToolkitSlug] = useState<string | null>(
+    null,
+  );
 
   const { data, isLoading, refetch } = useQuery(
     trpc.composio.listApps.queryOptions({
       search,
     }),
+  );
+  const { data: pendingConnectionStatus } = useQuery(
+    trpc.composio.getConnectionStatus.queryOptions(
+      { toolkitSlug: pendingToolkitSlug || "" },
+      {
+        enabled: Boolean(pendingToolkitSlug),
+        refetchInterval: pendingToolkitSlug ? 2000 : false,
+      },
+    ),
   );
 
   useEffect(() => {
@@ -43,6 +55,7 @@ export const ComposioMarketplace = () => {
       if (event.data?.type === "composio-connection-success") {
         const toolkit = event.data.toolkitSlug;
         toast.success(`Successfully connected to ${toolkit}!`);
+        setPendingToolkitSlug(null);
         refetch();
       }
     };
@@ -50,6 +63,16 @@ export const ComposioMarketplace = () => {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [refetch]);
+
+  useEffect(() => {
+    if (!pendingToolkitSlug || !pendingConnectionStatus?.connected) {
+      return;
+    }
+
+    toast.success(`Successfully connected to ${pendingToolkitSlug}!`);
+    setPendingToolkitSlug(null);
+    refetch();
+  }, [pendingConnectionStatus, pendingToolkitSlug, refetch]);
 
   const openCenteredPopup = (
     url: string,
@@ -69,8 +92,9 @@ export const ComposioMarketplace = () => {
 
   const connectMutation = useMutation(
     trpc.composio.getConnectUrl.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         if (data.url) {
+          setPendingToolkitSlug(variables.toolkitSlug);
           openCenteredPopup(data.url, "Connect Integration", 600, 750);
           toast.success("Opening connection portal...");
         } else {

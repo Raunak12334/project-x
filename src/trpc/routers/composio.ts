@@ -124,7 +124,10 @@ export const composioRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const callbackUrl = getComposioCallbackUrl(ctx.auth.organizationId);
+        const callbackUrl = getComposioCallbackUrl(
+          ctx.auth.organizationId,
+          input.toolkitSlug,
+        );
         const connectionRequest = await createComposioConnection({
           organizationId: ctx.auth.organizationId,
           toolkitSlug: input.toolkitSlug,
@@ -157,6 +160,7 @@ export const composioRouter = createTRPCRouter({
         return {
           url: connectionRequest.redirectUrl,
           connectionId: connectionRequest.id,
+          toolkitSlug: input.toolkitSlug,
         };
       } catch (error) {
         console.error("Error getting Composio connect URL:", error);
@@ -192,6 +196,37 @@ export const composioRouter = createTRPCRouter({
         console.error("Error listing available actions:", error);
         return { items: [] };
       }
+    }),
+  getConnectionStatus: protectedProcedure
+    .input(
+      z.object({
+        toolkitSlug: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const integration = await prisma.composioIntegration.findUnique({
+        where: {
+          organizationId_toolkitSlug: {
+            organizationId: ctx.auth.organizationId,
+            toolkitSlug: input.toolkitSlug,
+          },
+        },
+        select: {
+          id: true,
+          connectionId: true,
+          isConnected: true,
+          lastSyncedAt: true,
+          accountName: true,
+        },
+      });
+
+      return {
+        connected: integration?.isConnected ?? false,
+        integrationId: integration?.id ?? null,
+        connectionId: integration?.connectionId ?? null,
+        accountName: integration?.accountName ?? null,
+        lastSyncedAt: integration?.lastSyncedAt ?? null,
+      };
     }),
   disconnect: protectedProcedure
     .input(

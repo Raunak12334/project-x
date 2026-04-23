@@ -15,7 +15,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = connectSchema.parse(body);
 
-    const callbackUrl = getComposioCallbackUrl(input.organizationId);
+    const callbackUrl = getComposioCallbackUrl(
+      input.organizationId,
+      input.toolkitSlug,
+    );
     const connectionRequest = await createComposioConnection({
       organizationId: input.organizationId,
       toolkitSlug: input.toolkitSlug,

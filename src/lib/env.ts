@@ -34,9 +34,19 @@ export function getComposioApiKey() {
   return requireEnv("COMPOSIO_API_KEY");
 }
 
-export function getComposioCallbackUrl(organizationId: string) {
+export function getComposioCallbackUrl(
+  organizationId: string,
+  toolkitSlug?: string,
+) {
   const appUrl = getAppUrl();
-  return `${appUrl}/api/integrations/composio/callback?orgId=${organizationId}`;
+  const url = new URL("/api/integrations/composio/callback", appUrl);
+  url.searchParams.set("orgId", organizationId);
+
+  if (toolkitSlug) {
+    url.searchParams.set("toolkit_slug", toolkitSlug);
+  }
+
+  return url.toString();
 }
 
 export function getProductionEnvReport() {
