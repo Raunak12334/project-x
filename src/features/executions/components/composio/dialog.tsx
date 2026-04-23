@@ -161,28 +161,32 @@ export const ComposioDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden rounded-2xl p-0 shadow-2xl sm:max-w-3xl">
+        <DialogHeader className="border-b bg-muted/30 px-6 py-5 pr-14">
           <DialogTitle>Composio Execution Configuration</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="max-w-2xl">
             Configure a tool execution directly via Composio.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8 mt-4"
+            className="grid max-h-[calc(100dvh-8.5rem)] gap-5 overflow-y-auto px-5 py-5 sm:grid-cols-2 sm:px-6"
           >
             <FormField
               control={form.control}
               name="variableName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Variable Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="myComposioResult" {...field} />
+                    <Input
+                      className="h-11"
+                      placeholder="myComposioResult"
+                      {...field}
+                    />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     Use this name to reference the result in other nodes:{" "}
                     {`{{${watchVariableName}.data}}`}
                   </FormDescription>
@@ -214,7 +218,7 @@ export const ComposioDialog = ({
                     }
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="h-11 w-full">
                         <SelectValue placeholder="Select connected integration (recommended)" />
                       </SelectTrigger>
                     </FormControl>
@@ -229,7 +233,7 @@ export const ComposioDialog = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     Uses OAuth connections created from Integrations
                     Marketplace.
                   </FormDescription>
@@ -245,9 +249,13 @@ export const ComposioDialog = ({
                 <FormItem>
                   <FormLabel>App / Toolkit</FormLabel>
                   <FormControl>
-                    <Input placeholder="github, slack, gmail" {...field} />
+                    <Input
+                      className="h-11"
+                      placeholder="github, slack, gmail"
+                      {...field}
+                    />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     Used to load the available Composio actions for this app.
                   </FormDescription>
                   <FormMessage />
@@ -267,7 +275,7 @@ export const ComposioDialog = ({
                     disabled={isLoadingCredentials || !credentials?.length}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="h-11 w-full">
                         <SelectValue placeholder="Select a Composio Key" />
                       </SelectTrigger>
                     </FormControl>
@@ -282,7 +290,7 @@ export const ComposioDialog = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     Use only if you are executing with a direct API key flow.
                   </FormDescription>
                   <FormMessage />
@@ -303,7 +311,7 @@ export const ComposioDialog = ({
                       disabled={isLoadingActions}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="h-11 w-full">
                           <SelectValue placeholder="Select an action" />
                         </SelectTrigger>
                       </FormControl>
@@ -318,12 +326,13 @@ export const ComposioDialog = ({
                   ) : (
                     <FormControl>
                       <Input
+                        className="h-11"
                         placeholder="GITHUB_STAR_REPO or SLACK_SEND_MESSAGE"
                         {...field}
                       />
                     </FormControl>
                   )}
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     {selectedToolkitSlug
                       ? "Choose an action returned by Composio, or type the action slug manually if the list is empty."
                       : "Enter an app/toolkit first to load available actions."}
@@ -337,16 +346,16 @@ export const ComposioDialog = ({
               control={form.control}
               name="argumentsJson"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>JSON Arguments</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder={'{\n  "repo": "{{trigger.repo}}"\n}'}
-                      className="min-h-[120px] font-mono text-sm"
+                      className="min-h-[140px] resize-y font-mono text-sm leading-6"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs leading-5">
                     The parameters required by the tool. Can use Handlebars
                     templating like `{"{{myvariable}}"}`
                   </FormDescription>
@@ -354,8 +363,10 @@ export const ComposioDialog = ({
                 </FormItem>
               )}
             />
-            <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
+            <DialogFooter className="sticky bottom-0 -mx-5 -mb-5 border-t bg-background/95 px-5 py-4 backdrop-blur sm:col-span-2 sm:-mx-6 sm:-mb-5 sm:px-6">
+              <Button type="submit" className="h-11 min-w-28">
+                Save
+              </Button>
             </DialogFooter>
           </form>
         </Form>

@@ -12,7 +12,7 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     <div
       ref={ref}
       className={cn(
-        "relative w-[40px] h-[40px] rounded-lg border border-muted-foreground bg-card text-card-foreground shadow-sm transition-all duration-150 hover:border-slate-300 hover:shadow-md",
+        "relative size-16 rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-150 hover:border-foreground/20 hover:shadow-md",
         className,
       )}
       {...props}
