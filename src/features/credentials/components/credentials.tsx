@@ -95,31 +95,31 @@ export const CredentialsContainer = ({
     >
       <Tabs
         defaultValue="managed"
-        className="w-full"
+        className="w-full overflow-hidden rounded-lg border bg-card shadow-sm"
         onValueChange={setActiveTab}
       >
-        <div className="px-6 border-b">
-          <TabsList className="h-12 bg-transparent gap-8 p-0">
+        <div className="border-b bg-muted/20 px-4">
+          <TabsList className="h-11 gap-2 bg-transparent p-0">
             <TabsTrigger
               value="managed"
-              className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+              className="relative h-11 rounded-none border-b-2 border-transparent px-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
             >
               API Credentials
             </TabsTrigger>
             <TabsTrigger
               value="marketplace"
-              className="relative h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-medium"
+              className="relative h-11 rounded-none border-b-2 border-transparent px-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
             >
               Integrations Marketplace
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="managed" className="mt-0 outline-none">
+        <TabsContent value="managed" className="mt-0 p-4 outline-none">
           {children}
         </TabsContent>
 
-        <TabsContent value="marketplace" className="mt-0 p-8 outline-none">
+        <TabsContent value="marketplace" className="mt-0 outline-none">
           <ComposioMarketplace />
         </TabsContent>
       </Tabs>

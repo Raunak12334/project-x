@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, LayoutGrid, SearchIcon, X } from "lucide-react";
+import { LayoutGrid, SearchIcon, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { LoadingView } from "@/components/entity-components";
@@ -119,15 +119,15 @@ export const ComposioMarketplace = () => {
 
   if (isLoading && !data) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
+      <div className="flex h-[420px] items-center justify-center">
         <LoadingView message="Initializing marketplace..." />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#fbfbfc]">
-      <div className="max-w-[1600px] w-full mx-auto flex gap-10 px-8 py-10">
+    <div className="w-full bg-background">
+      <div className="grid w-full gap-5 p-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:p-5">
         {/* Sidebar Section */}
         <SetupSidebar
           selectedCategories={selectedCategories}
@@ -135,72 +135,56 @@ export const ComposioMarketplace = () => {
         />
 
         {/* Main Content Section */}
-        <div className="flex-1 flex flex-col gap-10">
-          <header className="space-y-8">
-            <div className="flex items-end justify-between">
-              <div className="space-y-3">
+        <div className="flex min-w-0 flex-col gap-5">
+          <header className="space-y-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-slate-900 rounded-xl">
-                    <LayoutGrid className="size-5 text-white" />
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-foreground">
+                    <LayoutGrid className="size-4 text-background" />
                   </div>
-                  <h1 className="text-3xl font-black tracking-tight text-slate-900">
+                  <h1 className="text-xl font-semibold tracking-tight text-foreground">
                     Integrations
                   </h1>
                 </div>
-                <p className="text-slate-500 font-medium max-w-xl leading-relaxed">
+                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                   Power your agents with specialized tools. Securely connect
                   your favorite apps to automate complex workflows.
                 </p>
               </div>
-
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-white border border-slate-200/60 rounded-2xl shadow-sm">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="size-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center"
-                    >
-                      <Check className="size-3 text-slate-400" />
-                    </div>
-                  ))}
-                </div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest pl-2">
-                  Cloud Verified
-                </span>
-              </div>
             </div>
 
-            <div className="relative group max-w-2xl">
-              <SearchIcon className="size-5 absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            <div className="group relative max-w-xl">
+              <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search over 11,000+ integrations..."
-                className="pl-16 h-16 bg-white border-slate-200/60 rounded-[28px] focus-visible:ring-4 focus-visible:ring-slate-900/5 focus-visible:border-slate-300 transition-all text-base font-medium shadow-sm hover:shadow-md"
+                className="h-10 rounded-lg border-border/70 bg-background pl-9 text-sm shadow-none transition-all focus-visible:ring-primary/15"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors hover:bg-muted"
                 >
-                  <X className="size-4 text-slate-400" />
+                  <X className="size-4 text-muted-foreground" />
                 </button>
               )}
             </div>
           </header>
 
-          <main className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
+          <main className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 All Toolkits ({filteredApps.length})
               </h2>
-              <div className="h-[1px] flex-1 mx-6 bg-slate-100" />
+              <div className="mx-4 h-px flex-1 bg-border/70" />
             </div>
 
             <motion.div
               layout
-              className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5"
+              className="grid grid-cols-1 gap-3 xl:grid-cols-2"
             >
               <AnimatePresence mode="popLayout">
                 {filteredApps.map((app: ComposioApp, index: number) => (
@@ -238,15 +222,15 @@ export const ComposioMarketplace = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-[40px] bg-white ring-8 ring-slate-50/50"
+                  className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed bg-background px-6 py-20"
                 >
-                  <div className="size-24 rounded-[32px] bg-slate-50 flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
-                    <SearchIcon className="size-10 text-slate-300" />
+                  <div className="mb-5 flex size-14 items-center justify-center rounded-lg border bg-muted/40">
+                    <SearchIcon className="size-6 text-muted-foreground" />
                   </div>
-                  <h3 className="text-slate-900 text-2xl font-black mb-3">
+                  <h3 className="mb-2 text-lg font-semibold text-foreground">
                     No toolkits found
                   </h3>
-                  <p className="text-base text-slate-500 max-w-sm text-center font-medium leading-relaxed mb-10 px-6">
+                  <p className="mb-6 max-w-sm text-center text-sm leading-6 text-muted-foreground">
                     We couldn't find any toolkits matching your search and
                     category selection.
                   </p>
@@ -256,43 +240,14 @@ export const ComposioMarketplace = () => {
                       setSearch("");
                       setSelectedCategories([]);
                     }}
-                    className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-95 transition-all"
+                    className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-all active:scale-95"
                   >
-                    Reset Application Filters
+                    Reset filters
                   </button>
                 </motion.div>
               )}
             </motion.div>
           </main>
-
-          <footer className="pt-10 pb-20 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                All Systems Operational
-              </span>
-            </div>
-            <div className="flex items-center gap-8">
-              <button
-                type="button"
-                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
-              >
-                Documentation
-              </button>
-              <button
-                type="button"
-                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
-              >
-                Request App
-              </button>
-              <button
-                type="button"
-                className="text-[11px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-[0.15em] transition-colors"
-              >
-                Support
-              </button>
-            </div>
-          </footer>
         </div>
       </div>
     </div>

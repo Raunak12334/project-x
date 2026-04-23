@@ -184,18 +184,18 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
   return (
     <>
       {modal}
-      <Card className="shadow-none">
-        <CardHeader>
+      <Card className="mx-auto w-full max-w-2xl rounded-lg border-border/70 shadow-sm">
+        <CardHeader className="border-b bg-muted/20">
           <CardTitle>
             {isEdit ? "Edit Credential" : "Create Credential"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="max-w-xl">
             {isEdit
               ? "Update your API key or credential details"
               : "Add a new API key or credential to your account"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -205,7 +205,11 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="My API key" {...field} />
+                      <Input
+                        className="h-11"
+                        placeholder="Production OpenAI key"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -222,7 +226,7 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="h-11 w-full">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -256,6 +260,7 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                     <FormControl>
                       <Input
                         type="password"
+                        className="h-11 font-mono text-sm"
                         placeholder={valuePlaceholder}
                         {...field}
                       />
@@ -266,9 +271,9 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
               />
 
               {/* Test Credential Section */}
-              <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-foreground">
                     Test Credential
                   </span>
                   <Button
@@ -295,16 +300,16 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
 
                 {testResult && (
                   <div
-                    className={`flex items-start gap-3 p-3 rounded-md ${
+                    className={`flex items-start gap-3 rounded-md p-3 ${
                       testResult.status === "success"
-                        ? "bg-green-50 border border-green-200"
-                        : "bg-red-50 border border-red-200"
+                        ? "border border-green-200 bg-green-50"
+                        : "border border-red-200 bg-red-50"
                     }`}
                   >
                     {testResult.status === "success" ? (
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
                     ) : (
-                      <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                     )}
                     <div>
                       <p
@@ -321,14 +326,19 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                 )}
 
                 {selectedType === CredentialType.GENERIC && (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Generic credentials cannot be automatically validated.
                     Please ensure your API key is correct.
                   </p>
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col-reverse gap-3 border-t pt-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/credentials" prefetch>
+                    Cancel
+                  </Link>
+                </Button>
                 <Button
                   type="submit"
                   disabled={
@@ -336,11 +346,6 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                   }
                 >
                   {isEdit ? "Update" : "Create"}
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/credentials" prefetch>
-                    Cancel
-                  </Link>
                 </Button>
               </div>
             </form>
