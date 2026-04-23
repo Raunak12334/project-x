@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { NodeType, type Prisma } from "@prisma/client";
+import { ExecutionStatus, NodeType, type Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { Edge, Node } from "@xyflow/react";
 import { generateSlug } from "random-word-slugs";
@@ -173,6 +173,82 @@ const persistWorkflowGraph = async (params: {
   });
 };
 
+const toInputJsonValue = (value: unknown): Prisma.InputJsonValue =>
+  JSON.parse(JSON.stringify(value ?? null)) as Prisma.InputJsonValue;
+
+const createWorkflowVersion = async (params: {
+  tx: Prisma.TransactionClient;
+  workflowId: string;
+  nodes: WorkflowNodeInput[];
+  edges: WorkflowEdgeInput[];
+}) => {
+  const { tx, workflowId, nodes, edges } = params;
+  const workflow = await tx.workflow.findUniqueOrThrow({
+    where: { id: workflowId },
+    select: { id: true, name: true },
+  });
+  const latest = await tx.workflowVersion.aggregate({
+    where: { workflowId },
+    _max: { version: true },
+  });
+  const version = (latest._max.version ?? 0) + 1;
+  const normalizedEdges = normalizeAndDedupeWorkflowConnections(edges);
+
+  const workflowVersion = await tx.workflowVersion.create({
+    data: {
+      workflowId,
+      version,
+      name: workflow.name,
+      nodes: toInputJsonValue(nodes),
+      connections: toInputJsonValue(normalizedEdges),
+      isActive: true,
+    },
+  });
+
+  await tx.workflow.update({
+    where: { id: workflowId },
+    data: { currentVersion: version, updatedAt: new Date() },
+  });
+
+  return workflowVersion;
+};
+
+const getCurrentWorkflowGraph = async (params: {
+  workflowId: string;
+  organizationId: string;
+}) => {
+  const workflow = await prisma.workflow.findUniqueOrThrow({
+    where: {
+      id: params.workflowId,
+      organizationId: params.organizationId,
+    },
+    include: {
+      nodes: {
+        where: {
+          deletedAt: null,
+        },
+      },
+      connections: true,
+    },
+  });
+
+  return {
+    workflow,
+    nodes: workflow.nodes.map((node) => ({
+      id: node.id,
+      type: node.type,
+      position: node.position as { x: number; y: number },
+      data: (node.data as Record<string, unknown>) || {},
+    })),
+    edges: workflow.connections.map((connection) => ({
+      source: connection.fromNodeId,
+      target: connection.toNodeId,
+      sourceHandle: connection.fromOutput,
+      targetHandle: connection.toInput,
+    })),
+  };
+};
+
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
     .input(
@@ -190,6 +266,7 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
 
+      let workflowVersion: { id: string; version: number };
       if (input.nodes && input.edges) {
         await validateWorkflowOrThrow({
           workflowId: input.id,
@@ -198,53 +275,69 @@ export const workflowsRouter = createTRPCRouter({
           edges: input.edges,
         });
 
-        await prisma.$transaction(async (tx) => {
+        workflowVersion = await prisma.$transaction(async (tx) => {
           await persistWorkflowGraph({
             tx,
             workflowId: input.id,
             nodes: input.nodes ?? [],
             edges: input.edges ?? [],
           });
+
+          const version = await createWorkflowVersion({
+            tx,
+            workflowId: input.id,
+            nodes: input.nodes ?? [],
+            edges: input.edges ?? [],
+          });
+
+          return { id: version.id, version: version.version };
         });
       } else {
-        const workflowWithGraph = await prisma.workflow.findUniqueOrThrow({
-          where: {
-            id: input.id,
-            organizationId: ctx.auth.organizationId,
-          },
-          include: {
-            nodes: {
-              where: {
-                deletedAt: null,
-              },
-            },
-            connections: true,
-          },
+        const graph = await getCurrentWorkflowGraph({
+          workflowId: input.id,
+          organizationId: ctx.auth.organizationId,
         });
 
         await validateWorkflowOrThrow({
           workflowId: input.id,
           organizationId: ctx.auth.organizationId,
-          nodes: workflowWithGraph.nodes.map((node) => ({
-            id: node.id,
-            type: node.type,
-            position: node.position as { x: number; y: number },
-            data: (node.data as Record<string, unknown>) || {},
-          })),
-          edges: workflowWithGraph.connections.map((connection) => ({
-            source: connection.fromNodeId,
-            target: connection.toNodeId,
-            sourceHandle: connection.fromOutput,
-            targetHandle: connection.toInput,
-          })),
+          nodes: graph.nodes,
+          edges: graph.edges,
+        });
+
+        workflowVersion = await prisma.$transaction(async (tx) => {
+          const version = await createWorkflowVersion({
+            tx,
+            workflowId: input.id,
+            nodes: graph.nodes,
+            edges: graph.edges,
+          });
+
+          return { id: version.id, version: version.version };
         });
       }
 
-      await sendWorkflowExecution({
-        workflowId: input.id,
+      const execution = await prisma.execution.create({
+        data: {
+          workflowId: input.id,
+          workflowVersionId: workflowVersion.id,
+          versionUsed: workflowVersion.version,
+          inngestEventId: createId(),
+          status: ExecutionStatus.RUNNING,
+        },
       });
 
-      return workflow;
+      await sendWorkflowExecution({
+        workflowId: input.id,
+        workflowVersionId: workflowVersion.id,
+        executionId: execution.id,
+      });
+
+      return {
+        ...workflow,
+        executionId: execution.id,
+        workflowVersionId: workflowVersion.id,
+      };
     }),
   create: premiumProcedure.mutation(({ ctx }) => {
     return prisma.workflow.create({
@@ -357,6 +450,13 @@ export const workflowsRouter = createTRPCRouter({
       // Transaction to ensure consistency
       return await prisma.$transaction(async (tx) => {
         await persistWorkflowGraph({
+          tx,
+          workflowId: id,
+          nodes,
+          edges,
+        });
+
+        await createWorkflowVersion({
           tx,
           workflowId: id,
           nodes,

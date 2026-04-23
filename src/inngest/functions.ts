@@ -40,7 +40,6 @@ import { twilioSmsChannel } from "./channels/twilio-sms";
 import { webhookTriggerChannel } from "./channels/webhook-trigger";
 import { xChannel } from "./channels/x";
 import { inngest } from "./client";
-import { topologicalSort } from "./utils";
 
 type RuntimeNode = {
   id: string;
@@ -54,6 +53,24 @@ type RuntimeConnection = {
   fromOutput: string;
 };
 
+type WorkflowVersionNode = {
+  id: string;
+  type: NodeType;
+  data?: unknown;
+  position?: unknown;
+};
+
+type WorkflowVersionConnection = {
+  source?: string;
+  target?: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+  fromNodeId?: string;
+  toNodeId?: string;
+  fromOutput?: string | null;
+  toInput?: string | null;
+};
+
 const toJsonValue = (value: unknown): Prisma.InputJsonValue => {
   if (value === undefined) {
     return Prisma.JsonNull as unknown as Prisma.InputJsonValue;
@@ -62,11 +79,116 @@ const toJsonValue = (value: unknown): Prisma.InputJsonValue => {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 };
 
+const toInputJsonValue = (value: unknown): Prisma.InputJsonValue =>
+  JSON.parse(JSON.stringify(value ?? null)) as Prisma.InputJsonValue;
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
 const getErrorStack = (error: unknown) =>
   error instanceof Error ? error.stack : undefined;
+
+const orderRuntimeNodes = (
+  nodes: RuntimeNode[],
+  connections: RuntimeConnection[],
+) => {
+  if (connections.length === 0) {
+    return nodes;
+  }
+
+  const incoming = new Map(nodes.map((node) => [node.id, 0]));
+  const outgoing = new Map<string, string[]>();
+
+  for (const connection of connections) {
+    incoming.set(
+      connection.toNodeId,
+      (incoming.get(connection.toNodeId) ?? 0) + 1,
+    );
+    outgoing.set(connection.fromNodeId, [
+      ...(outgoing.get(connection.fromNodeId) ?? []),
+      connection.toNodeId,
+    ]);
+  }
+
+  const queue = nodes
+    .filter((node) => (incoming.get(node.id) ?? 0) === 0)
+    .map((node) => node.id);
+  const orderedIds: string[] = [];
+
+  while (queue.length > 0) {
+    const nodeId = queue.shift();
+    if (!nodeId) {
+      continue;
+    }
+
+    orderedIds.push(nodeId);
+    for (const targetId of outgoing.get(nodeId) ?? []) {
+      const nextIncoming = (incoming.get(targetId) ?? 0) - 1;
+      incoming.set(targetId, nextIncoming);
+      if (nextIncoming === 0) {
+        queue.push(targetId);
+      }
+    }
+  }
+
+  if (orderedIds.length !== nodes.length) {
+    throw new Error("Workflow contains a cycle");
+  }
+
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  return orderedIds
+    .map((nodeId) => byId.get(nodeId))
+    .filter((node): node is RuntimeNode => Boolean(node));
+};
+
+const parseWorkflowVersionNodes = (value: unknown): RuntimeNode[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((node): RuntimeNode | null => {
+      const record = node as WorkflowVersionNode;
+      if (!record.id || !record.type) {
+        return null;
+      }
+
+      return {
+        id: record.id,
+        type: record.type,
+        data: record.data ?? {},
+      };
+    })
+    .filter((node): node is RuntimeNode => Boolean(node));
+};
+
+const parseWorkflowVersionConnections = (
+  value: unknown,
+): RuntimeConnection[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((connection): RuntimeConnection | null => {
+      const record = connection as WorkflowVersionConnection;
+      const fromNodeId = record.fromNodeId ?? record.source;
+      const toNodeId = record.toNodeId ?? record.target;
+
+      if (!fromNodeId || !toNodeId) {
+        return null;
+      }
+
+      return {
+        fromNodeId,
+        toNodeId,
+        fromOutput: record.fromOutput ?? record.sourceHandle ?? "main",
+      };
+    })
+    .filter((connection): connection is RuntimeConnection =>
+      Boolean(connection),
+    );
+};
 
 const getSelectedRouteForNode = (
   variables: Record<string, unknown>,
@@ -219,14 +341,18 @@ const runLegacyWorkflow = async (params: {
           data: {
             executionId: params.executionId,
             nodeId: node.id,
+            nodeType: node.type,
             status: NodeStatus.RUNNING,
             startedAt: nodeStartedAt,
             attempt,
-            output: toJsonValue({
-              nodeType: node.type,
-              input: nodeInput,
-              logs: [`Started ${node.type}`],
-            }),
+            input: toJsonValue(nodeInput),
+            logs: toJsonValue([
+              {
+                level: "info",
+                message: `Started ${node.type}`,
+                timestamp: nodeStartedAt.toISOString(),
+              },
+            ]),
           },
         });
       },
@@ -261,16 +387,32 @@ const runLegacyWorkflow = async (params: {
           data: {
             status: NodeStatus.FAILED,
             completedAt,
+            durationMs,
             error: getErrorMessage(error),
+            errorJson: toJsonValue({
+              message: getErrorMessage(error),
+              stack: getErrorStack(error),
+            }),
+            logs: toJsonValue([
+              {
+                level: "info",
+                message: `Started ${node.type}`,
+                timestamp: nodeStartedAt.toISOString(),
+              },
+              {
+                level: "error",
+                message: `Failed ${node.type}`,
+                timestamp: completedAt.toISOString(),
+                error: {
+                  message: getErrorMessage(error),
+                },
+              },
+            ]),
             output: toJsonValue({
-              nodeType: node.type,
-              input: nodeInput,
               error: {
                 message: getErrorMessage(error),
                 stack: getErrorStack(error),
               },
-              logs: [`Started ${node.type}`, `Failed ${node.type}`],
-              durationMs,
             }),
           },
         });
@@ -324,21 +466,31 @@ const runLegacyWorkflow = async (params: {
         data: {
           status: NodeStatus.SUCCESS,
           completedAt: nodeCompletedAt,
-          output: toJsonValue({
-            nodeType: node.type,
-            input: nodeInput,
-            output: resultData,
-            routeId: result.routeId,
-            nextNodeIds: nextConnections.map(
-              (connection) => connection.toNodeId,
-            ),
-            logs: [
-              `Started ${node.type}`,
-              `Selected route ${result.routeId}`,
-              `Completed ${node.type}`,
-            ],
-            durationMs,
-          }),
+          durationMs,
+          output: toJsonValue(resultData),
+          routeId: result.routeId,
+          logs: toJsonValue([
+            {
+              level: "info",
+              message: `Started ${node.type}`,
+              timestamp: nodeStartedAt.toISOString(),
+            },
+            {
+              level: "info",
+              message: `Selected route ${result.routeId}`,
+              timestamp: nodeCompletedAt.toISOString(),
+              routeId: result.routeId,
+              nextNodeIds: nextConnections.map(
+                (connection) => connection.toNodeId,
+              ),
+            },
+            {
+              level: "info",
+              message: `Completed ${node.type}`,
+              timestamp: nodeCompletedAt.toISOString(),
+              durationMs,
+            },
+          ]),
         },
       });
     });
@@ -427,6 +579,9 @@ export const executeWorkflow = inngest.createFunction(
     const checkpointId = event.data.checkpointId as string | undefined;
     const triggerNodeId = event.data.triggerNodeId as string | undefined;
     const idempotencyKey = event.data.idempotencyKey as string | undefined;
+    const eventWorkflowVersionId = event.data.workflowVersionId as
+      | string
+      | undefined;
 
     if (!inngestEventId || !workflowId) {
       throw new NonRetriableError("Event ID or workflow ID is missing");
@@ -473,6 +628,7 @@ export const executeWorkflow = inngest.createFunction(
             errorStack: null,
             completedAt: null,
             inngestEventId,
+            workflowVersionId: eventWorkflowVersionId,
             output: Prisma.JsonNull,
           },
         });
@@ -482,6 +638,7 @@ export const executeWorkflow = inngest.createFunction(
         return await prisma.execution.create({
           data: {
             workflowId,
+            workflowVersionId: eventWorkflowVersionId,
             inngestEventId,
             idempotencyKey,
           },
@@ -513,57 +670,105 @@ export const executeWorkflow = inngest.createFunction(
       return execution.output || {};
     }
 
-    const { workflowDefinition, organizationId } = await step.run(
-      "prepare-workflow-context",
-      async () => {
-        const workflow = await prisma.workflow.findUniqueOrThrow({
-          where: { id: workflowId },
+    const { workflowDefinition, organizationId, workflowVersionId } =
+      await step.run("prepare-workflow-context", async () => {
+        let workflowVersionId = eventWorkflowVersionId;
+
+        if (!workflowVersionId) {
+          const workflow = await prisma.workflow.findUniqueOrThrow({
+            where: { id: workflowId },
+            include: {
+              nodes: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+              connections: true,
+            },
+          });
+          const latest = await prisma.workflowVersion.aggregate({
+            where: { workflowId },
+            _max: { version: true },
+          });
+          const version = (latest._max.version ?? 0) + 1;
+          const workflowVersion = await prisma.workflowVersion.create({
+            data: {
+              workflowId,
+              version,
+              name: workflow.name,
+              nodes: toInputJsonValue(
+                workflow.nodes.map((node) => ({
+                  id: node.id,
+                  type: node.type,
+                  data: node.data,
+                  position: node.position,
+                })),
+              ),
+              connections: toInputJsonValue(
+                workflow.connections.map((connection) => ({
+                  source: connection.fromNodeId,
+                  target: connection.toNodeId,
+                  sourceHandle: connection.fromOutput,
+                  targetHandle: connection.toInput,
+                })),
+              ),
+            },
+          });
+
+          await prisma.execution.update({
+            where: { id: execution.id },
+            data: {
+              workflowVersionId: workflowVersion.id,
+              versionUsed: workflowVersion.version,
+            },
+          });
+
+          workflowVersionId = workflowVersion.id;
+        }
+
+        const workflowVersion = await prisma.workflowVersion.findFirstOrThrow({
+          where: {
+            id: workflowVersionId,
+            workflowId,
+          },
           include: {
-            nodes: {
-              where: {
-                deletedAt: null,
+            workflow: {
+              select: {
+                organizationId: true,
               },
             },
-            connections: true,
           },
         });
-
-        const orderedNodes = topologicalSort(
-          workflow.nodes,
-          workflow.connections,
+        const nodes = parseWorkflowVersionNodes(workflowVersion.nodes);
+        const connections = parseWorkflowVersionConnections(
+          workflowVersion.connections,
         );
+        const orderedNodes = orderRuntimeNodes(nodes, connections);
 
         return {
-          organizationId: workflow.organizationId,
+          organizationId: workflowVersion.workflow.organizationId,
+          workflowVersionId: workflowVersion.id,
           workflowDefinition: {
-            nodes: orderedNodes.map((node) => ({
-              id: node.id,
-              type: node.type,
-              data: node.data,
-            })),
-            connections: workflow.connections.map((connection) => ({
-              fromNodeId: connection.fromNodeId,
-              toNodeId: connection.toNodeId,
-              fromOutput: connection.fromOutput,
-            })),
+            nodes: orderedNodes,
+            connections,
           },
         };
-      },
-    );
+      });
 
-    const graphResult = isLangGraphEnabled()
-      ? await runWorkflowGraph({
-          executionId: execution.id,
-          workflowId,
-          organizationId,
-          inngestEventId,
-          checkpointId,
-          triggerNodeId,
-          initialData: event.data.initialData || {},
-          step,
-          publish,
-        })
-      : null;
+    const graphResult =
+      isLangGraphEnabled() && !workflowVersionId
+        ? await runWorkflowGraph({
+            executionId: execution.id,
+            workflowId,
+            organizationId,
+            inngestEventId,
+            checkpointId,
+            triggerNodeId,
+            initialData: event.data.initialData || {},
+            step,
+            publish,
+          })
+        : null;
 
     let context: Record<string, unknown>;
 

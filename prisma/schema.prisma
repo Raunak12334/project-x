@@ -8,22 +8,22 @@ datasource db {
 }
 
 model User {
-  id                  String        @id
+  id                  String          @id
   name                String
-  email               String        @unique
-  emailVerified       Boolean       @default(false)
+  email               String          @unique
+  emailVerified       Boolean         @default(false)
   image               String?
-  role                Role          @default(USER)
-  onboardingCompleted Boolean       @default(false)
+  role                Role            @default(USER)
+  onboardingCompleted Boolean         @default(false)
   organizationId      String?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @default(now()) @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @default(now()) @updatedAt
   deletedAt           DateTime?
   accounts            Account[]
   blogPosts           BlogPost[]
   sessions            Session[]
-  invitesSent         TeamInvite[]  @relation("InvitedBy")
-  organization        Organization? @relation(fields: [organizationId], references: [id])
+  invitesSent         TeamInvite[]    @relation("InvitedBy")
+  organization        Organization?   @relation(fields: [organizationId], references: [id])
   supportTickets      SupportTicket[]
 
   @@index([organizationId])
@@ -31,20 +31,20 @@ model User {
 }
 
 model Organization {
-  id           String        @id @default(cuid())
-  name         String
-  companySize  String?
-  useCase      String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @default(now()) @updatedAt
-  deletedAt    DateTime?
-  credentials           Credential[]
-  composioIntegrations  ComposioIntegration[]
-  subscription          Subscription?
-  teamInvites           TeamInvite[]
-  users                 User[]
-  workflows             Workflow[]
-  supportTickets        SupportTicket[]
+  id                   String                @id @default(cuid())
+  name                 String
+  companySize          String?
+  useCase              String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  deletedAt            DateTime?
+  credentials          Credential[]
+  composioIntegrations ComposioIntegration[]
+  subscription         Subscription?
+  teamInvites          TeamInvite[]
+  users                User[]
+  workflows            Workflow[]
+  supportTickets       SupportTicket[]
 
   @@map("organization")
 }
@@ -65,13 +65,13 @@ model Subscription {
   priceId             String?
 
   // Quota fields
-  workflowLimit       Int     @default(2)  // FREE: 2, PRO: -1 (unlimited), CUSTOM: configured
-  featureFlags        Json?   // For CUSTOM plans
+  workflowLimit Int   @default(2) // FREE: 2, PRO: -1 (unlimited), CUSTOM: configured
+  featureFlags  Json? // For CUSTOM plans
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  deletedAt           DateTime?
-  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("subscription")
 }
@@ -199,16 +199,17 @@ model Workflow {
 }
 
 model WorkflowVersion {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   workflowId   String
   version      Int
   name         String
   nodes        Json
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime    @default(now())
   connections  Json
   deprecatedAt DateTime?
-  isActive     Boolean   @default(true)
-  workflow     Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  isActive     Boolean     @default(true)
+  workflow     Workflow    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  executions   Execution[]
 
   @@unique([workflowId, version])
   @@index([workflowId])
@@ -260,31 +261,34 @@ model Connection {
 }
 
 model Execution {
-  id             String                @id @default(cuid())
-  workflowId     String
-  status         ExecutionStatus       @default(RUNNING)
-  error          String?
-  errorStack     String?
-  startedAt      DateTime              @default(now())
-  completedAt    DateTime?
-  inngestEventId String
-  deletedAt      DateTime?
-  output         Json?
-  archivedAt     DateTime?
-  idempotencyKey String?
-  maxRetries     Int                   @default(3)
-  retryCount     Int                   @default(0)
-  versionUsed    Int?
-  lastRetryAt    DateTime?
-  priority       Int                   @default(0)
-  queueStatus    QueueStatus           @default(QUEUED)
-  retryStrategy  String                @default("exponential")
-  scheduledAt    DateTime?
-  workflow       Workflow              @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  checkpoints    ExecutionCheckpoint[]
-  nodeExecutions NodeExecution[]
+  id                String                @id @default(cuid())
+  workflowId        String
+  workflowVersionId String?
+  status            ExecutionStatus       @default(RUNNING)
+  error             String?
+  errorStack        String?
+  startedAt         DateTime              @default(now())
+  completedAt       DateTime?
+  inngestEventId    String
+  deletedAt         DateTime?
+  output            Json?
+  archivedAt        DateTime?
+  idempotencyKey    String?
+  maxRetries        Int                   @default(3)
+  retryCount        Int                   @default(0)
+  versionUsed       Int?
+  lastRetryAt       DateTime?
+  priority          Int                   @default(0)
+  queueStatus       QueueStatus           @default(QUEUED)
+  retryStrategy     String                @default("exponential")
+  scheduledAt       DateTime?
+  workflow          Workflow              @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowVersion   WorkflowVersion?      @relation(fields: [workflowVersionId], references: [id])
+  checkpoints       ExecutionCheckpoint[]
+  nodeExecutions    NodeExecution[]
 
   @@index([workflowId, status, startedAt])
+  @@index([workflowVersionId])
   @@index([status, queueStatus, scheduledAt])
   @@index([workflowId, startedAt])
   @@index([queueStatus, priority, scheduledAt])
@@ -323,12 +327,18 @@ model NodeExecution {
   id          String                @id @default(cuid())
   executionId String
   nodeId      String
+  nodeType    NodeType?
   status      NodeStatus            @default(PENDING)
   startedAt   DateTime              @default(now())
   completedAt DateTime?
+  durationMs  Int?
   retryCount  Int                   @default(0)
   error       String?
+  errorJson   Json?
+  input       Json?
   output      Json?
+  routeId     String?
+  logs        Json?
   archivedAt  DateTime?
   attempt     Int                   @default(1)
   checkpoints ExecutionCheckpoint[]
@@ -411,22 +421,22 @@ model WorkflowTemplate {
 }
 
 model ComposioIntegration {
-  id                String       @id @default(cuid())
-  organizationId    String
-  toolkitSlug       String
-  name              String
-  logo              String?
-  accountName       String?
-  authToken         String       // Encrypted Composio token
-  connectionId      String?      // Composio connection ID
-  isConnected       Boolean      @default(false)
-  lastSyncedAt      DateTime?
-  expiresAt         DateTime?
-  metadata          Json?        // Store additional integration-specific data
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  deletedAt         DateTime?
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String
+  toolkitSlug    String
+  name           String
+  logo           String?
+  accountName    String?
+  authToken      String // Encrypted Composio token
+  connectionId   String? // Composio connection ID
+  isConnected    Boolean      @default(false)
+  lastSyncedAt   DateTime?
+  expiresAt      DateTime?
+  metadata       Json? // Store additional integration-specific data
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, toolkitSlug])
   @@index([organizationId])

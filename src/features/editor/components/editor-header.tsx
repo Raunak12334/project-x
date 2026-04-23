@@ -26,13 +26,17 @@ import { getWorkflowValidationIssuesFromError } from "../lib/workflow-validation
 import {
   editorAtom,
   editorDirtyAtom,
+  editorLastSavedAtAtom,
   editorLastSavedHashAtom,
+  editorSavingAtom,
   workflowValidationIssuesAtom,
 } from "../store/atoms";
 
 export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
   const editor = useAtomValue(editorAtom);
   const setLastSavedHash = useSetAtom(editorLastSavedHashAtom);
+  const setLastSavedAt = useSetAtom(editorLastSavedAtAtom);
+  const setIsSaving = useSetAtom(editorSavingAtom);
   const setValidationIssues = useSetAtom(workflowValidationIssuesAtom);
   const saveWorkflow = useUpdateWorkflow();
 
@@ -45,18 +49,22 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
     const edges = normalizeAndDedupeWorkflowConnections(editor.getEdges());
 
     try {
+      setIsSaving(true);
       await saveWorkflow.mutateAsync({
         id: workflowId,
         nodes,
         edges,
       });
       setLastSavedHash(createWorkflowGraphHash(nodes, edges));
+      setLastSavedAt(new Date());
       setValidationIssues([]);
     } catch (error) {
       const issues = getWorkflowValidationIssuesFromError(error);
       if (issues.length > 0) {
         setValidationIssues(issues);
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -163,6 +171,8 @@ export const EditorBreadcrumbs = ({ workflowId }: { workflowId: string }) => {
 
 export const EditorHeader = ({ workflowId }: { workflowId: string }) => {
   const isDirty = useAtomValue(editorDirtyAtom);
+  const isSaving = useAtomValue(editorSavingAtom);
+  const lastSavedAt = useAtomValue(editorLastSavedAtAtom);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 bg-background">
@@ -170,7 +180,13 @@ export const EditorHeader = ({ workflowId }: { workflowId: string }) => {
       <div className="flex flex-row items-center justify-between gap-x-4 w-full">
         <div className="flex min-w-0 items-center gap-2">
           <EditorBreadcrumbs workflowId={workflowId} />
-          {isDirty && <Badge variant="secondary">Unsaved</Badge>}
+          {isSaving ? (
+            <Badge variant="secondary">Saving</Badge>
+          ) : isDirty ? (
+            <Badge variant="secondary">Unsaved</Badge>
+          ) : lastSavedAt ? (
+            <Badge variant="outline">Saved</Badge>
+          ) : null}
         </div>
         <EditorSaveButton workflowId={workflowId} />
       </div>

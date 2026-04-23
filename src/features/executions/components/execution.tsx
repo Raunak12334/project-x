@@ -66,16 +66,6 @@ const getNodeStatusIcon = (status: NodeStatus) => {
   }
 };
 
-const asRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-
-const getMetaValue = (output: unknown, key: string) => {
-  const record = asRecord(output);
-  return record[key];
-};
-
 const formatDurationMs = (
   startedAt: Date | string,
   completedAt?: Date | string | null,
@@ -264,11 +254,9 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
           ) : (
             <div className="divide-y">
               {execution.nodeExecutions.map((nodeExecution) => {
-                const routeId = getMetaValue(nodeExecution.output, "routeId");
                 const duration =
-                  typeof getMetaValue(nodeExecution.output, "durationMs") ===
-                  "number"
-                    ? `${getMetaValue(nodeExecution.output, "durationMs")}ms`
+                  typeof nodeExecution.durationMs === "number"
+                    ? `${nodeExecution.durationMs}ms`
                     : formatDurationMs(
                         nodeExecution.startedAt,
                         nodeExecution.completedAt,
@@ -294,8 +282,8 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-3 text-muted-foreground text-xs">
-                          {routeId ? (
-                            <span>Route: {String(routeId)}</span>
+                          {nodeExecution.routeId ? (
+                            <span>Route: {nodeExecution.routeId}</span>
                           ) : null}
                           {duration ? <span>{duration}</span> : null}
                           <span>{formatNodeStatus(nodeExecution.status)}</span>
@@ -346,13 +334,38 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
                           </div>
                         ) : null}
 
-                        {nodeExecution.output ? (
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-md border bg-background p-3">
+                            <p className="mb-2 font-medium text-xs">Input</p>
+                            <pre className="max-h-72 overflow-auto text-xs">
+                              {JSON.stringify(nodeExecution.input, null, 2)}
+                            </pre>
+                          </div>
+
+                          <div className="rounded-md border bg-background p-3">
+                            <p className="mb-2 font-medium text-xs">Output</p>
+                            <pre className="max-h-72 overflow-auto text-xs">
+                              {JSON.stringify(nodeExecution.output, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+
+                        {nodeExecution.logs ? (
+                          <div className="rounded-md border bg-background p-3">
+                            <p className="mb-2 font-medium text-xs">Logs</p>
+                            <pre className="max-h-96 overflow-auto text-xs">
+                              {JSON.stringify(nodeExecution.logs, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
+
+                        {nodeExecution.errorJson ? (
                           <div className="rounded-md border bg-background p-3">
                             <p className="mb-2 font-medium text-xs">
-                              Input, output, route, and logs
+                              Error details
                             </p>
                             <pre className="max-h-96 overflow-auto text-xs">
-                              {JSON.stringify(nodeExecution.output, null, 2)}
+                              {JSON.stringify(nodeExecution.errorJson, null, 2)}
                             </pre>
                           </div>
                         ) : null}

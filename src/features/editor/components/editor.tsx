@@ -32,6 +32,7 @@ import {
   editorAtom,
   editorCurrentHashAtom,
   editorDirtyAtom,
+  editorLastSavedAtAtom,
   editorLastSavedHashAtom,
   workflowValidationIssuesAtom,
 } from "../store/atoms";
@@ -53,6 +54,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const setEditor = useSetAtom(editorAtom);
   const setCurrentHash = useSetAtom(editorCurrentHashAtom);
   const setLastSavedHash = useSetAtom(editorLastSavedHashAtom);
+  const setLastSavedAt = useSetAtom(editorLastSavedAtAtom);
   const setIsDirty = useSetAtom(editorDirtyAtom);
   const setValidationIssues = useSetAtom(workflowValidationIssuesAtom);
   const lastSavedHash = useAtomValue(editorLastSavedHashAtom);
@@ -106,6 +108,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   useEffect(() => {
     const savedHash = createWorkflowGraphHash(workflow.nodes, workflow.edges);
     setLastSavedHash(savedHash);
+    setLastSavedAt(null);
     setCurrentHash(savedHash);
     setIsDirty(false);
     setValidationIssues([]);
@@ -115,6 +118,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     setCurrentHash,
     setIsDirty,
     setLastSavedHash,
+    setLastSavedAt,
     setValidationIssues,
   ]);
 

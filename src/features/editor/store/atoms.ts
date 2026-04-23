@@ -7,4 +7,6 @@ export const selectedNodeIdAtom = atom<string | null>(null);
 export const editorCurrentHashAtom = atom<string | null>(null);
 export const editorLastSavedHashAtom = atom<string | null>(null);
 export const editorDirtyAtom = atom(false);
+export const editorSavingAtom = atom(false);
+export const editorLastSavedAtAtom = atom<Date | null>(null);
 export const workflowValidationIssuesAtom = atom<WorkflowValidationIssue[]>([]);
