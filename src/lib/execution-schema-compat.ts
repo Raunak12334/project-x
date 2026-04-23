@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 
 let executionWorkflowVersionColumnPromise: Promise<boolean> | null = null;
 let nodeExecutionNodeTypeColumnPromise: Promise<boolean> | null = null;
+let nodeExecutionColumnsPromise: Promise<Set<string>> | null = null;
 
 export const executionScalarSelect = {
   id: true,
@@ -79,6 +80,17 @@ export const nodeExecutionScalarSelect = {
   attempt: true,
 } satisfies Prisma.NodeExecutionSelect;
 
+const NODE_EXECUTION_OPTIONAL_COLUMNS = [
+  "nodeType",
+  "durationMs",
+  "retryCount",
+  "errorJson",
+  "routeId",
+  "logs",
+  "archivedAt",
+  "attempt",
+] as const;
+
 export async function supportsNodeExecutionNodeType() {
   if (!nodeExecutionNodeTypeColumnPromise) {
     nodeExecutionNodeTypeColumnPromise = prisma.$queryRaw<
@@ -99,6 +111,46 @@ export async function supportsNodeExecutionNodeType() {
   return nodeExecutionNodeTypeColumnPromise;
 }
 
+export async function getNodeExecutionColumns() {
+  if (!nodeExecutionColumnsPromise) {
+    nodeExecutionColumnsPromise = prisma.$queryRaw<
+      Array<{ column_name: string }>
+    >`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'node_execution'
+      `
+      .then((rows) => new Set(rows.map((row) => row.column_name)))
+      .catch(() => new Set<string>());
+  }
+
+  return nodeExecutionColumnsPromise;
+}
+
+export async function getNodeExecutionScalarSelect() {
+  const columns = await getNodeExecutionColumns();
+  const select: Prisma.NodeExecutionSelect = {
+    id: true,
+    executionId: true,
+    nodeId: true,
+    status: true,
+    startedAt: true,
+    completedAt: true,
+    error: true,
+    input: true,
+    output: true,
+  };
+
+  for (const column of NODE_EXECUTION_OPTIONAL_COLUMNS) {
+    if (columns.has(column)) {
+      (select as Record<string, boolean>)[column] = true;
+    }
+  }
+
+  return select;
+}
+
 export function withNodeExecutionNodeType<
   T extends Prisma.NodeExecutionCreateInput | Prisma.NodeExecutionUpdateInput,
 >(data: T, nodeType?: string | null) {
@@ -110,4 +162,19 @@ export function withNodeExecutionNodeType<
     ...data,
     nodeType,
   };
+}
+
+export async function stripUnsupportedNodeExecutionFields<
+  T extends Prisma.NodeExecutionCreateInput | Prisma.NodeExecutionUpdateInput,
+>(data: T) {
+  const columns = await getNodeExecutionColumns();
+  const result = { ...data } as Record<string, unknown>;
+
+  for (const column of NODE_EXECUTION_OPTIONAL_COLUMNS) {
+    if (!columns.has(column)) {
+      delete result[column];
+    }
+  }
+
+  return result as T;
 }

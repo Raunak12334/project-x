@@ -16,6 +16,7 @@ import prisma from "@/lib/db";
 import {
   executionScalarSelect,
   nodeExecutionScalarSelect,
+  stripUnsupportedNodeExecutionFields,
   supportsExecutionWorkflowVersionId,
   supportsNodeExecutionNodeType,
   withExecutionWorkflowVersionId,
@@ -347,23 +348,25 @@ const runLegacyWorkflow = async (params: {
           })) + 1;
 
         return prisma.nodeExecution.create({
-          data: withNodeExecutionNodeType(
-            {
-              executionId: params.executionId,
-              nodeId: node.id,
-              status: NodeStatus.RUNNING,
-              startedAt: nodeStartedAt,
-              attempt,
-              input: toJsonValue(nodeInput),
-              logs: toJsonValue([
-                {
-                  level: "info",
-                  message: `Started ${node.type}`,
-                  timestamp: nodeStartedAt.toISOString(),
-                },
-              ]),
-            },
-            canStoreNodeType ? node.type : null,
+          data: await stripUnsupportedNodeExecutionFields(
+            withNodeExecutionNodeType(
+              {
+                executionId: params.executionId,
+                nodeId: node.id,
+                status: NodeStatus.RUNNING,
+                startedAt: nodeStartedAt,
+                attempt,
+                input: toJsonValue(nodeInput),
+                logs: toJsonValue([
+                  {
+                    level: "info",
+                    message: `Started ${node.type}`,
+                    timestamp: nodeStartedAt.toISOString(),
+                  },
+                ]),
+              },
+              canStoreNodeType ? node.type : null,
+            ),
           ),
           select: nodeExecutionScalarSelect,
         });
@@ -396,7 +399,7 @@ const runLegacyWorkflow = async (params: {
       await params.step.run(`${node.id}-node-execution-failed`, async () => {
         return prisma.nodeExecution.update({
           where: { id: nodeExecution.id },
-          data: {
+          data: await stripUnsupportedNodeExecutionFields({
             status: NodeStatus.FAILED,
             completedAt,
             durationMs,
@@ -426,7 +429,7 @@ const runLegacyWorkflow = async (params: {
                 stack: getErrorStack(error),
               },
             }),
-          },
+          }),
           select: nodeExecutionScalarSelect,
         });
       });
@@ -476,7 +479,7 @@ const runLegacyWorkflow = async (params: {
     await params.step.run(`${node.id}-node-execution-success`, async () => {
       return prisma.nodeExecution.update({
         where: { id: nodeExecution.id },
-        data: {
+        data: await stripUnsupportedNodeExecutionFields({
           status: NodeStatus.SUCCESS,
           completedAt: nodeCompletedAt,
           durationMs,
@@ -504,7 +507,7 @@ const runLegacyWorkflow = async (params: {
               durationMs,
             },
           ]),
-        },
+        }),
         select: nodeExecutionScalarSelect,
       });
     });

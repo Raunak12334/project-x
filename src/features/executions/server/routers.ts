@@ -1,4 +1,4 @@
-import { ExecutionStatus } from "@prisma/client";
+import { ExecutionStatus, type Prisma } from "@prisma/client";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
 import { sendWorkflowExecution } from "@/inngest/utils";
@@ -9,7 +9,8 @@ import {
 import prisma from "@/lib/db";
 import {
   executionScalarSelect,
-  nodeExecutionScalarSelect,
+  getNodeExecutionColumns,
+  getNodeExecutionScalarSelect,
 } from "@/lib/execution-schema-compat";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
@@ -167,54 +168,81 @@ export const executionsRouter = createTRPCRouter({
     }),
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      return prisma.execution
-        .findUniqueOrThrow({
-          where: {
-            id: input.id,
-            workflow: {
-              organizationId: ctx.auth.organizationId,
+    .query(async ({ ctx, input }) => {
+      const nodeExecutionColumns = await getNodeExecutionColumns();
+      const nodeExecutionSelect = await getNodeExecutionScalarSelect();
+      const nodeExecutionOrderBy: Prisma.NodeExecutionOrderByWithRelationInput[] =
+        [{ startedAt: "asc" }];
+
+      if (nodeExecutionColumns.has("attempt")) {
+        nodeExecutionOrderBy.push({ attempt: "asc" });
+      }
+
+      const execution = await prisma.execution.findUniqueOrThrow({
+        where: {
+          id: input.id,
+          workflow: {
+            organizationId: ctx.auth.organizationId,
+          },
+        },
+        select: {
+          ...executionScalarSelect,
+          checkpoints: {
+            orderBy: {
+              sequence: "asc",
+            },
+            select: {
+              id: true,
+              nodeId: true,
+              sequence: true,
+              state: true,
             },
           },
-          select: {
-            ...executionScalarSelect,
-            checkpoints: {
-              orderBy: {
-                sequence: "asc",
-              },
-            },
-            nodeExecutions: {
-              orderBy: [
-                {
-                  startedAt: "asc",
+          nodeExecutions: {
+            orderBy: nodeExecutionOrderBy,
+            select: {
+              ...nodeExecutionSelect,
+              node: {
+                select: {
+                  id: true,
+                  name: true,
+                  type: true,
                 },
-                {
-                  attempt: "asc",
-                },
-              ],
-              select: {
-                ...nodeExecutionScalarSelect,
-                node: {
-                  select: {
-                    id: true,
-                    name: true,
-                    type: true,
-                  },
-                },
-              },
-            },
-            workflow: {
-              select: {
-                id: true,
-                name: true,
               },
             },
           },
-        })
-        .then((execution) => ({
-          ...execution,
-          workflowVersionId: null,
-        }));
+          workflow: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      return {
+        ...execution,
+        workflowVersionId: null,
+        nodeExecutions: execution.nodeExecutions.map(
+          (nodeExecution, index) => ({
+            ...nodeExecution,
+            attempt:
+              typeof nodeExecution.attempt === "number"
+                ? nodeExecution.attempt
+                : index + 1,
+            durationMs:
+              typeof nodeExecution.durationMs === "number"
+                ? nodeExecution.durationMs
+                : null,
+            routeId:
+              typeof nodeExecution.routeId === "string"
+                ? nodeExecution.routeId
+                : null,
+            logs: nodeExecution.logs ?? null,
+            errorJson: nodeExecution.errorJson ?? null,
+          }),
+        ),
+      };
     }),
   getMany: protectedProcedure
     .input(
