@@ -204,7 +204,13 @@ const runLegacyWorkflow = async (params: {
       result.data &&
       typeof result.data === "object" &&
       !Array.isArray(result.data)
-        ? result.data
+        ? (result.data as Record<string, unknown>)
+        : {};
+    const resultRoutes =
+      resultData.__routes &&
+      typeof resultData.__routes === "object" &&
+      !Array.isArray(resultData.__routes)
+        ? (resultData.__routes as Record<string, string>)
         : {};
 
     context = {
@@ -212,6 +218,7 @@ const runLegacyWorkflow = async (params: {
       ...resultData,
       __routes: {
         ...(context.__routes as Record<string, string>),
+        ...resultRoutes,
         [node.id]: result.routeId,
       },
     };

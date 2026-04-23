@@ -7,6 +7,23 @@ import { toast } from "sonner";
 import { useTRPC } from "@/trpc/client";
 import { useWorkflowsParams } from "./use-workflows-params";
 
+const getValidationIssueCount = (message: string) => {
+  try {
+    const payload = JSON.parse(message) as {
+      type?: string;
+      issues?: unknown[];
+    };
+
+    if (payload.type === "VALIDATION_ERROR" && Array.isArray(payload.issues)) {
+      return payload.issues.length;
+    }
+  } catch {
+    return 0;
+  }
+
+  return 0;
+};
+
 /**
  * Hook to fetch all workflows using suspense
  */
@@ -122,7 +139,12 @@ export const useUpdateWorkflow = () => {
         );
       },
       onError: (error) => {
-        toast.error(`Failed to save workflow: ${error.message}`);
+        const issueCount = getValidationIssueCount(error.message);
+        toast.error(
+          issueCount > 0
+            ? `Fix ${issueCount} workflow issue${issueCount === 1 ? "" : "s"} before saving`
+            : `Failed to save workflow: ${error.message}`,
+        );
       },
     }),
   );
@@ -140,7 +162,12 @@ export const useExecuteWorkflow = () => {
         toast.success(`Workflow "${data.name}" executed`);
       },
       onError: (error) => {
-        toast.error(`Failed to execute workflow: ${error.message}`);
+        const issueCount = getValidationIssueCount(error.message);
+        toast.error(
+          issueCount > 0
+            ? `Fix ${issueCount} workflow issue${issueCount === 1 ? "" : "s"} before executing`
+            : `Failed to execute workflow: ${error.message}`,
+        );
       },
     }),
   );

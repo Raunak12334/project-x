@@ -12,6 +12,7 @@ import {
   normalizeConnectionSourceHandle,
   normalizeConnectionTargetHandle,
 } from "@/features/workflows/lib/connections";
+import { validateWorkflow } from "@/features/workflows/lib/workflow-validator";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
 import { createWebhookSecret } from "@/lib/webhook-security";
@@ -21,9 +22,150 @@ import {
   protectedProcedure,
 } from "@/trpc/init";
 
+const workflowNodeInputSchema = z.object({
+  id: z.string(),
+  type: z.string().nullish(),
+  position: z.object({ x: z.number(), y: z.number() }),
+  data: z.record(z.string(), z.any()).optional(),
+});
+
+const workflowEdgeInputSchema = z.object({
+  source: z.string(),
+  target: z.string(),
+  sourceHandle: z.string().nullish(),
+  targetHandle: z.string().nullish(),
+});
+
+type WorkflowNodeInput = z.infer<typeof workflowNodeInputSchema>;
+type WorkflowEdgeInput = z.infer<typeof workflowEdgeInputSchema>;
+
+const getValidationContext = async (organizationId: string) => {
+  const [credentials, integrations] = await Promise.all([
+    prisma.credential.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true },
+    }),
+    prisma.composioIntegration.findMany({
+      where: { organizationId, deletedAt: null, isConnected: true },
+      select: { id: true },
+    }),
+  ]);
+
+  return {
+    validCredentialIds: new Set(credentials.map((credential) => credential.id)),
+    validIntegrationIds: new Set(
+      integrations.map((integration) => integration.id),
+    ),
+  };
+};
+
+const throwValidationError = (
+  issues: ReturnType<typeof validateWorkflow>["issues"],
+) => {
+  throw new TRPCError({
+    code: "BAD_REQUEST",
+    message: JSON.stringify({
+      ok: false,
+      type: "VALIDATION_ERROR",
+      issues,
+    }),
+  });
+};
+
+const validateWorkflowOrThrow = async (params: {
+  workflowId: string;
+  organizationId: string;
+  nodes: WorkflowNodeInput[];
+  edges: WorkflowEdgeInput[];
+}) => {
+  const validationContext = await getValidationContext(params.organizationId);
+  const result = validateWorkflow({
+    workflowId: params.workflowId,
+    nodes: params.nodes as Node[],
+    edges: params.edges as Edge[],
+    ...validationContext,
+  });
+
+  if (!result.isValid) {
+    throwValidationError(result.issues);
+  }
+
+  return result;
+};
+
+const persistWorkflowGraph = async (params: {
+  tx: Prisma.TransactionClient;
+  workflowId: string;
+  nodes: WorkflowNodeInput[];
+  edges: WorkflowEdgeInput[];
+}) => {
+  const { tx, workflowId, nodes, edges } = params;
+  const nodeTypeSchema = z.enum(NodeType);
+
+  await tx.connection.deleteMany({
+    where: { workflowId },
+  });
+
+  await tx.node.deleteMany({
+    where: { workflowId },
+  });
+
+  await tx.node.createMany({
+    data: nodes.map((node) => {
+      const type = nodeTypeSchema.parse(node.type);
+
+      return {
+        id: node.id,
+        workflowId,
+        name: type,
+        type,
+        position: node.position,
+        data: node.data || {},
+      };
+    }),
+  });
+
+  const connections = normalizeAndDedupeWorkflowConnections(edges).map(
+    (edge) => ({
+      workflowId,
+      fromNodeId: edge.source,
+      toNodeId: edge.target,
+      fromOutput: edge.sourceHandle,
+      toInput: edge.targetHandle,
+    }),
+  );
+
+  if (
+    process.env.NODE_ENV !== "production" &&
+    connections.length !== edges.length
+  ) {
+    console.debug("[workflows.persist] Duplicate connections removed", {
+      workflowId,
+      received: edges.length,
+      saved: connections.length,
+    });
+  }
+
+  await tx.connection.createMany({
+    data: connections,
+    skipDuplicates: true,
+  });
+
+  await tx.workflow.update({
+    where: { id: workflowId },
+    data: { updatedAt: new Date() },
+  });
+};
+
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(
+      z.object({
+        id: z.string(),
+        nodes: z.array(workflowNodeInputSchema).optional(),
+        edges: z.array(workflowEdgeInputSchema).optional(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       const workflow = await prisma.workflow.findUniqueOrThrow({
         where: {
@@ -31,6 +173,49 @@ export const workflowsRouter = createTRPCRouter({
           organizationId: ctx.auth.organizationId,
         },
       });
+
+      if (input.nodes && input.edges) {
+        await validateWorkflowOrThrow({
+          workflowId: input.id,
+          organizationId: ctx.auth.organizationId,
+          nodes: input.nodes,
+          edges: input.edges,
+        });
+
+        await prisma.$transaction(async (tx) => {
+          await persistWorkflowGraph({
+            tx,
+            workflowId: input.id,
+            nodes: input.nodes ?? [],
+            edges: input.edges ?? [],
+          });
+        });
+      } else {
+        const workflowWithGraph = await prisma.workflow.findUniqueOrThrow({
+          where: {
+            id: input.id,
+            organizationId: ctx.auth.organizationId,
+          },
+          include: { nodes: true, connections: true },
+        });
+
+        await validateWorkflowOrThrow({
+          workflowId: input.id,
+          organizationId: ctx.auth.organizationId,
+          nodes: workflowWithGraph.nodes.map((node) => ({
+            id: node.id,
+            type: node.type,
+            position: node.position as { x: number; y: number },
+            data: (node.data as Record<string, unknown>) || {},
+          })),
+          edges: workflowWithGraph.connections.map((connection) => ({
+            source: connection.fromNodeId,
+            target: connection.toNodeId,
+            sourceHandle: connection.fromOutput,
+            targetHandle: connection.toInput,
+          })),
+        });
+      }
 
       await sendWorkflowExecution({
         workflowId: input.id,
@@ -128,22 +313,8 @@ export const workflowsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        nodes: z.array(
-          z.object({
-            id: z.string(),
-            type: z.string().nullish(),
-            position: z.object({ x: z.number(), y: z.number() }),
-            data: z.record(z.string(), z.any()).optional(),
-          }),
-        ),
-        edges: z.array(
-          z.object({
-            source: z.string(),
-            target: z.string(),
-            sourceHandle: z.string().nullish(),
-            targetHandle: z.string().nullish(),
-          }),
-        ),
+        nodes: z.array(workflowNodeInputSchema),
+        edges: z.array(workflowEdgeInputSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -153,65 +324,20 @@ export const workflowsRouter = createTRPCRouter({
         where: { id, organizationId: ctx.auth.organizationId },
       });
 
+      await validateWorkflowOrThrow({
+        workflowId: id,
+        organizationId: ctx.auth.organizationId,
+        nodes,
+        edges,
+      });
+
       // Transaction to ensure consistency
       return await prisma.$transaction(async (tx) => {
-        // Delete existing connections and nodes before rebuilding the workflow.
-        await tx.connection.deleteMany({
-          where: { workflowId: id },
-        });
-
-        await tx.node.deleteMany({
-          where: { workflowId: id },
-        });
-
-        const nodeTypeSchema = z.enum(NodeType);
-
-        // Create nodes
-        await tx.node.createMany({
-          data: nodes.map((node) => {
-            const type = nodeTypeSchema.parse(node.type);
-
-            return {
-              id: node.id,
-              workflowId: id,
-              name: type,
-              type,
-              position: node.position,
-              data: node.data || {},
-            };
-          }),
-        });
-
-        const connections = normalizeAndDedupeWorkflowConnections(edges).map(
-          (edge) => ({
-            workflowId: id,
-            fromNodeId: edge.source,
-            toNodeId: edge.target,
-            fromOutput: edge.sourceHandle,
-            toInput: edge.targetHandle,
-          }),
-        );
-
-        if (
-          process.env.NODE_ENV !== "production" &&
-          connections.length !== edges.length
-        ) {
-          console.debug("[workflows.update] Duplicate connections removed", {
-            workflowId: id,
-            received: edges.length,
-            saved: connections.length,
-          });
-        }
-
-        await tx.connection.createMany({
-          data: connections,
-          skipDuplicates: true,
-        });
-
-        // Update workflow's updateAt timestamp
-        await tx.workflow.update({
-          where: { id },
-          data: { updatedAt: new Date() },
+        await persistWorkflowGraph({
+          tx,
+          workflowId: id,
+          nodes,
+          edges,
         });
 
         return workflow;

@@ -1,4 +1,4 @@
-import type { NodeType } from "@prisma/client";
+import { NodeType } from "@prisma/client";
 import { getExecutor as getLegacyExecutor } from "@/features/executions/lib/executor-registry";
 import { decrypt } from "@/lib/encryption";
 import { getNodeDefinition } from "../core/registry";
@@ -8,6 +8,86 @@ import type {
   StepRunner,
   WorkflowContext,
 } from "../core/types";
+
+const BRANCHING_NODE_TYPES = new Set<NodeType>([
+  NodeType.CONDITION,
+  NodeType.ROUTER,
+]);
+
+export const extractRouteIdFromLegacyResult = (params: {
+  result: unknown;
+  nodeId: string;
+  context?: WorkflowContext;
+}): string | undefined => {
+  const { result, nodeId, context } = params;
+
+  if (result && typeof result === "object" && !Array.isArray(result)) {
+    const record = result as Record<string, unknown>;
+
+    if (typeof record.routeId === "string" && record.routeId.length > 0) {
+      return record.routeId;
+    }
+
+    if (
+      record.__routes &&
+      typeof record.__routes === "object" &&
+      !Array.isArray(record.__routes)
+    ) {
+      const route = (record.__routes as Record<string, unknown>)[nodeId];
+
+      if (typeof route === "string" && route.length > 0) {
+        return route;
+      }
+    }
+  }
+
+  const contextRoutes = context?.__routes;
+
+  if (
+    contextRoutes &&
+    typeof contextRoutes === "object" &&
+    !Array.isArray(contextRoutes)
+  ) {
+    const route = (contextRoutes as Record<string, unknown>)[nodeId];
+
+    if (typeof route === "string" && route.length > 0) {
+      return route;
+    }
+  }
+
+  return undefined;
+};
+
+const adaptLegacyResult = (params: {
+  node: { id: string; type: NodeType };
+  result: unknown;
+  context: WorkflowContext;
+}): NodeExecutionResult => {
+  const routeId = extractRouteIdFromLegacyResult({
+    result: params.result,
+    nodeId: params.node.id,
+    context: params.context,
+  });
+
+  if (!routeId && BRANCHING_NODE_TYPES.has(params.node.type)) {
+    return {
+      status: "FAILURE",
+      data: {},
+      routeId: "",
+      error: {
+        message: `Branching node ${params.node.id} did not return a route`,
+        code: "MISSING_BRANCH_ROUTE",
+        isRetriable: false,
+      },
+    };
+  }
+
+  return {
+    status: "SUCCESS",
+    data: params.result,
+    routeId: routeId ?? "main",
+  };
+};
 
 /**
  * Adapter to bridge legacy execution logic with the new hardened node system.
@@ -40,12 +120,7 @@ export async function executeNode(params: {
       publish,
     });
 
-    // Adapt legacy context return to new result contract
-    return {
-      status: "SUCCESS",
-      data: result,
-      routeId: "main", // Legacy nodes always assume 'main' route
-    };
+    return adaptLegacyResult({ node, result, context });
   }
 
   // New hardened execution path
@@ -103,9 +178,5 @@ export async function executeNode(params: {
     publish,
   });
 
-  return {
-    status: "SUCCESS",
-    data: result,
-    routeId: "main",
-  };
+  return adaptLegacyResult({ node, result, context });
 }

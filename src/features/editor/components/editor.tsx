@@ -16,7 +16,7 @@ import {
   Panel,
   ReactFlow,
 } from "@xyflow/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
@@ -27,9 +27,17 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import { nodeComponents } from "@/config/node-components";
-import { editorAtom } from "../store/atoms";
+import { createWorkflowGraphHash } from "../lib/graph-hash";
+import {
+  editorAtom,
+  editorCurrentHashAtom,
+  editorDirtyAtom,
+  editorLastSavedHashAtom,
+  workflowValidationIssuesAtom,
+} from "../store/atoms";
 import { AddNodeButton } from "./add-node-button";
 import { ExecuteWorkflowButton } from "./execute-workflow-button";
+import { WorkflowValidationPanel } from "./workflow-validation-panel";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -43,6 +51,11 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: workflow } = useSuspenseWorkflow(workflowId);
 
   const setEditor = useSetAtom(editorAtom);
+  const setCurrentHash = useSetAtom(editorCurrentHashAtom);
+  const setLastSavedHash = useSetAtom(editorLastSavedHashAtom);
+  const setIsDirty = useSetAtom(editorDirtyAtom);
+  const setValidationIssues = useSetAtom(workflowValidationIssuesAtom);
+  const lastSavedHash = useAtomValue(editorLastSavedHashAtom);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
@@ -89,6 +102,27 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
       nodes[0]?.type === NodeType.INITIAL
     );
   }, [edges.length, nodes]);
+
+  useEffect(() => {
+    const savedHash = createWorkflowGraphHash(workflow.nodes, workflow.edges);
+    setLastSavedHash(savedHash);
+    setCurrentHash(savedHash);
+    setIsDirty(false);
+    setValidationIssues([]);
+  }, [
+    workflow.nodes,
+    workflow.edges,
+    setCurrentHash,
+    setIsDirty,
+    setLastSavedHash,
+    setValidationIssues,
+  ]);
+
+  useEffect(() => {
+    const currentHash = createWorkflowGraphHash(nodes, edges);
+    setCurrentHash(currentHash);
+    setIsDirty(Boolean(lastSavedHash && currentHash !== lastSavedHash));
+  }, [edges, lastSavedHash, nodes, setCurrentHash, setIsDirty]);
 
   useEffect(() => {
     if (!isInitialOnlyWorkflow) {
@@ -171,6 +205,9 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           <MiniMap />
           <Panel position="top-right">
             <AddNodeButton />
+          </Panel>
+          <Panel position="top-left">
+            <WorkflowValidationPanel />
           </Panel>
           {hasManualTrigger && (
             <Panel position="bottom-center">
