@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type BrandLogoProps = {
@@ -8,6 +8,7 @@ type BrandLogoProps = {
   alt: string;
   className?: string;
   imageClassName?: string;
+  fallbackSrc?: string;
 };
 
 export function BrandLogo({
@@ -15,7 +16,14 @@ export function BrandLogo({
   alt,
   className,
   imageClassName,
+  fallbackSrc = "/logos/composio.svg",
 }: BrandLogoProps) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+
+  useEffect(() => {
+    setCurrentSrc(src);
+  }, [src]);
+
   return (
     <div
       className={cn(
@@ -23,12 +31,16 @@ export function BrandLogo({
         className,
       )}
     >
-      <Image
-        src={src}
+      {/* biome-ignore lint/performance/noImgElement: Remote SVG brand icons should render directly instead of going through Next image optimization. */}
+      <img
+        src={currentSrc}
         alt={alt}
-        fill
-        sizes="32px"
-        className={cn("object-contain", imageClassName)}
+        className={cn("h-full w-full object-contain", imageClassName)}
+        onError={() => {
+          if (currentSrc !== fallbackSrc) {
+            setCurrentSrc(fallbackSrc);
+          }
+        }}
       />
     </div>
   );

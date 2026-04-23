@@ -25,11 +25,11 @@ export function WorkflowNode({
   return (
     <>
       {showToolbar && (
-        <NodeToolbar className="min-w-16 justify-center gap-1">
-          <Button size="icon" variant="ghost" className="size-7" onClick={onSettings}>
+        <NodeToolbar className="w-[40px] justify-end gap-1">
+          <Button size="sm" variant="ghost" onClick={onSettings}>
             <SettingsIcon className="size-3" />
           </Button>
-          <Button size="icon" variant="ghost" className="size-7" onClick={onDelete}>
+          <Button size="sm" variant="ghost" onClick={onDelete}>
             <TrashIcon className="size-3" />
           </Button>
         </NodeToolbar>
@@ -39,11 +39,11 @@ export function WorkflowNode({
         <NodeToolbar
           position={Position.Bottom}
           isVisible
-          className="w-28 text-center"
+          className="w-[40px] text-center"
         >
-          <p className="text-xs font-semibold leading-4 text-foreground">{name}</p>
+          <p className="text-xs font-medium leading-4">{name}</p>
           {description && (
-            <p className="truncate text-[10px] leading-4 text-muted-foreground">
+            <p className="text-muted-foreground truncate text-[10px] leading-4">
               {description}
             </p>
           )}
