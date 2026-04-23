@@ -7,7 +7,7 @@ import { memo, useState } from "react";
 import { toast } from "sonner";
 import { getVariableSuggestions } from "@/features/editor/lib/variable-suggestions";
 import { COMPOSIO_CHANNEL_NAME } from "@/inngest/channels/composio";
-import { getIntegrationLogo } from "@/lib/integration-logo";
+import { getIntegrationLogoCandidates } from "@/lib/integration-logo";
 import { useTRPC } from "@/trpc/client";
 import { useNodeStatus } from "../../hooks/use-node-status";
 import { BaseExecutionNode } from "../base-execution-node";
@@ -23,6 +23,7 @@ type ComposioNodeData = {
   toolSlug?: string;
   toolkitSlug?: string;
   argumentsJson?: string;
+  appLogoCandidates?: string[];
 };
 
 type ComposioNodeType = Node<ComposioNodeData>;
@@ -112,11 +113,12 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
       ? `App: ${nodeData.toolkitSlug}`
       : "Not configured";
   const name = nodeData?.name || "Composio";
-  const icon = getIntegrationLogo({
+  const iconCandidates = getIntegrationLogoCandidates({
     slug: nodeData?.toolkitSlug,
     name,
     logo: nodeData?.appLogo,
   });
+  const icon = iconCandidates[0];
 
   return (
     <>
@@ -136,6 +138,7 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
         {...props}
         id={props.id}
         icon={icon}
+        iconCandidates={iconCandidates}
         name={name}
         status={nodeStatus}
         description={description}

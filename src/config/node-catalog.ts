@@ -71,6 +71,7 @@ export type NodeCatalogItem = {
   description: string;
   icon: ComponentType<{ className?: string }> | string;
   brandIcon?: string | null;
+  logoCandidates?: string[];
   group: NodeCatalogGroupId;
   keywords: string[];
   inputs: InputField[];

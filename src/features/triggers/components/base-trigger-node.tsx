@@ -38,6 +38,7 @@ export const BaseTriggerNode = memo(
   }: BaseTriggerNodeProps) => {
     const catalogItem = nodeCatalog.find((item) => item.type === type);
     const Icon = propsIcon || catalogItem?.icon || "/logo.svg";
+    const logoCandidates = catalogItem?.logoCandidates;
     const name = propsName || catalogItem?.label || "Trigger Node";
     const { setNodes, setEdges } = useReactFlow();
     const handleDelete = () => {
@@ -76,7 +77,12 @@ export const BaseTriggerNode = memo(
                 <Icon className="size-5 text-muted-foreground" />
               )}
               {typeof Icon === "string" && (
-                <BrandLogo src={Icon} alt={`${name} logo`} className="size-5" />
+                <BrandLogo
+                  src={Icon}
+                  alt={`${name} logo`}
+                  className="size-5"
+                  candidates={logoCandidates}
+                />
               )}
               {children}
               <BaseHandle id="main" type="source" position={Position.Right} />

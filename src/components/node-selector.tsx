@@ -26,7 +26,7 @@ import {
   nodeCatalogGroups,
 } from "@/config/node-catalog";
 import { isTriggerNodeType } from "@/features/workflows/lib/start-nodes";
-import { getIntegrationLogo } from "@/lib/integration-logo";
+import { getIntegrationLogoCandidates } from "@/lib/integration-logo";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
@@ -112,11 +112,12 @@ export function NodeSelector({
     // Map merged apps to individual tools in the catalog
     const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app) => {
       const catalogApp = catalogAppsBySlug.get(app.slug);
-      const appLogo = getIntegrationLogo({
+      const appLogoCandidates = getIntegrationLogoCandidates({
         slug: app.slug,
         name: app.name,
         logo: catalogApp?.logo || app.logo,
       });
+      const appLogo = appLogoCandidates[0];
 
       return {
         type: NodeType.COMPOSIO,
@@ -124,6 +125,7 @@ export function NodeSelector({
         description:
           app.description || `Integration for ${app.name} via Composio.`,
         icon: appLogo,
+        logoCandidates: appLogoCandidates,
         group: "integrations",
         keywords: [
           "composio",
@@ -139,6 +141,7 @@ export function NodeSelector({
         defaultData: {
           argumentsJson: "{}",
           appLogo,
+          appLogoCandidates,
           integrationId: app.integrationId || undefined,
           name: `${app.name}`,
           toolSlug: "",
@@ -328,6 +331,7 @@ export function NodeSelector({
                               src={Icon}
                               alt={`${item.label} logo`}
                               className="size-7"
+                              candidates={item.logoCandidates}
                             />
                           ) : (
                             <Icon className="size-7 text-muted-foreground transition-colors group-hover:text-primary" />

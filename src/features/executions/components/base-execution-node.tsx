@@ -16,6 +16,7 @@ import { nodeCatalog } from "@/config/node-catalog";
 
 interface BaseExecutionNodeProps extends NodeProps {
   icon?: LucideIcon | string;
+  iconCandidates?: string[];
   name?: string;
   description?: string;
   children?: ReactNode;
@@ -28,7 +29,9 @@ export const BaseExecutionNode = memo(
   ({
     id,
     type,
+    data,
     icon: propsIcon,
+    iconCandidates,
     name: propsName,
     description,
     children,
@@ -38,6 +41,14 @@ export const BaseExecutionNode = memo(
   }: BaseExecutionNodeProps) => {
     const catalogItem = nodeCatalog.find((item) => item.type === type);
     const Icon = propsIcon || catalogItem?.icon || "/logo.svg";
+    const dataLogoCandidates =
+      data &&
+      typeof data === "object" &&
+      Array.isArray((data as { appLogoCandidates?: unknown }).appLogoCandidates)
+        ? (data as { appLogoCandidates: string[] }).appLogoCandidates
+        : undefined;
+    const logoCandidates =
+      iconCandidates || dataLogoCandidates || catalogItem?.logoCandidates;
     const name = propsName || catalogItem?.label || "Unknown Node";
     const { setNodes, setEdges } = useReactFlow();
     const handleDelete = () => {
@@ -68,7 +79,12 @@ export const BaseExecutionNode = memo(
                 <Icon className="size-5 text-muted-foreground" />
               )}
               {typeof Icon === "string" && (
-                <BrandLogo src={Icon} alt={`${name} logo`} className="size-5" />
+                <BrandLogo
+                  src={Icon}
+                  alt={`${name} logo`}
+                  className="size-5"
+                  candidates={logoCandidates}
+                />
               )}
               {children}
               <BaseHandle id="main" type="target" position={Position.Left} />
