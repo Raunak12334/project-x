@@ -49,6 +49,7 @@ const formSchema = z
     credentialId: z.string().optional(),
     integrationId: z.string().optional(),
     toolSlug: z.string().min(1, "Composio action is required"),
+    toolkitSlug: z.string().optional(),
     argumentsJson: z.string().optional(),
   })
   .refine((value) => Boolean(value.integrationId || value.credentialId), {
@@ -78,6 +79,12 @@ export const ComposioDialog = ({
     trpc.composio.listConnectedAccounts.queryOptions(),
   );
 
+  const connectedAccounts = integrations?.items ?? [];
+  const selectedIntegrationId = defaultValues.integrationId;
+  const initialIntegration = connectedAccounts.find(
+    (integration) => integration.id === selectedIntegrationId,
+  );
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -85,21 +92,56 @@ export const ComposioDialog = ({
       credentialId: defaultValues.credentialId || undefined,
       integrationId: defaultValues.integrationId || undefined,
       toolSlug: defaultValues.toolSlug || "",
+      toolkitSlug:
+        defaultValues.toolkitSlug || initialIntegration?.toolkitSlug || "",
       argumentsJson: defaultValues.argumentsJson || "{}",
     },
   });
 
+  const selectedToolkitSlug = form.watch("toolkitSlug") || "";
+  const selectedAccountId = form.watch("integrationId");
+  const selectedIntegration = connectedAccounts.find(
+    (integration) => integration.id === selectedAccountId,
+  );
+  const matchingAccounts = selectedToolkitSlug
+    ? connectedAccounts.filter(
+        (integration) => integration.toolkitSlug === selectedToolkitSlug,
+      )
+    : connectedAccounts;
+  const { data: actions, isLoading: isLoadingActions } = useQuery(
+    trpc.composio.listAvailableActions.queryOptions(
+      { toolkitSlug: selectedToolkitSlug },
+      { enabled: Boolean(selectedToolkitSlug) },
+    ),
+  );
+  const availableActions = actions?.items ?? [];
+
   useEffect(() => {
     if (open) {
+      const integration = connectedAccounts.find(
+        (item) => item.id === defaultValues.integrationId,
+      );
+
       form.reset({
         variableName: defaultValues.variableName || "",
         credentialId: defaultValues.credentialId || undefined,
         integrationId: defaultValues.integrationId || undefined,
         toolSlug: defaultValues.toolSlug || "",
+        toolkitSlug: defaultValues.toolkitSlug || integration?.toolkitSlug || "",
         argumentsJson: defaultValues.argumentsJson || "{}",
       });
     }
-  }, [open, defaultValues, form]);
+  }, [open, defaultValues, form, connectedAccounts]);
+
+  useEffect(() => {
+    if (!selectedIntegration?.toolkitSlug) {
+      return;
+    }
+
+    if (selectedIntegration.toolkitSlug !== selectedToolkitSlug) {
+      form.setValue("toolkitSlug", selectedIntegration.toolkitSlug);
+    }
+  }, [form, selectedIntegration, selectedToolkitSlug]);
 
   const watchVariableName = form.watch("variableName") || "myComposioResult";
 
@@ -156,10 +198,19 @@ export const ComposioDialog = ({
                 <FormItem>
                   <FormLabel>Connected App Account</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value)}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const integration = connectedAccounts.find(
+                        (item) => item.id === value,
+                      );
+
+                      if (integration?.toolkitSlug) {
+                        form.setValue("toolkitSlug", integration.toolkitSlug);
+                      }
+                    }}
                     value={field.value}
                     disabled={
-                      isLoadingIntegrations || !integrations?.items?.length
+                      isLoadingIntegrations || matchingAccounts.length === 0
                     }
                   >
                     <FormControl>
@@ -168,7 +219,7 @@ export const ComposioDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {integrations?.items?.map((integration) => (
+                      {matchingAccounts.map((integration) => (
                         <SelectItem key={integration.id} value={integration.id}>
                           {integration.name}
                           {integration.accountName
@@ -181,6 +232,23 @@ export const ComposioDialog = ({
                   <FormDescription>
                     Uses OAuth connections created from Integrations
                     Marketplace.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="toolkitSlug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>App / Toolkit</FormLabel>
+                  <FormControl>
+                    <Input placeholder="github, slack, gmail" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Used to load the available Composio actions for this app.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -227,16 +295,38 @@ export const ComposioDialog = ({
               name="toolSlug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tool Slug</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="GITHUB_STAR_REPO or SLACK_SEND_MESSAGE"
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Action</FormLabel>
+                  {availableActions.length > 0 ? (
+                    <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value}
+                      disabled={isLoadingActions}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select an action" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableActions.map((action) => (
+                          <SelectItem key={action.slug} value={action.slug}>
+                            {action.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <FormControl>
+                      <Input
+                        placeholder="GITHUB_STAR_REPO or SLACK_SEND_MESSAGE"
+                        {...field}
+                      />
+                    </FormControl>
+                  )}
                   <FormDescription>
-                    Composio action slug to execute for the selected
-                    integration.
+                    {selectedToolkitSlug
+                      ? "Choose an action returned by Composio, or type the action slug manually if the list is empty."
+                      : "Enter an app/toolkit first to load available actions."}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

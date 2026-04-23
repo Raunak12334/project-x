@@ -6,7 +6,6 @@ export const triggerNodeTypes = [
   NodeType.GOOGLE_FORM_TRIGGER,
   NodeType.STRIPE_TRIGGER,
   NodeType.SCHEDULE,
-  NodeType.COMPOSIO,
 ] as const;
 
 const triggerNodeTypeSet = new Set<NodeType>(triggerNodeTypes);

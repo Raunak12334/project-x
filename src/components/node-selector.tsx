@@ -37,8 +37,21 @@ interface NodeSelectorProps {
 
 type DynamicComposioApp = Omit<ComposioAppMeta, "authType"> & {
   authType?: string;
+  accountName?: string | null;
+  integrationId?: string | null;
+  isConnected?: boolean;
   tags?: string[];
   logo?: string | null;
+};
+
+const toVariableName = (value: string) => {
+  const normalized = value
+    .replace(/[^A-Za-z0-9_$]+/g, " ")
+    .trim()
+    .replace(/\s+([A-Za-z0-9_$])/g, (_, char: string) => char.toUpperCase())
+    .replace(/^[^A-Za-z_$]+/, "");
+
+  return `${normalized || "composio"}Result`;
 };
 
 const matchesSearch = (item: NodeCatalogItem, query: string) => {
@@ -71,6 +84,14 @@ export function NodeSelector({
     trpc.composio.listApps.queryOptions({ search: deferredSearch }),
   );
 
+  const hasConfiguredNode = useMemo(() => {
+    return nodes.some(
+      (node) => typeof node.type === "string" && node.type !== NodeType.INITIAL,
+    );
+  }, [nodes]);
+
+  const isTriggerOnboardingMode = !hasConfiguredNode;
+
   const groupedNodes = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
@@ -102,8 +123,12 @@ export function NodeSelector({
       outputs: [{ key: "data", type: "object", description: "Response data" }],
       setupGuide: ["Ensure your account is connected in the marketplace."],
       defaultData: {
-        toolSlug: `${(app.slug || "").toUpperCase()}_GET_INFO`,
+        argumentsJson: "{}",
+        integrationId: app.integrationId || undefined,
         name: `${app.name}`,
+        toolSlug: "",
+        toolkitSlug: app.slug,
+        variableName: toVariableName(app.slug || app.name || "composio"),
       },
     }));
 
@@ -115,18 +140,14 @@ export function NodeSelector({
         items: allNodes.filter(
           (item) =>
             item.group === group.id && matchesSearch(item, normalizedSearch),
+        ).filter((item) =>
+          isTriggerOnboardingMode
+            ? isTriggerNodeType(item.type)
+            : !isTriggerNodeType(item.type),
         ),
       }))
       .filter((group) => group.items.length > 0);
-  }, [deferredSearch, composioApps]);
-
-  const hasConfiguredNode = useMemo(() => {
-    return nodes.some(
-      (node) => typeof node.type === "string" && node.type !== NodeType.INITIAL,
-    );
-  }, [nodes]);
-
-  const isTriggerOnboardingMode = !hasConfiguredNode;
+  }, [deferredSearch, composioApps, isTriggerOnboardingMode]);
 
   const filteredNodeCount = useMemo(
     () =>

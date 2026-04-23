@@ -62,6 +62,12 @@ export const composioRouter = createTRPCRouter({
         const connectedSlugs = new Set(
           connectedIntegrations.map((i) => i.toolkitSlug),
         );
+        const connectedBySlug = new Map(
+          connectedIntegrations.map((integration) => [
+            integration.toolkitSlug,
+            integration,
+          ]),
+        );
 
         return {
           items: toolkitItems
@@ -78,6 +84,7 @@ export const composioRouter = createTRPCRouter({
             .map((toolkit) => {
               const slug = toolkit.slug || "unknown";
               const name = toolkit.name || slug || "Unknown Tool";
+              const connectedIntegration = connectedBySlug.get(slug);
 
               // Ensure we have fallback values for everything
               return {
@@ -98,6 +105,8 @@ export const composioRouter = createTRPCRouter({
                   toolkit.auth_type ||
                   toolkit.authConfig?.auth_type ||
                   "OAUTH2",
+                integrationId: connectedIntegration?.id ?? null,
+                accountName: connectedIntegration?.accountName ?? null,
               };
             }),
         };
@@ -221,6 +230,7 @@ export const composioRouter = createTRPCRouter({
         items: integrations.map((integration) => ({
           id: integration.id,
           name: integration.name,
+          toolkitSlug: integration.toolkitSlug,
           accountName: integration.accountName,
         })),
       };

@@ -19,6 +19,7 @@ type ComposioData = {
   credentialId?: string;
   integrationId?: string;
   toolSlug?: string;
+  toolkitSlug?: string;
   argumentsJson?: string;
 };
 

@@ -13,6 +13,7 @@ type ComposioNodeData = {
   credentialId?: string;
   integrationId?: string;
   toolSlug?: string;
+  toolkitSlug?: string;
   argumentsJson?: string;
 };
 
@@ -50,7 +51,9 @@ export const ComposioNode = memo((props: NodeProps<ComposioNodeType>) => {
 
   const nodeData = props.data;
   const description = nodeData?.toolSlug
-    ? `Tool: ${nodeData.toolSlug.slice(0, 30)}`
+    ? `Action: ${nodeData.toolSlug.slice(0, 30)}`
+    : nodeData?.toolkitSlug
+      ? `App: ${nodeData.toolkitSlug}`
     : "Not configured";
 
   return (
