@@ -15,8 +15,11 @@ import { runWorkflowGraph } from "@/langgraph/run-graph";
 import prisma from "@/lib/db";
 import {
   executionScalarSelect,
+  nodeExecutionScalarSelect,
   supportsExecutionWorkflowVersionId,
+  supportsNodeExecutionNodeType,
   withExecutionWorkflowVersionId,
+  withNodeExecutionNodeType,
 } from "@/lib/execution-schema-compat";
 import { logger } from "@/lib/logger";
 import { anthropicChannel } from "./channels/anthropic";
@@ -334,6 +337,7 @@ const runLegacyWorkflow = async (params: {
     const nodeExecution = await params.step.run(
       `${node.id}-node-execution-start`,
       async () => {
+        const canStoreNodeType = await supportsNodeExecutionNodeType();
         const attempt =
           (await prisma.nodeExecution.count({
             where: {
@@ -343,22 +347,25 @@ const runLegacyWorkflow = async (params: {
           })) + 1;
 
         return prisma.nodeExecution.create({
-          data: {
-            executionId: params.executionId,
-            nodeId: node.id,
-            nodeType: node.type,
-            status: NodeStatus.RUNNING,
-            startedAt: nodeStartedAt,
-            attempt,
-            input: toJsonValue(nodeInput),
-            logs: toJsonValue([
-              {
-                level: "info",
-                message: `Started ${node.type}`,
-                timestamp: nodeStartedAt.toISOString(),
-              },
-            ]),
-          },
+          data: withNodeExecutionNodeType(
+            {
+              executionId: params.executionId,
+              nodeId: node.id,
+              status: NodeStatus.RUNNING,
+              startedAt: nodeStartedAt,
+              attempt,
+              input: toJsonValue(nodeInput),
+              logs: toJsonValue([
+                {
+                  level: "info",
+                  message: `Started ${node.type}`,
+                  timestamp: nodeStartedAt.toISOString(),
+                },
+              ]),
+            },
+            canStoreNodeType ? node.type : null,
+          ),
+          select: nodeExecutionScalarSelect,
         });
       },
     );
@@ -420,6 +427,7 @@ const runLegacyWorkflow = async (params: {
               },
             }),
           },
+          select: nodeExecutionScalarSelect,
         });
       });
 
@@ -497,6 +505,7 @@ const runLegacyWorkflow = async (params: {
             },
           ]),
         },
+        select: nodeExecutionScalarSelect,
       });
     });
 

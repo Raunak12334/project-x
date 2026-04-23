@@ -7,7 +7,10 @@ import {
   updateExecutionCheckpointState,
 } from "@/langgraph/checkpoints";
 import prisma from "@/lib/db";
-import { executionScalarSelect } from "@/lib/execution-schema-compat";
+import {
+  executionScalarSelect,
+  nodeExecutionScalarSelect,
+} from "@/lib/execution-schema-compat";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const executionsRouter = createTRPCRouter({
@@ -189,7 +192,8 @@ export const executionsRouter = createTRPCRouter({
                   attempt: "asc",
                 },
               ],
-              include: {
+              select: {
+                ...nodeExecutionScalarSelect,
                 node: {
                   select: {
                     id: true,
