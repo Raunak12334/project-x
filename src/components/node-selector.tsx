@@ -101,6 +101,9 @@ export function NodeSelector({
     // Merge SDK results with our comprehensive static catalog
     // prioritizing SDK results (which might have live connection data)
     const sdkSlugs = new Set(sdkApps.map((app) => app.slug));
+    const catalogAppsBySlug = new Map(
+      COMPOSIO_FULL_CATALOG.map((app) => [app.slug, app]),
+    );
     const mergedApps: DynamicComposioApp[] = [
       ...sdkApps,
       ...COMPOSIO_FULL_CATALOG.filter((app) => !sdkSlugs.has(app.slug)),
@@ -108,10 +111,11 @@ export function NodeSelector({
 
     // Map merged apps to individual tools in the catalog
     const dynamicComposioNodes: NodeCatalogItem[] = mergedApps.map((app) => {
+      const catalogApp = catalogAppsBySlug.get(app.slug);
       const appLogo = getIntegrationLogo({
         slug: app.slug,
         name: app.name,
-        logo: app.logo,
+        logo: catalogApp?.logo || app.logo,
       });
 
       return {

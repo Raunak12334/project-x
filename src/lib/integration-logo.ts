@@ -30,10 +30,13 @@ const localIntegrationLogos: Record<string, string> = {
   notion: "/logos/notion.svg",
   openai: "/logos/openai.svg",
   outlook: "/logos/outlook.svg",
+  "perplexity-ai": "/logos/Perplexity.svg",
   perplexity: "/logos/Perplexity.svg",
+  "code-interpreter": "/logos/openai.svg",
   shopify: "/logos/shopify.svg",
   slack: "/logos/slack.svg",
   skype: "/logos/skype.svg",
+  serpapi: "https://cdn.simpleicons.org/google/4285F4",
   stripe: "/logos/stripe.svg",
   supabase: "/logos/supabase.svg",
   telegram: "/logos/telegram.svg",
@@ -51,6 +54,9 @@ const normalizeLogoKey = (value?: string | null) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const isGenericComposioLogo = (slugKey: string, logo?: string | null) =>
+  slugKey !== "composio" && Boolean(logo?.toLowerCase().includes("composio"));
+
 export const getIntegrationLogo = ({
   slug,
   name,
@@ -60,16 +66,21 @@ export const getIntegrationLogo = ({
   name?: string | null;
   logo?: string | null;
 }) => {
-  if (logo) {
+  const slugKey = normalizeLogoKey(slug);
+  const nameKey = normalizeLogoKey(name);
+  const localLogo =
+    localIntegrationLogos[slugKey] || localIntegrationLogos[nameKey];
+
+  if (localLogo) {
+    return localLogo;
+  }
+
+  if (logo && !isGenericComposioLogo(slugKey, logo)) {
     return logo;
   }
 
-  const slugKey = normalizeLogoKey(slug);
-  const nameKey = normalizeLogoKey(name);
-
   return (
-    localIntegrationLogos[slugKey] ||
-    localIntegrationLogos[nameKey] ||
+    (slugKey ? `https://cdn.simpleicons.org/${slugKey}/111827` : "") ||
     DEFAULT_INTEGRATION_LOGO
   );
 };
