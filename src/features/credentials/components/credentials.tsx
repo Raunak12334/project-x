@@ -102,13 +102,13 @@ export const CredentialsContainer = ({
           <TabsList className="h-11 gap-2 bg-transparent p-0">
             <TabsTrigger
               value="managed"
-              className="relative h-11 rounded-none border-b-2 border-transparent px-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              className="relative h-11 rounded-none border-x-0 border-t-0 border-b-2 border-transparent px-2 text-sm font-medium outline-none ring-0 focus-visible:border-x-0 focus-visible:border-t-0 focus-visible:border-b-primary focus-visible:outline-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
             >
               API Credentials
             </TabsTrigger>
             <TabsTrigger
               value="marketplace"
-              className="relative h-11 rounded-none border-b-2 border-transparent px-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              className="relative h-11 rounded-none border-x-0 border-t-0 border-b-2 border-transparent px-2 text-sm font-medium outline-none ring-0 focus-visible:border-x-0 focus-visible:border-t-0 focus-visible:border-b-primary focus-visible:outline-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
             >
               Integrations Marketplace
             </TabsTrigger>
