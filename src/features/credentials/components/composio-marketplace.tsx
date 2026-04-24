@@ -19,6 +19,16 @@ import {
 import { getIntegrationLogoCandidates } from "@/lib/integration-logo";
 import { useTRPC } from "@/trpc/client";
 import { IntegrationCard } from "./integration-card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { KeyIcon } from "lucide-react";
 
 const MARKETPLACE_PAGE_SIZE = 12;
 
@@ -44,6 +54,8 @@ export const ComposioMarketplace = () => {
   const [pendingToolkitSlug, setPendingToolkitSlug] = useState<string | null>(
     null,
   );
+  const [apiKeyToolkit, setApiKeyToolkit] = useState<ComposioApp | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
 
   const { data, isLoading, refetch } = useQuery(
     trpc.composio.listApps.queryOptions({
@@ -129,8 +141,35 @@ export const ComposioMarketplace = () => {
     }),
   );
 
-  const handleConnect = (slug: string) => {
-    connectMutation.mutate({ toolkitSlug: slug });
+  const saveApiKeyMutation = useMutation(
+    trpc.composio.saveApiKey.mutationOptions({
+      onSuccess: () => {
+        toast.success(`Successfully connected to ${apiKeyToolkit?.name}!`);
+        setApiKeyToolkit(null);
+        setApiKeyInput("");
+        refetch();
+        refreshCredentialsList();
+      },
+      onError: (error) => {
+        toast.error(`Failed to save API key: ${error.message}`);
+      },
+    }),
+  );
+
+  const handleConnect = (app: ComposioApp) => {
+    if (app.authType === "API_KEY") {
+      setApiKeyToolkit(app);
+      return;
+    }
+    connectMutation.mutate({ toolkitSlug: app.slug });
+  };
+
+  const handleSaveApiKey = () => {
+    if (!apiKeyToolkit || !apiKeyInput.trim()) return;
+    saveApiKeyMutation.mutate({
+      toolkitSlug: apiKeyToolkit.slug,
+      apiKey: apiKeyInput.trim(),
+    });
   };
 
   const handleSearchChange = (value: string) => {
@@ -264,14 +303,16 @@ export const ComposioMarketplace = () => {
                         `Integrate ${app.name} tools into your Otogent workflows.`
                       }
                       isConnected={app.isConnected || false}
-                      onConnect={() => handleConnect(app.slug)}
+                      onConnect={() => handleConnect(app)}
                       isConnecting={
-                        connectMutation.isPending &&
-                        (
-                          connectMutation.variables as
-                            | ConnectVariables
-                            | undefined
-                        )?.toolkitSlug === app.slug
+                        (connectMutation.isPending &&
+                          (
+                            connectMutation.variables as
+                              | ConnectVariables
+                              | undefined
+                          )?.toolkitSlug === app.slug) ||
+                        (saveApiKeyMutation.isPending &&
+                          apiKeyToolkit?.slug === app.slug)
                       }
                       authType={app.authType}
                     />
@@ -373,6 +414,70 @@ export const ComposioMarketplace = () => {
           </main>
         </div>
       </div>
+
+      <Dialog
+        open={Boolean(apiKeyToolkit)}
+        onOpenChange={(open) => !open && setApiKeyToolkit(null)}
+      >
+        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl p-0 shadow-2xl">
+          <DialogHeader className="border-b bg-muted/30 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg border bg-white shadow-sm">
+                <KeyIcon className="size-5 text-amber-500" />
+              </div>
+              <DialogTitle>Connect {apiKeyToolkit?.name}</DialogTitle>
+            </div>
+            <DialogDescription className="mt-2">
+              Enter your {apiKeyToolkit?.name} API key below to enable its
+              tools in your workflows.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6">
+            <div className="space-y-3">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                API Key
+              </label>
+              <Input
+                type="password"
+                placeholder={`sk-... or your ${apiKeyToolkit?.name} token`}
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                className="h-11"
+                autoFocus
+              />
+              <p className="text-[11px] leading-5 text-muted-foreground">
+                Your key is encrypted and stored securely. You can find your key
+                in the {apiKeyToolkit?.name} developer dashboard.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2 border-t bg-muted/30 px-6 py-4 sm:flex-row">
+            <Button
+              variant="ghost"
+              onClick={() => setApiKeyToolkit(null)}
+              className="h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveApiKey}
+              disabled={!apiKeyInput.trim() || saveApiKeyMutation.isPending}
+              className="h-11 min-w-[120px]"
+            >
+              {saveApiKeyMutation.isPending ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  className="mr-2 size-4 border-2 border-white/30 border-t-white rounded-full"
+                />
+              ) : null}
+              Save Connection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

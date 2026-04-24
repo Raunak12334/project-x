@@ -253,6 +253,42 @@ export const composioRouter = createTRPCRouter({
         throw new Error("Failed to disconnect integration");
       }
     }),
+  saveApiKey: protectedProcedure
+    .input(
+      z.object({
+        toolkitSlug: z.string(),
+        apiKey: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await prisma.composioIntegration.upsert({
+          where: {
+            organizationId_toolkitSlug: {
+              organizationId: ctx.auth.organizationId,
+              toolkitSlug: input.toolkitSlug,
+            },
+          },
+          update: {
+            authTokenEncrypted: encrypt(input.apiKey),
+            isConnected: true,
+            lastSyncedAt: new Date(),
+          },
+          create: {
+            organizationId: ctx.auth.organizationId,
+            toolkitSlug: input.toolkitSlug,
+            name: input.toolkitSlug,
+            authTokenEncrypted: encrypt(input.apiKey),
+            isConnected: true,
+            lastSyncedAt: new Date(),
+          },
+        });
+        return { success: true };
+      } catch (error) {
+        console.error("Error saving API key:", error);
+        throw new Error("Failed to save API key");
+      }
+    }),
 
   listConnectedAccounts: protectedProcedure.query(async ({ ctx }) => {
     try {
