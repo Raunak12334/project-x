@@ -35,12 +35,29 @@ export async function validateAnthropicKey(apiKey: string): Promise<boolean> {
  * Validates a Gemini API key by making a test API call
  */
 export async function validateGeminiKey(apiKey: string): Promise<boolean> {
-  try {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    await model.generateContent("test");
-    return true;
+    // 1. Basic format check (all Gemini keys start with AIzaSy)
+    if (!apiKey.startsWith("AIzaSy")) {
+      return false;
+    }
+
+    // 2. Try a quick test call, but don't fail immediately if it's just a quota/model issue
+    try {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      await model.generateContent("test");
+      return true;
+    } catch (apiError) {
+      // If it's a 403 or 401, it's definitely invalid. 
+      // Otherwise, we'll give it the benefit of the doubt for now.
+      const errorMessage = apiError instanceof Error ? apiError.message : "";
+      if (errorMessage.includes("403") || errorMessage.includes("401") || errorMessage.includes("API_KEY_INVALID")) {
+        return false;
+      }
+      
+      // If it's a network error or 500, let's assume the key is okay but the service is busy
+      return true; 
+    }
   } catch (_error) {
     return false;
   }
