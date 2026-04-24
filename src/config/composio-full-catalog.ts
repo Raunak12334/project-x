@@ -357,6 +357,14 @@ export const COMPOSIO_FULL_CATALOG: ComposioAppMeta[] = [
     authType: "API_KEY",
   },
   {
+    slug: "google-generative-ai",
+    name: "Gemini",
+    logo: "https://cdn.simpleicons.org/google/4285F4",
+    description: "Google's most capable AI models for reasoning and creative tasks.",
+    categories: ["AI & Machine Learning"],
+    authType: "API_KEY",
+  },
+  {
     slug: "huggingface",
     name: "Hugging Face",
     logo: "https://cdn.simpleicons.org/huggingface/FFD21E",
