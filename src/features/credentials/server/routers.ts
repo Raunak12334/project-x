@@ -11,7 +11,7 @@ import {
 import { validateCredential } from "./validators";
 
 export const credentialsRouter = createTRPCRouter({
-  create: premiumProcedure
+  create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, "Name is required"),
