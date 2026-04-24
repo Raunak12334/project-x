@@ -445,7 +445,7 @@ model ComposioIntegration {
   name           String
   logo           String?
   accountName    String?
-  authTokenEncrypted String // Encrypted Composio token
+  authTokenEncrypted String      @default("") // Encrypted Composio token
   connectionId   String? // Composio connection ID
   isConnected    Boolean      @default(false)
   lastSyncedAt   DateTime?
