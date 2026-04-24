@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       update: {
         connectionId: resolvedConnectionId,
         accountName: accountName || undefined,
-        authToken: encrypt(resolvedConnectionId),
+        authTokenEncrypted: encrypt(resolvedConnectionId),
         isConnected: true,
         lastSyncedAt: new Date(),
       },
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         connectionId: resolvedConnectionId,
         accountName: accountName || undefined,
         isConnected: true,
-        authToken: encrypt(resolvedConnectionId),
+        authTokenEncrypted: encrypt(resolvedConnectionId),
       },
     });
 

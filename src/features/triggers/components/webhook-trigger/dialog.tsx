@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CopyIcon } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,11 +30,25 @@ export const WebhookTriggerDialog = ({ nodeId, open, onOpenChange }: Props) => {
   const { data: workflow } = useQuery(
     trpc.workflows.getOne.queryOptions({ id: workflowId }),
   );
+  const [plainSecret, setPlainSecret] = useState("");
+  const rotateWebhookSecret = useMutation(
+    trpc.workflows.rotateWebhookSecret.mutationOptions({
+      onSuccess: (data) => {
+        setPlainSecret(data.secret);
+        toast.success("New webhook secret generated");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to generate webhook secret");
+      },
+    }),
+  );
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== "undefined" ? window.location.origin : "");
-  const webhookUrl = `${baseUrl}/api/webhooks/generic?workflowId=${encodeURIComponent(workflowId)}&nodeId=${encodeURIComponent(nodeId)}&secret=${encodeURIComponent(workflow?.webhookSecret ?? "")}`;
-  const curlExample = `curl -X POST "${webhookUrl}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"orderId":"123","status":"paid"}'`;
+  const webhookUrl = `${baseUrl}/api/webhooks/generic?workflowId=${encodeURIComponent(workflowId)}&nodeId=${encodeURIComponent(nodeId)}`;
+  const curlExample = plainSecret
+    ? `curl -X POST "${webhookUrl}" \\\n  -H "Content-Type: application/json" \\\n  -H "x-otogent-webhook-secret: ${plainSecret}" \\\n  -d '{"orderId":"123","status":"paid"}'`
+    : `curl -X POST "${webhookUrl}" \\\n  -H "Content-Type: application/json" \\\n  -H "x-otogent-webhook-secret: <generate-secret-first>" \\\n  -d '{"orderId":"123","status":"paid"}'`;
 
   const copyText = async (value: string, successMessage: string) => {
     try {
@@ -73,6 +88,34 @@ export const WebhookTriggerDialog = ({ nodeId, open, onOpenChange }: Props) => {
                 <CopyIcon className="size-4" />
               </Button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="webhook-secret">Webhook Secret</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => rotateWebhookSecret.mutate({ id: workflowId })}
+                disabled={rotateWebhookSecret.isPending}
+              >
+                {workflow?.webhookSecretConfigured
+                  ? "Rotate Secret"
+                  : "Generate Secret"}
+              </Button>
+            </div>
+            <Input
+              id="webhook-secret"
+              value={
+                plainSecret ||
+                (workflow?.webhookSecretConfigured
+                  ? "Current secret is hidden. Rotate to generate a new one."
+                  : "No webhook secret generated yet.")
+              }
+              readOnly
+              className="font-mono text-sm"
+            />
           </div>
 
           <div className="space-y-2 rounded-lg bg-muted p-4">

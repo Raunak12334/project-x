@@ -4,7 +4,10 @@ import Stripe from "stripe";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { verifyWebhookSecret } from "@/lib/webhook-security";
+import {
+  getWebhookSecretHeaderName,
+  verifyWebhookSecret,
+} from "@/lib/webhook-security";
 
 let stripeClient: Stripe | null = null;
 
@@ -62,7 +65,9 @@ export async function POST(request: NextRequest) {
 
     const url = new URL(request.url);
     const workflowId = url.searchParams.get("workflowId");
-    const secret = url.searchParams.get("secret");
+    const secret =
+      request.headers.get(getWebhookSecretHeaderName()) ??
+      url.searchParams.get("secret");
 
     if (!workflowId) {
       return NextResponse.json(
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
       where: { id: workflowId },
       select: {
         id: true,
-        webhookSecret: true,
+        webhookSecretHash: true,
         nodes: {
           where: { type: NodeType.STRIPE_TRIGGER },
           select: { id: true },
@@ -95,8 +100,8 @@ export async function POST(request: NextRequest) {
     }
 
     const hasValidWorkflowSecret = Boolean(
-      workflow.webhookSecret &&
-        verifyWebhookSecret(workflow.webhookSecret, secret),
+      workflow.webhookSecretHash &&
+        verifyWebhookSecret(workflow.webhookSecretHash, secret),
     );
 
     if (!hasValidWorkflowSecret) {

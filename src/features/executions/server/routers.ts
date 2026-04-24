@@ -8,7 +8,7 @@ import {
 } from "@/langgraph/checkpoints";
 import prisma from "@/lib/db";
 import {
-  executionScalarSelect,
+  getExecutionScalarSelect,
   getNodeExecutionColumns,
   getNodeExecutionScalarSelect,
 } from "@/lib/execution-schema-compat";
@@ -18,6 +18,7 @@ export const executionsRouter = createTRPCRouter({
   approve: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const executionSelect = await getExecutionScalarSelect();
       const execution = await prisma.execution.findUniqueOrThrow({
         where: {
           id: input.id,
@@ -25,7 +26,7 @@ export const executionsRouter = createTRPCRouter({
             organizationId: ctx.auth.organizationId,
           },
         },
-        select: executionScalarSelect,
+        select: executionSelect,
       });
 
       if (execution.status !== ExecutionStatus.WAITING_APPROVAL) {
@@ -93,6 +94,7 @@ export const executionsRouter = createTRPCRouter({
   replayFromCheckpoint: protectedProcedure
     .input(z.object({ id: z.string(), checkpointId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const executionSelect = await getExecutionScalarSelect();
       const execution = await prisma.execution.findUniqueOrThrow({
         where: {
           id: input.id,
@@ -101,8 +103,15 @@ export const executionsRouter = createTRPCRouter({
           },
         },
         select: {
-          ...executionScalarSelect,
-          checkpoints: true,
+          ...executionSelect,
+          checkpoints: {
+            select: {
+              id: true,
+              nodeId: true,
+              sequence: true,
+              state: true,
+            },
+          },
         },
       });
 
@@ -127,6 +136,7 @@ export const executionsRouter = createTRPCRouter({
   resume: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const executionSelect = await getExecutionScalarSelect();
       const execution = await prisma.execution.findUniqueOrThrow({
         where: {
           id: input.id,
@@ -135,7 +145,7 @@ export const executionsRouter = createTRPCRouter({
           },
         },
         select: {
-          ...executionScalarSelect,
+          ...executionSelect,
           checkpoints: {
             orderBy: {
               sequence: "desc",
@@ -169,6 +179,7 @@ export const executionsRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
+      const executionSelect = await getExecutionScalarSelect();
       const nodeExecutionColumns = await getNodeExecutionColumns();
       const nodeExecutionSelect = await getNodeExecutionScalarSelect();
       const nodeExecutionOrderBy: Prisma.NodeExecutionOrderByWithRelationInput[] =
@@ -186,7 +197,7 @@ export const executionsRouter = createTRPCRouter({
           },
         },
         select: {
-          ...executionScalarSelect,
+          ...executionSelect,
           checkpoints: {
             orderBy: {
               sequence: "asc",
@@ -222,7 +233,11 @@ export const executionsRouter = createTRPCRouter({
 
       return {
         ...execution,
-        workflowVersionId: null,
+        workflowVersionId:
+          "workflowVersionId" in execution &&
+          typeof execution.workflowVersionId === "string"
+            ? execution.workflowVersionId
+            : null,
         nodeExecutions: execution.nodeExecutions.map(
           (nodeExecution, index) => ({
             ...nodeExecution,
@@ -257,6 +272,7 @@ export const executionsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { page, pageSize } = input;
+      const executionSelect = await getExecutionScalarSelect();
 
       const [items, totalCount] = await Promise.all([
         prisma.execution.findMany({
@@ -271,7 +287,7 @@ export const executionsRouter = createTRPCRouter({
             startedAt: "desc",
           },
           select: {
-            ...executionScalarSelect,
+            ...executionSelect,
             workflow: {
               select: {
                 id: true,

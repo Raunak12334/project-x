@@ -17,11 +17,11 @@ import { validateWorkflow } from "@/features/workflows/lib/workflow-validator";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
 import {
-  executionScalarSelect,
+  getExecutionScalarSelect,
   supportsExecutionWorkflowVersionId,
   withExecutionWorkflowVersionId,
 } from "@/lib/execution-schema-compat";
-import { createWebhookSecret } from "@/lib/webhook-security";
+import { createWebhookSecret, hashWebhookSecret } from "@/lib/webhook-security";
 import {
   createTRPCRouter,
   premiumProcedure,
@@ -109,12 +109,36 @@ const persistWorkflowGraph = async (params: {
 }) => {
   const { tx, workflowId, nodes, edges } = params;
   const nodeTypeSchema = z.enum(NodeType);
+  const activeNodeIds = nodes.map((node) => node.id);
+  const activeNodeIdSet = new Set(activeNodeIds);
+
+  if (activeNodeIdSet.size !== activeNodeIds.length) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Workflow contains duplicate node ids.",
+    });
+  }
+
+  const collidingNodes = await tx.node.findMany({
+    where: {
+      id: { in: activeNodeIds },
+      workflowId: { not: workflowId },
+    },
+    select: { id: true },
+  });
+
+  if (collidingNodes.length > 0) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Workflow update attempted to reuse nodes from another workflow.",
+    });
+  }
 
   await tx.connection.deleteMany({
     where: { workflowId },
   });
 
-  const activeNodeIds = nodes.map((node) => node.id);
   await tx.node.updateMany({
     where: {
       workflowId,
@@ -126,26 +150,38 @@ const persistWorkflowGraph = async (params: {
   await Promise.all(
     nodes.map((node) => {
       const type = nodeTypeSchema.parse(node.type);
-
-      return tx.node.upsert({
-        where: { id: node.id },
-        create: {
-          id: node.id,
-          workflowId,
-          name: type,
-          type,
-          position: node.position,
-          data: node.data || {},
-          deletedAt: null,
-        },
-        update: {
-          name: type,
-          type,
-          position: node.position,
-          data: node.data || {},
-          deletedAt: null,
-        },
-      });
+      return tx.node
+        .findFirst({
+          where: {
+            id: node.id,
+            workflowId,
+          },
+          select: { id: true },
+        })
+        .then((existingNode) =>
+          existingNode
+            ? tx.node.update({
+                where: { id: node.id },
+                data: {
+                  name: type,
+                  type,
+                  position: node.position,
+                  data: node.data || {},
+                  deletedAt: null,
+                },
+              })
+            : tx.node.create({
+                data: {
+                  id: node.id,
+                  workflowId,
+                  name: type,
+                  type,
+                  position: node.position,
+                  data: node.data || {},
+                  deletedAt: null,
+                },
+              }),
+        );
     }),
   );
 
@@ -158,6 +194,20 @@ const persistWorkflowGraph = async (params: {
       toInput: edge.targetHandle,
     }),
   );
+
+  const invalidConnections = connections.filter(
+    (connection) =>
+      !activeNodeIdSet.has(connection.fromNodeId) ||
+      !activeNodeIdSet.has(connection.toNodeId),
+  );
+
+  if (invalidConnections.length > 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "Workflow contains connections referencing nodes outside the current workflow graph.",
+    });
+  }
 
   if (
     process.env.NODE_ENV !== "production" &&
@@ -334,6 +384,7 @@ export const workflowsRouter = createTRPCRouter({
 
       const canStoreWorkflowVersionId =
         await supportsExecutionWorkflowVersionId();
+      const executionSelect = await getExecutionScalarSelect();
       const execution = await prisma.execution.create({
         data: withExecutionWorkflowVersionId(
           {
@@ -344,7 +395,7 @@ export const workflowsRouter = createTRPCRouter({
           },
           canStoreWorkflowVersionId ? workflowVersion.id : null,
         ),
-        select: executionScalarSelect,
+        select: executionSelect,
       });
 
       await sendWorkflowExecution({
@@ -447,7 +498,6 @@ export const workflowsRouter = createTRPCRouter({
       data: {
         name: generateSlug(3),
         organizationId: ctx.auth.organizationId,
-        webhookSecret: createWebhookSecret(),
         nodes: {
           create: {
             type: NodeType.INITIAL,
@@ -481,7 +531,6 @@ export const workflowsRouter = createTRPCRouter({
           data: {
             name: template.name,
             organizationId: ctx.auth.organizationId,
-            webhookSecret: createWebhookSecret(),
           },
         });
 
@@ -577,6 +626,34 @@ export const workflowsRouter = createTRPCRouter({
         data: { name: input.name },
       });
     }),
+  rotateWebhookSecret: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const secret = createWebhookSecret();
+      const workflow = await prisma.workflow.update({
+        where: {
+          id: input.id,
+          organizationId: ctx.auth.organizationId,
+        },
+        data: {
+          webhookSecretHash: hashWebhookSecret(secret),
+          webhookSecretLastRotatedAt: new Date(),
+          webhookSecretVersion: {
+            increment: 1,
+          },
+        },
+        select: {
+          id: true,
+          webhookSecretVersion: true,
+          webhookSecretLastRotatedAt: true,
+        },
+      });
+
+      return {
+        ...workflow,
+        secret,
+      };
+    }),
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -617,7 +694,9 @@ export const workflowsRouter = createTRPCRouter({
       return {
         id: workflow.id,
         name: workflow.name,
-        webhookSecret: workflow.webhookSecret || "",
+        webhookSecretConfigured: Boolean(workflow.webhookSecretHash),
+        webhookSecretLastRotatedAt: workflow.webhookSecretLastRotatedAt,
+        webhookSecretVersion: workflow.webhookSecretVersion,
         nodes,
         edges,
       };

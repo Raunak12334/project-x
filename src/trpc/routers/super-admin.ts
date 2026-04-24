@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { executionScalarSelect } from "@/lib/execution-schema-compat";
+import { getExecutionScalarSelect } from "@/lib/execution-schema-compat";
 import {
   baseProcedure,
   createTRPCRouter,
@@ -49,6 +49,7 @@ export const superAdminRouter = createTRPCRouter({
   }),
 
   getDashboardData: superAdminProcedure.query(async () => {
+    const executionSelect = await getExecutionScalarSelect();
     const [
       totalUsers,
       totalOrganizations,
@@ -84,7 +85,7 @@ export const superAdminRouter = createTRPCRouter({
       prisma.execution.findMany({
         where: { deletedAt: null },
         select: {
-          ...executionScalarSelect,
+          ...executionSelect,
           workflow: {
             select: { name: true, organization: { select: { name: true } } },
           },
@@ -244,9 +245,9 @@ export const superAdminRouter = createTRPCRouter({
     }),
 
   getSystemActivity: superAdminProcedure.query(async () => {
+    const executionSelect = await getExecutionScalarSelect();
     const [auditLogs, executions] = await Promise.all([
       prisma.auditLog.findMany({
-        where: { deletedAt: null },
         take: 50,
         orderBy: { createdAt: "desc" },
       }),
@@ -255,7 +256,7 @@ export const superAdminRouter = createTRPCRouter({
         take: 50,
         orderBy: { startedAt: "desc" },
         select: {
-          ...executionScalarSelect,
+          ...executionSelect,
           workflow: {
             select: { name: true, organization: { select: { name: true } } },
           },

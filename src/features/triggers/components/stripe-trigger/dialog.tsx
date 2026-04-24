@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CopyIcon } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,19 +29,33 @@ export const StripeTriggerDialog = ({ open, onOpenChange }: Props) => {
   const { data: workflow } = useQuery(
     trpc.workflows.getOne.queryOptions({ id: workflowId }),
   );
+  const [plainSecret, setPlainSecret] = useState("");
+  const rotateWebhookSecret = useMutation(
+    trpc.workflows.rotateWebhookSecret.mutationOptions({
+      onSuccess: (data) => {
+        setPlainSecret(data.secret);
+        toast.success("New webhook secret generated");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to generate webhook secret");
+      },
+    }),
+  );
 
-  // Construct the webhook URL
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== "undefined" ? window.location.origin : "");
-  const webhookUrl = `${baseUrl}/api/webhooks/stripe?workflowId=${encodeURIComponent(workflowId)}&secret=${encodeURIComponent(workflow?.webhookSecret ?? "")}`;
+  const baseWebhookUrl = `${baseUrl}/api/webhooks/stripe?workflowId=${encodeURIComponent(workflowId)}`;
+  const webhookUrl = plainSecret
+    ? `${baseWebhookUrl}&secret=${encodeURIComponent(plainSecret)}`
+    : baseWebhookUrl;
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (value: string, successMessage: string) => {
     try {
-      await navigator.clipboard.writeText(webhookUrl);
-      toast.success("Webhook URL copied to clipboard");
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
     } catch {
-      toast.error("Failed to copy URL");
+      toast.error("Failed to copy");
     }
   };
 
@@ -68,24 +83,55 @@ export const StripeTriggerDialog = ({ open, onOpenChange }: Props) => {
                 type="button"
                 size="icon"
                 variant="outline"
-                onClick={copyToClipboard}
+                onClick={() =>
+                  copyToClipboard(webhookUrl, "Webhook URL copied")
+                }
               >
                 <CopyIcon className="size-4" />
               </Button>
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="webhook-secret">Webhook Secret</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => rotateWebhookSecret.mutate({ id: workflowId })}
+                disabled={rotateWebhookSecret.isPending}
+              >
+                {workflow?.webhookSecretConfigured
+                  ? "Rotate Secret"
+                  : "Generate Secret"}
+              </Button>
+            </div>
+            <Input
+              id="webhook-secret"
+              value={
+                plainSecret ||
+                (workflow?.webhookSecretConfigured
+                  ? "Current secret is hidden. Rotate to generate a new one."
+                  : "No webhook secret generated yet.")
+              }
+              readOnly
+              className="font-mono text-sm"
+            />
+          </div>
+
           <div className="rounded-lg bg-muted p-4 space-y-2">
             <h4 className="font-medium text-sm">Setup instructions:</h4>
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
               <li>Open your Stripe Dashboard</li>
-              <li>Go to Developers → Webhooks</li>
-              <li>Click "Add endpoint"</li>
+              <li>Go to Developers and then Webhooks</li>
+              <li>Click Add endpoint</li>
               <li>Paste the webhook URL above</li>
+              <li>Rotate the secret if you need a new fully signed URL</li>
+              <li>Select the Stripe events you want to listen for</li>
               <li>
-                Select events to listen for (e.g., payment_intent.succeeded)
+                Save and keep the Stripe signing secret configured server-side
               </li>
-              <li>Save and copy the signing secret</li>
             </ol>
           </div>
 
@@ -120,7 +166,7 @@ export const StripeTriggerDialog = ({ open, onOpenChange }: Props) => {
                 <code className="bg-background px-1 py-0.5 rounded">
                   {"{{stripe.eventType}}"}
                 </code>{" "}
-                - Event type (e.g., payment_intent.succeeded)
+                - Event type
               </li>
             </ul>
           </div>

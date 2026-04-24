@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id                  String          @id
+  id                  String          @id @default(cuid())
   name                String
   email               String          @unique
   emailVerified       Boolean         @default(false)
@@ -102,16 +102,21 @@ model AuditLog {
   organizationId String
   action         String
   metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  requestId      String?
+  severity       String    @default("INFO")
+  resourceType   String?
+  resourceId     String?
   createdAt      DateTime  @default(now())
-  deletedAt      DateTime?
 
   @@index([organizationId, createdAt])
 }
 
 model Session {
-  id        String    @id
+  id        String    @id @default(cuid())
   expiresAt DateTime
-  token     String    @unique
+  tokenHash String    @unique @map("token")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -124,17 +129,17 @@ model Session {
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
+  accessTokenEncrypted  String?   @map("accessToken")
+  refreshTokenEncrypted String?   @map("refreshToken")
+  idTokenEncrypted      String?   @map("idToken")
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
+  passwordHash          String?   @map("password")
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   deletedAt             DateTime?
@@ -144,13 +149,13 @@ model Account {
 }
 
 model Verification {
-  id         String    @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @default(now()) @updatedAt
-  deletedAt  DateTime?
+  id             String    @id @default(cuid())
+  identifierHash String    @map("identifier")
+  valueEncrypted String    @map("value")
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  deletedAt      DateTime?
 
   @@map("verification")
 }
@@ -158,7 +163,6 @@ model Verification {
 model Credential {
   id             String         @id @default(cuid())
   name           String
-  value          String?
   type           CredentialType
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -179,22 +183,25 @@ model Credential {
 }
 
 model Workflow {
-  id             String            @id @default(cuid())
-  name           String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  deletedAt      DateTime?
-  organizationId String
-  currentVersion Int               @default(1)
-  isLocked       Boolean           @default(false)
-  webhookSecret  String?           @unique
-  connections    Connection[]
-  executions     Execution[]
-  nodes          Node[]
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  versions       WorkflowVersion[]
+  id                         String           @id @default(cuid())
+  name                       String
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  deletedAt                  DateTime?
+  organizationId             String
+  currentVersion             Int              @default(1)
+  isLocked                   Boolean          @default(false)
+  webhookSecretHash          String?
+  webhookSecretLastRotatedAt DateTime?
+  webhookSecretVersion       Int              @default(1)
+  connections                Connection[]
+  executions                 Execution[]
+  nodes                      Node[]
+  organization               Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  versions                   WorkflowVersion[]
 
   @@index([organizationId, updatedAt])
+  @@index([organizationId, deletedAt])
   @@map("workflow")
 }
 
@@ -233,7 +240,7 @@ model Node {
   url               String?
   outputConnections Connection[]    @relation("FromNode")
   inputConnections  Connection[]    @relation("ToNode")
-  credential        Credential?     @relation(fields: [credentialId], references: [id])
+  credential        Credential?     @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   workflow          Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   nodeExecutions    NodeExecution[]
 
@@ -256,7 +263,8 @@ model Connection {
   toNode     Node      @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
   workflow   Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
-  @@unique([fromNodeId, toNodeId, fromOutput, toInput])
+  @@unique([workflowId, fromNodeId, toNodeId, fromOutput, toInput])
+  @@index([workflowId])
   @@map("connection")
 }
 
@@ -295,6 +303,8 @@ model Execution {
   @@index([status, retryCount])
   @@index([inngestEventId])
   @@index([idempotencyKey])
+  @@unique([workflowId, idempotencyKey])
+  @@unique([workflowId, inngestEventId])
   @@map("execution")
 }
 
@@ -358,15 +368,18 @@ model NodeExecution {
 model RateLimitBucket {
   id             String   @id @default(cuid())
   organizationId String
+  subjectType    String   @default("ORG")
+  subjectId      String
   limitType      String
+  route          String   @default("")
   count          Int      @default(0)
   limit          Int
   resetAt        DateTime
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([organizationId, limitType, resetAt])
-  @@index([organizationId, limitType])
+  @@unique([organizationId, subjectType, subjectId, limitType, route, resetAt])
+  @@index([organizationId, subjectType, subjectId, limitType])
   @@map("rate_limit_bucket")
 }
 
@@ -376,8 +389,13 @@ model ExecutionAuditLog {
   organizationId String
   action         String
   details        Json?
+  ipAddress      String?
+  userAgent      String?
+  requestId      String?
+  severity       String    @default("INFO")
+  resourceType   String?
+  resourceId     String?
   createdAt      DateTime  @default(now())
-  deletedAt      DateTime?
   archivedAt     DateTime?
 
   @@index([executionId])
@@ -427,7 +445,7 @@ model ComposioIntegration {
   name           String
   logo           String?
   accountName    String?
-  authToken      String // Encrypted Composio token
+  authTokenEncrypted String // Encrypted Composio token
   connectionId   String? // Composio connection ID
   isConnected    Boolean      @default(false)
   lastSyncedAt   DateTime?

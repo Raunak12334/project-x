@@ -4,7 +4,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { sendWorkflowExecution } from "@/inngest/utils";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { verifyWebhookSecret } from "@/lib/webhook-security";
+import {
+  getWebhookSecretHeaderName,
+  verifyWebhookSecret,
+} from "@/lib/webhook-security";
 
 const parseBody = async (request: NextRequest) => {
   if (request.method === "GET") {
@@ -90,7 +93,9 @@ const handleWebhookRequest = async (request: NextRequest) => {
     const url = new URL(request.url);
     const workflowId = url.searchParams.get("workflowId");
     const nodeId = url.searchParams.get("nodeId");
-    const secret = url.searchParams.get("secret");
+    const secret =
+      request.headers.get(getWebhookSecretHeaderName()) ??
+      url.searchParams.get("secret");
 
     if (!workflowId || !nodeId) {
       return createWebhookResponse(400, {
@@ -105,7 +110,7 @@ const handleWebhookRequest = async (request: NextRequest) => {
       select: {
         id: true,
         organizationId: true,
-        webhookSecret: true,
+        webhookSecretHash: true,
       },
     });
 
@@ -117,8 +122,8 @@ const handleWebhookRequest = async (request: NextRequest) => {
     }
 
     const hasValidSecret = Boolean(
-      workflow.webhookSecret &&
-        verifyWebhookSecret(workflow.webhookSecret, secret),
+      workflow.webhookSecretHash &&
+        verifyWebhookSecret(workflow.webhookSecretHash, secret),
     );
 
     if (!hasValidSecret) {

@@ -145,7 +145,7 @@ export const composioRouter = createTRPCRouter({
           },
           update: {
             connectionId: connectionRequest.id,
-            authToken: encrypt(connectionRequest.id),
+            authTokenEncrypted: encrypt(connectionRequest.id),
             isConnected: false,
             lastSyncedAt: new Date(),
           },
@@ -154,7 +154,7 @@ export const composioRouter = createTRPCRouter({
             toolkitSlug: input.toolkitSlug,
             name: input.toolkitSlug,
             connectionId: connectionRequest.id,
-            authToken: encrypt(connectionRequest.id),
+            authTokenEncrypted: encrypt(connectionRequest.id),
             isConnected: false,
           },
         });

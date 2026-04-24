@@ -6,7 +6,7 @@ async function main() {
   const result = await prisma.account.update({
     where: { id: "admin-account-id" },
     data: {
-      password:
+      passwordHash:
         "$argon2id$v=19$m=19456,t=2,p=1$UDuM9oY5dVodF5sWNef09A$qlkNRAwGfi+WmGG4OfzkkB0NHNdH1HTz1udkXcmjyGc",
       providerId: "email",
     },

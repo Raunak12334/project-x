@@ -27,7 +27,6 @@ export const credentialsRouter = createTRPCRouter({
           name,
           organizationId: ctx.auth.organizationId,
           type,
-          value: null,
           valueEncrypted: encrypt(value),
         },
         select: {
@@ -75,7 +74,6 @@ export const credentialsRouter = createTRPCRouter({
           type,
           ...(trimmedValue
             ? {
-                value: null,
                 valueEncrypted: encrypt(trimmedValue),
               }
             : {}),

@@ -35,7 +35,7 @@ async function main() {
         accountId: email,
         providerId: "email",
         userId: user.id,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       },
     });
   });

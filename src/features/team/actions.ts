@@ -19,6 +19,9 @@ export async function inviteTeamMember(email: string, organizationId: string) {
     key: `invite_team_member:${user.id}`,
     limit: 5,
     windowMs: 60 * 1000,
+    subjectType: "USER",
+    subjectId: user.id,
+    route: "team.invite",
   });
 
   if (!isWithinInviteLimit) {

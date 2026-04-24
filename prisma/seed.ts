@@ -30,7 +30,7 @@ async function main() {
       accountId: "abhishekverma9920@gmail.com",
       providerId: "email",
       userId: superAdmin.id,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
     },
   });
 

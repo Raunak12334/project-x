@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 
   title: {
     default:
-      "Otogent – AI Agent Platform & Workflow Builder (All-in-One AI Tools)",
+      "Otogent - AI Agent Platform & Workflow Builder (All-in-One AI Tools)",
     template: "%s | Otogent AI Platform",
   },
 
@@ -79,16 +79,16 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Otogent – Multi-Agent AI Platform",
+    title: "Otogent - Multi-Agent AI Platform",
     description:
       "Build and deploy scalable AI agent workflows using Otogent. One platform. Infinite automation.",
     url: "https://otogent.com",
     siteName: "Otogent",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        url: "/logo.svg",
+        width: 512,
+        height: 512,
       },
     ],
     type: "website",
@@ -98,7 +98,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Otogent AI Platform",
     description: "Create and scale AI agent workflows with ease using Otogent.",
-    images: ["/og-image.png"],
+    images: ["/logo.svg"],
   },
 
   robots: {

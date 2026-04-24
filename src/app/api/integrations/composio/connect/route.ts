@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       },
       update: {
         connectionId: connectionRequest.id,
-        authToken: encrypt(connectionRequest.id),
+        authTokenEncrypted: encrypt(connectionRequest.id),
         isConnected: false,
         lastSyncedAt: new Date(),
       },
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         toolkitSlug: input.toolkitSlug,
         name: input.toolkitSlug,
         connectionId: connectionRequest.id,
-        authToken: encrypt(connectionRequest.id),
+        authTokenEncrypted: encrypt(connectionRequest.id),
         isConnected: false,
       },
     });
