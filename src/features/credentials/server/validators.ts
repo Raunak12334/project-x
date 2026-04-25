@@ -58,9 +58,6 @@ export async function validateGeminiKey(apiKey: string): Promise<boolean> {
       // If it's a network error or 500, let's assume the key is okay but the service is busy
       return true; 
     }
-  } catch (_error) {
-    return false;
-  }
 }
 
 /**
