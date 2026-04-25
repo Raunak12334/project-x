@@ -573,7 +573,7 @@ export const executeWorkflow = inngest.createFunction(
 
       // Create a notification for the organization
       try {
-        await prisma.notification.create({
+        await (prisma as any).notification.create({
           data: {
             organizationId: updatedExecution.workflow.organizationId,
             title: `Workflow Execution Failed`,
@@ -902,7 +902,7 @@ export const onUserSignup = inngest.createFunction(
     const { userId, name } = event.data;
 
     await step.run("create-welcome-notification", async () => {
-      return prisma.notification.create({
+      return (prisma as any).notification.create({
         data: {
           userId,
           title: `Welcome to Otogent, ${name || "there"}! 🚀`,

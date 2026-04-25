@@ -15,14 +15,14 @@ import {
   ErrorView, 
   EmptyView 
 } from "@/components/entity-components";
-import type { Notification } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 export default function NotificationsPage() {
   const trpc = useTRPC();
-  const { data: notifications, isLoading, isError, refetch } = useQuery({
+  const { data: notificationsData, isLoading, isError, refetch } = useQuery({
     ...trpc.notifications.getNotifications.queryOptions(),
   });
+  const notifications = notificationsData as any[];
 
   const markAsRead = useMutation({
     ...trpc.notifications.markAsRead.mutationOptions(),
@@ -67,7 +67,7 @@ export default function NotificationsPage() {
         items={notifications || []}
         getKey={(n) => n.id}
         emptyView={<EmptyView message="You don't have any notifications yet." />}
-        renderItem={(notification: Notification) => (
+        renderItem={(notification: any) => (
           <NotificationPageItem 
             notification={notification} 
             onMarkRead={async () => {
@@ -88,7 +88,7 @@ function NotificationPageItem({
   onMarkRead,
   getStatusIcon
 }: { 
-  notification: Notification; 
+  notification: any; 
   onMarkRead: () => Promise<void>;
   getStatusIcon: (type: string) => React.ReactNode;
 }) {
@@ -133,7 +133,7 @@ function NotificationPageItem({
       }
       className={cn(
         "transition-all",
-        !notification.isRead && "border-l-2 border-l-blue-500 bg-blue-50/10 dark:bg-blue-900/5"
+        !notification.isRead && "bg-slate-50/50 dark:bg-slate-900/20 shadow-sm"
       )}
       onRemove={onMarkRead}
     />

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import type { Notification } from "@prisma/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -20,10 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const NotificationBell = () => {
   const trpc = useTRPC();
-  const { data: notifications, refetch } = useQuery({
+  const { data: notificationsData, refetch } = useQuery({
     ...trpc.notifications.getNotifications.queryOptions(),
     refetchInterval: 30000,
   });
+  const notifications = notificationsData as any[];
 
   const markAsRead = useMutation({
     ...trpc.notifications.markAsRead.mutationOptions(),
@@ -35,7 +35,7 @@ export const NotificationBell = () => {
     onSuccess: () => refetch(),
   });
 
-  const unreadCount = notifications?.filter((n: Notification) => !n.isRead).length || 0;
+  const unreadCount = notifications?.filter((n: any) => !n.isRead).length || 0;
 
   const getStatusIcon = (type: string) => {
     switch (type) {
@@ -95,7 +95,7 @@ export const NotificationBell = () => {
           <TabsContent value="unread" className="mt-0">
             <ScrollArea className="h-[350px]">
               <div className="flex flex-col">
-                {notifications?.filter(n => !n.isRead).length === 0 ? (
+                {notifications?.filter((n: any) => !n.isRead).length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
                     <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
                       <BellIcon className="size-6 text-slate-400" />
@@ -106,7 +106,7 @@ export const NotificationBell = () => {
                     </div>
                   </div>
                 ) : (
-                  notifications?.filter(n => !n.isRead).map((n) => (
+                  notifications?.filter((n: any) => !n.isRead).map((n: any) => (
                     <NotificationItem 
                       key={n.id} 
                       notification={n} 
@@ -126,7 +126,7 @@ export const NotificationBell = () => {
                     No activity found.
                   </div>
                 ) : (
-                  notifications?.map((n) => (
+                  notifications?.map((n: any) => (
                     <NotificationItem 
                       key={n.id} 
                       notification={n} 
@@ -156,7 +156,7 @@ const NotificationItem = ({
   notification, 
   onMarkRead 
 }: { 
-  notification: Notification; 
+  notification: any; 
   onMarkRead: (id: string) => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -182,7 +182,7 @@ const NotificationItem = ({
       }}
       className={cn(
         "group relative flex items-start gap-4 p-4 cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-all duration-200",
-        !notification.isRead && "bg-blue-50/30 dark:bg-blue-900/5"
+        !notification.isRead && "bg-slate-50/50 dark:bg-slate-900/20"
       )}
     >
       <div className={cn(
