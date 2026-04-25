@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -66,37 +68,74 @@ export default function NotificationsPage() {
         getKey={(n) => n.id}
         emptyView={<EmptyView message="You don't have any notifications yet." />}
         renderItem={(notification: Notification) => (
-          <EntityItem
-            href={notification.link || "#"}
-            title={notification.title}
-            subtitle={
-              <div className="space-y-1">
-                <p>{notification.message}</p>
-                <p className="text-[10px] text-slate-400 uppercase font-semibold">
-                  {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                </p>
-              </div>
-            }
-            image={
-              <div className={cn(
-                "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm border border-slate-100 dark:border-slate-800",
-                !notification.isRead ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-900/50"
-              )}>
-                {getStatusIcon(notification.type)}
-              </div>
-            }
-            className={cn(
-              "transition-all",
-              !notification.isRead && "border-l-2 border-l-blue-500 bg-blue-50/10 dark:bg-blue-900/5"
-            )}
-            onRemove={async () => {
-                if (!notification.isRead) {
-                    await markAsRead.mutateAsync({ id: notification.id });
-                }
+          <NotificationPageItem 
+            notification={notification} 
+            onMarkRead={async () => {
+              if (!notification.isRead) {
+                await markAsRead.mutateAsync({ id: notification.id });
+              }
             }}
+            getStatusIcon={getStatusIcon}
           />
         )}
       />
     </EntityContainer>
+  );
+}
+
+function NotificationPageItem({ 
+  notification, 
+  onMarkRead,
+  getStatusIcon
+}: { 
+  notification: Notification; 
+  onMarkRead: () => Promise<void>;
+  getStatusIcon: (type: string) => React.ReactNode;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <EntityItem
+      href={notification.link || "#"}
+      title={notification.title}
+      subtitle={
+        <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          <p className={cn(
+            "transition-all duration-200",
+            !isExpanded && "line-clamp-2"
+          )}>
+            {notification.message}
+          </p>
+          {notification.message.length > 100 && (
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline"
+            >
+              {isExpanded ? "Show less" : "Show more"}
+            </button>
+          )}
+          <p className="text-[10px] text-slate-400 uppercase font-semibold">
+            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+          </p>
+        </div>
+      }
+      image={
+        <div className={cn(
+          "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm border border-slate-100 dark:border-slate-800",
+          !notification.isRead ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-900/50"
+        )}>
+          {getStatusIcon(notification.type)}
+        </div>
+      }
+      className={cn(
+        "transition-all",
+        !notification.isRead && "border-l-2 border-l-blue-500 bg-blue-50/10 dark:bg-blue-900/5"
+      )}
+      onRemove={onMarkRead}
+    />
   );
 }

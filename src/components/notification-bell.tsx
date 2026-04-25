@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { BellIcon, CheckCircle2Icon, AlertCircleIcon, InfoIcon, MoreHorizontalIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -157,6 +159,8 @@ const NotificationItem = ({
   notification: Notification; 
   onMarkRead: (id: string) => void;
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const getStatusIcon = (type: string) => {
     switch (type) {
       case "WORKFLOW":
@@ -170,12 +174,10 @@ const NotificationItem = ({
 
   return (
     <div
-      onClick={() => {
+      onClick={(e) => {
+        // Prevent trigger if clicking "Show more"
         if (!notification.isRead) {
           onMarkRead(notification.id);
-        }
-        if (notification.link) {
-          window.location.href = notification.link;
         }
       }}
       className={cn(
@@ -203,16 +205,43 @@ const NotificationItem = ({
             {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-          {notification.message}
-        </p>
+        <div className="space-y-1">
+          <p className={cn(
+            "text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed transition-all",
+            !isExpanded && "line-clamp-2"
+          )}>
+            {notification.message}
+          </p>
+          {notification.message.length > 80 && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline block"
+            >
+              {isExpanded ? "Show less" : "Show more"}
+            </button>
+          )}
+        </div>
+        
+        {isExpanded && notification.link && (
+          <Link 
+            href={notification.link}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded-md font-bold inline-block hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            Go to action
+          </Link>
+        )}
       </div>
       {!notification.isRead && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+        <div className="absolute right-3 top-4">
           <div className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
         </div>
       )}
     </div>
   );
 };
+
 
