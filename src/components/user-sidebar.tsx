@@ -19,6 +19,7 @@ import {
   createBillingPortalUrl,
   createProCheckoutUrl,
 } from "@/app/pricing/actions";
+import { useTRPC } from "@/trpc/client";
 import {
   Sidebar,
   SidebarContent,
@@ -36,8 +37,12 @@ import { authClient } from "@/lib/auth-client";
 export const UserSidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const trpc = useTRPC();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
+
+  const { data: subscription } = trpc.subscriptions.getCurrent.useQuery();
+  const isPro = subscription?.plan === "PRO" || subscription?.plan === "CUSTOM";
 
   const handleUpgradeToPro = async () => {
     setUpgradeLoading(true);
@@ -132,23 +137,25 @@ export const UserSidebar = () => {
         ))}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
-              onClick={handleUpgradeToPro}
-              disabled={upgradeLoading}
-            >
-              <StarIcon className="size-4" />
-              <span>
-                {upgradeLoading ? "Opening Checkout..." : "Upgrade to Pro"}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+        <SidebarMenu className="gap-3">
+          {!isPro && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                className="w-full justify-start gap-3 h-10 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium transition-colors"
+                onClick={handleUpgradeToPro}
+                disabled={upgradeLoading}
+              >
+                <StarIcon className="size-4" />
+                <span>
+                  {upgradeLoading ? "Opening Checkout..." : "Upgrade to Pro"}
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
 
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
+              className="w-full justify-start gap-3 h-10 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium transition-colors"
               onClick={handleOpenBillingPortal}
               disabled={billingLoading}
             >
