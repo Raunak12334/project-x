@@ -100,14 +100,14 @@ export async function createProCheckoutUrl() {
         organizationId: user.organizationId,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error("billing.checkout.create_failed", {
       userId: user.id,
       organizationId: user.organizationId,
       error,
     });
     throw new Error(
-      "Unable to start checkout. Please contact support if this continues.",
+      error.message || "Unable to start checkout. Please contact support if this continues.",
     );
   }
 
