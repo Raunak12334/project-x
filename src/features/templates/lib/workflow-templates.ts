@@ -30,10 +30,10 @@ export type WorkflowTemplateDefinition = {
 
 export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
-    id: "real-estate-ai-qualifier",
-    name: "Real Estate Lead Qualifier",
-    slug: "real-estate-ai-lead-qualifier-automation",
-    description: "Qualifies inbound Zillow/Trulia leads using AI and alerts agents on high-intent buyers.",
+    id: "real-estate-multi-agent-qualifier",
+    name: "Real Estate Multi-Agent Qualifier",
+    slug: "real-estate-multi-agent-lead-qualification-automation",
+    description: "Orchestrates multiple agents to qualify Zillow/Trulia leads and alert agents on high-intent buyers.",
     useCase: "Perfect for real estate teams managing high volumes of inbound leads. Automate the first contact and lead grading process.",
     benefits: [
       "Instantly qualify leads 24/7",
@@ -233,10 +233,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "legal-contract-summarizer",
-    name: "Legal Contract Summarizer",
-    slug: "legal-ai-contract-clause-summarizer",
-    description: "Identifies key risks and summarizes termination clauses in legal documents.",
+    id: "legal-multi-agent-summarizer",
+    name: "Legal Multi-Agent Summarizer",
+    slug: "legal-multi-agent-contract-clause-summarizer",
+    description: "Orchestrates multiple agents to identify key risks and summarize termination clauses in legal documents.",
     category: "Legal",
     tags: ["legal", "contract", "risk-management"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -258,10 +258,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "hr-resume-screener",
-    name: "HR AI Resume Screener",
-    slug: "hr-ai-candidate-resume-screener",
-    description: "Screens candidates against a Job Description and ranks them by cultural and technical fit.",
+    id: "hr-multi-agent-screener",
+    name: "HR Multi-Agent Resume Screener",
+    slug: "hr-multi-agent-candidate-resume-screener",
+    description: "Uses a multi-agent workflow to screen candidates against a Job Description and rank them by fit.",
     category: "Human Resources",
     tags: ["hr", "recruiting", "hiring"],
     requiredCredentials: [CredentialType.OPENAI],

@@ -6,9 +6,9 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Otogent | The No-Code AI Agent Builder & Automation Platform",
+  title: "Otogent | The Multi-Agent Automation Platform",
   description:
-    "Build, deploy, and scale your AI agent workforce with Otogent. The visual workflow builder for multi-agent systems using OpenAI, Anthropic Claude, and Google Gemini.",
+    "Build, deploy, and scale multi-agent automation workflows with Otogent. The visual workflow builder for complex multi-agent systems using OpenAI, Anthropic Claude, and Google Gemini.",
 };
 
 export default async function Page() {

@@ -14,7 +14,7 @@ export function generateTemplateSlug(name: string): string {
   const base = slugify(name);
   // If the slug is too short or generic, append a natural keyword
   if (base.split("-").length < 3) {
-    return `${base}-ai-automation-template`;
+    return `${base}-multi-agent-automation-template`;
   }
-  return `${base}-template`;
+  return `${base}-multi-agent-template`;
 }

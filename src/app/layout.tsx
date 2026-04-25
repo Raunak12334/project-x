@@ -45,8 +45,8 @@ export const metadata: Metadata = {
 
   title: {
     default:
-      "Otogent | AI Agent Platform & No-Code Workflow Builder",
-    template: "%s | Otogent AI Platform",
+      "Otogent | Multi-Agent Automation Platform & No-Code Workflow Builder",
+    template: "%s | Otogent Multi-Agent Platform",
   },
 
   description:
