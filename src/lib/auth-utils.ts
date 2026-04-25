@@ -26,15 +26,24 @@ function hasUsableSubscription(
 }
 
 export const requireAuth = async () => {
-  const authData = await auth.api.getSession({
-    headers: await headers(),
-  });
+  try {
+    const authData = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-  if (!authData) {
-    redirect("/login");
+    if (!authData) {
+      redirect("/login");
+    }
+
+    return authData;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+    
+    logger.error("auth.requireAuth.failed", { error });
+    throw error;
   }
-
-  return authData;
 };
 
 /**
@@ -44,27 +53,35 @@ export const requireAuth = async () => {
 export const requireOrganization = async () => {
   const { session, user: authUser } = await requireAuth();
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.id },
-    select: {
-      id: true,
-      organizationId: true,
-      role: true,
-    },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.id },
+      select: {
+        id: true,
+        organizationId: true,
+        role: true,
+      },
+    });
 
-  if (!user || !user.organizationId) {
-    redirect("/onboarding");
+    if (!user || !user.organizationId) {
+      redirect("/onboarding");
+    }
+
+    return {
+      session,
+      user: {
+        ...authUser,
+        organizationId: user.organizationId,
+        role: user.role,
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+    logger.error("auth.requireOrganization.failed", { error });
+    throw error;
   }
-
-  return {
-    session,
-    user: {
-      ...authUser,
-      organizationId: user.organizationId,
-      role: user.role,
-    },
-  };
 };
 
 /**
@@ -91,72 +108,90 @@ export function assertSameOrganization(
 export const requireSuperAdmin = async () => {
   const { session, user: authUser } = await requireAuth();
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.id },
-    select: {
-      id: true,
-      role: true,
-    },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.id },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
 
-  if (!user || user.role !== "SUPER_ADMIN") {
-    throw new Error("Unauthorized: Super Admin access required");
+    if (!user || user.role !== "SUPER_ADMIN") {
+      throw new Error("Unauthorized: Super Admin access required");
+    }
+
+    return {
+      session,
+      user: {
+        ...authUser,
+        role: user.role,
+      },
+    };
+  } catch (error) {
+    logger.error("auth.requireSuperAdmin.failed", { error });
+    throw error;
   }
-
-  return {
-    session,
-    user: {
-      ...authUser,
-      role: user.role,
-    },
-  };
 };
 
 export const enforceAppRouting = async (currentPath?: string) => {
-  const { session, user: authUser } = await requireAuth();
+  try {
+    const { session, user: authUser } = await requireAuth();
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.id },
-    include: {
-      organization: {
-        include: { subscription: true },
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.id },
+      include: {
+        organization: {
+          include: { subscription: true },
+        },
       },
-    },
-  });
+    });
 
-  if (!user) {
-    redirect("/login");
-  }
+    if (!user) {
+      redirect("/login");
+    }
 
-  // Super-admins bypass organization requirements
-  if (user.role === "SUPER_ADMIN") {
+    // Super-admins bypass organization requirements
+    if (user.role === "SUPER_ADMIN") {
+      if (currentPath === "/onboarding" || currentPath === "/pricing") {
+        redirect("/workflows");
+      }
+      return { session, user };
+    }
+
+    const { organizationId, onboardingCompleted, organization } = user;
+
+    if (!organizationId || !onboardingCompleted) {
+      if (currentPath !== "/onboarding") {
+        redirect("/onboarding");
+      }
+      return { session, user };
+    }
+
+    if (!hasUsableSubscription(organization?.subscription)) {
+      if (currentPath !== "/pricing") {
+        redirect("/pricing");
+      }
+      return { session, user };
+    }
+
     if (currentPath === "/onboarding" || currentPath === "/pricing") {
       redirect("/workflows");
     }
+
     return { session, user };
-  }
-
-  const { organizationId, onboardingCompleted, organization } = user;
-
-  if (!organizationId || !onboardingCompleted) {
-    if (currentPath !== "/onboarding") {
-      redirect("/onboarding");
+  } catch (error) {
+    // Re-throw Next.js redirects so they work correctly
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
     }
-    return { session, user };
-  }
 
-  if (!hasUsableSubscription(organization?.subscription)) {
-    if (currentPath !== "/pricing") {
-      redirect("/pricing");
-    }
-    return { session, user };
+    logger.error("auth.enforceAppRouting.failed", { error, currentPath });
+    
+    // If we are in production and something crashed, try to at least not 
+    // kill the whole render if it's a minor error, but for auth we must be strict.
+    throw error;
   }
-
-  if (currentPath === "/onboarding" || currentPath === "/pricing") {
-    redirect("/workflows");
-  }
-
-  return { session, user };
 };
 
 export const requireUnauth = async () => {

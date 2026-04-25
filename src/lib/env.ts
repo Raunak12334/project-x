@@ -4,7 +4,11 @@ export function requireEnv(name: string) {
   const value = process.env[name];
 
   if (!value) {
-    throw new Error(`${name} environment variable is required`);
+    console.error(`CRITICAL: Environment variable ${name} is missing!`);
+    
+    // In production rendering, throwing here can cause "Server Components render" errors.
+    // If it's a critical secret, we must throw, but with a clear message.
+    throw new Error(`Environment variable ${name} is required but missing. Check your Vercel/environment configuration.`);
   }
 
   return value;
