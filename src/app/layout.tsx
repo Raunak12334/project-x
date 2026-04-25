@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "Otogent is an all-in-one AI agent platform to automate workflows, reduce manual work, and scale AI operations using OpenAI, Anthropic, and Gemini.",
+    "Otogent is the leading Multi-Agent Automation Platform to build and scale complex workflows using OpenAI, Anthropic Claude, and Google Gemini. No-code orchestration for intelligent agent teams.",
 
   applicationName: "Otogent",
   authors: [{ name: "Otogent" }],

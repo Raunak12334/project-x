@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!template) return {};
 
-  const title = template.seoTitle || `${template.name} AI Automation Template | Otogent`;
+  const title = template.seoTitle || `${template.name} Multi-Agent Automation Template | Otogent`;
   const description = template.seoDescription || 
     `${template.description} Automate ${template.category} tasks with this no-code multi-agent blueprint. ${template.benefits?.join(" ") || ""}`;
 

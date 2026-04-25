@@ -68,10 +68,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "healthcare-appointment-reminder",
-    name: "Healthcare Patient Reminder",
-    slug: "healthcare-patient-appointment-reminder",
-    description: "Summarizes patient notes and sends a personalized appointment reminder via SMS/Email.",
+    id: "healthcare-multi-agent-reminder",
+    name: "Healthcare Multi-Agent Reminder",
+    slug: "healthcare-multi-agent-patient-reminder",
+    description: "Orchestrates multiple agents to summarize patient notes and send personalized reminders.",
     useCase: "Clinics and private practices looking to reduce no-show rates with personalized, intelligent communication.",
     benefits: [
       "Reduce no-show rates significantly",
@@ -106,10 +106,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "ecommerce-sentiment-alert",
-    name: "E-commerce Review Monitor",
-    slug: "ecommerce-customer-review-sentiment-monitor",
-    description: "Analyzes customer reviews for sentiment and alerts the support team on negative feedback.",
+    id: "ecommerce-multi-agent-monitor",
+    name: "E-commerce Multi-Agent Monitor",
+    slug: "ecommerce-multi-agent-customer-review-monitor",
+    description: "Orchestrates multiple agents to analyze customer reviews for sentiment and alert teams.",
     useCase: "Brand managers who need to react instantly to negative social proof before it impacts sales.",
     benefits: [
       "Protect brand reputation in real-time",
@@ -151,10 +151,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "finance-expense-auditor",
-    name: "Finance Expense Auditor",
-    slug: "finance-expense-audit-compliance-automation",
-    description: "Audits receipt data using AI to flag unusual spending or non-compliant expenses.",
+    id: "finance-multi-agent-auditor",
+    name: "Finance Multi-Agent Auditor",
+    slug: "finance-multi-agent-expense-audit-automation",
+    description: "Orchestrates multiple agents to audit receipt data and flag non-compliant expenses.",
     category: "Finance",
     tags: ["finance", "audit", "expenses"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -176,10 +176,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "marketing-content-multiplier",
-    name: "Marketing Content Multiplier",
-    slug: "marketing-ai-content-multiplier-automation",
-    description: "Generates a Blog Post, Twitter Thread, and LinkedIn Update from a single topic.",
+    id: "marketing-multi-agent-multiplier",
+    name: "Marketing Multi-Agent Multiplier",
+    slug: "marketing-multi-agent-content-multiplier-automation",
+    description: "Orchestrates multiple agents to generate a Blog Post, Twitter Thread, and LinkedIn update.",
     category: "Marketing",
     tags: ["marketing", "content", "social-media"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -208,10 +208,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "education-feedback-bot",
-    name: "Education Feedback Bot",
-    slug: "education-student-feedback-grading-automation",
-    description: "Analyzes student submissions and provides personalized feedback and grading suggestions.",
+    id: "education-multi-agent-feedback",
+    name: "Education Multi-Agent Feedback Bot",
+    slug: "education-multi-agent-student-feedback-automation",
+    description: "Orchestrates multiple agents to analyze submissions and provide personalized grading feedback.",
     category: "Education",
     tags: ["education", "grading", "feedback"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -283,10 +283,10 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
     ]
   },
   {
-    id: "saas-roadmap-prioritizer",
-    name: "SaaS Roadmap Prioritizer",
-    slug: "saas-product-roadmap-feature-prioritization",
-    description: "Analyzes customer feature requests and prioritizes them based on effort vs impact.",
+    id: "saas-multi-agent-prioritizer",
+    name: "SaaS Multi-Agent Roadmap Prioritizer",
+    slug: "saas-multi-agent-product-feature-prioritization",
+    description: "Orchestrates multiple agents to analyze feature requests and prioritize roadmaps.",
     category: "Tech/SaaS",
     tags: ["saas", "product", "roadmap"],
     requiredCredentials: [CredentialType.OPENAI],
