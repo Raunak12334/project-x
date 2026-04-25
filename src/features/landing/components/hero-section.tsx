@@ -41,8 +41,8 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-brand text-6xl md:text-8xl lg:text-[7rem] leading-[1.05] tracking-tight text-foreground max-w-5xl"
         >
-          Otogent: The Execution Layer <br className="hidden md:block" />{" "}
-          for Multi-Agent Workflows
+          Automate your workflow <br className="hidden md:block" />{" "}
+          with multi-agent catalyst
         </motion.h1>
 
         {/* Supporting SEO Line */}
