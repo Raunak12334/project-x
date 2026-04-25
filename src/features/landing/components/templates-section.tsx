@@ -46,9 +46,9 @@ export function TemplatesSection() {
               >
                 <CardHeader className="border-b bg-muted/10 pb-4">
                   <Badge variant="secondary" className="w-fit bg-white/80 dark:bg-slate-800/80">{template.category}</Badge>
-                  <CardTitle className="mt-2 text-lg font-bold truncate">
+                  <h3 className="mt-2 text-lg font-bold truncate">
                     {template.name}
-                  </CardTitle>
+                  </h3>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <p className="text-sm text-muted-foreground line-clamp-3 min-h-[4.5rem]">

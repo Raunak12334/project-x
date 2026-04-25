@@ -20,6 +20,7 @@ export function HeroSection() {
         muted
         loop
         playsInline
+        poster="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_poster.jpg"
         className="absolute inset-0 w-full h-full object-cover z-0"
         src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
       />
@@ -32,7 +33,7 @@ export function HeroSection() {
           className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-4 py-1.5 text-sm text-foreground font-body mb-8"
         >
           <Settings className="h-3.5 w-3.5" />
-          Infra. for Multi Agent System
+          The No-Code AI Agent Builder
         </motion.div>
 
         {/* Headline */}
@@ -40,8 +41,8 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-4xl"
         >
-          Automate your workflow with <br className="hidden md:block" />{" "}
-          multi-agent catalyst
+          Build and deploy your <br className="hidden md:block" />{" "}
+          AI agent workforce
         </motion.h1>
 
         {/* Subheadline */}

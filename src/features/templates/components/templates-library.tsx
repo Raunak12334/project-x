@@ -180,9 +180,9 @@ export const TemplatesLibrary = () => {
                     >
                       <CardHeader className="border-b bg-muted/15">
                         <Badge variant="outline">{template.category}</Badge>
-                        <CardTitle className="mt-2 text-lg">
+                        <h3 className="mt-2 text-lg font-bold">
                           {template.name}
-                        </CardTitle>
+                        </h3>
                       </CardHeader>
 
                       <CardContent className="space-y-5 pt-6">
