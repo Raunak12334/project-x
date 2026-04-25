@@ -155,7 +155,7 @@ export const UserSidebar = () => {
           {!isPro && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                className="w-full justify-start gap-3 h-10 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium transition-colors"
+                className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
                 onClick={handleUpgradeToPro}
                 disabled={upgradeLoading}
               >
@@ -169,7 +169,7 @@ export const UserSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="w-full justify-start gap-3 h-10 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium transition-colors"
+              className="w-full justify-start gap-3 h-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium transition-colors"
               onClick={handleOpenBillingPortal}
               disabled={billingLoading}
             >
