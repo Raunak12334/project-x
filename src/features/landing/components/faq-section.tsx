@@ -7,24 +7,20 @@ import {
 
 const faqs = [
   {
-    q: "What is Otogent Multi-Agent Automation?",
-    a: "Otogent is the leading platform for building and orchestrating multi-agent automation workflows. Unlike simple chatbots, Otogent allows multiple intelligent agents to work together on complex business tasks, similar to a digital workforce.",
+    q: "What is Otogent?",
+    a: "Otogent is an AI workflow automation platform that helps teams build multi-agent systems where AI agents handle tasks, decisions, and execution across business workflows.",
   },
   {
-    q: "How does Otogent compare to Zapier?",
-    a: "Zapier is for simple 'if this, then that' app connections. Otogent is a multi-agent orchestration engine. It handles complex, multi-step reasoning, long-running agent states, and autonomous decision-making that simple automation tools cannot.",
+    q: "What can I automate with Otogent?",
+    a: "You can automate lead management, follow-ups, reporting, internal approvals, data processing, customer operations, and other repeatable business workflows.",
   },
   {
-    q: "Is Otogent an alternative to n8n for AI?",
-    a: "Yes, Otogent is the specialized multi-agent alternative to n8n. While n8n is a general-purpose workflow tool, Otogent is built from the ground up for agentic workflows, featuring native support for shared memory and multi-model collaboration.",
+    q: "Is Otogent a no-code automation platform?",
+    a: "Yes. Otogent provides a visual workflow builder so users can create AI automation workflows without writing code.",
   },
   {
-    q: "Which AI models does Otogent support?",
-    a: "Otogent supports the industry's leading LLMs, including OpenAI (GPT-4), Anthropic (Claude 3.5), and Google (Gemini 1.5). You can even mix and match different models within a single multi-agent workflow.",
-  },
-  {
-    q: "Is Otogent a no-code platform?",
-    a: "Yes. Otogent features a visual, drag-and-drop canvas that allows business users to build production-ready multi-agent automations without writing a single line of code.",
+    q: "How is Otogent different from basic automation tools?",
+    a: "Otogent is designed for multi-agent automation, where AI agents can work together to process information, make decisions, and execute workflows instead of only triggering simple app-to-app actions.",
   },
 ];
 

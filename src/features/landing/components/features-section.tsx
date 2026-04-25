@@ -17,7 +17,7 @@ const features = [
     icon: Bot,
     title: "Multi-Model Support",
     description:
-      "Orchestrate OpenAI, Anthropic Claude, Google Gemini, and Gemma in a single workflow.",
+      "Orchestrate OpenAI, Anthropic Claude, Google Gemini, and other leading LLM providers in a single workflow.",
   },
   {
     icon: Zap,

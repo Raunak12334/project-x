@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "Otogent is the leading Multi-Agent Automation Platform to build and scale complex workflows using OpenAI, Anthropic Claude, and Google Gemini. No-code orchestration for intelligent agent teams.",
+    "Otogent is the leading Multi-Agent Automation Platform to build and scale complex workflows using OpenAI, Anthropic Claude, Google Gemini, and leading LLM providers. No-code orchestration for intelligent agent teams.",
 
   applicationName: "Otogent",
   authors: [{ name: "Otogent" }],
@@ -142,24 +142,19 @@ export default function RootLayout({
               "applicationSubCategory": "Multi-Agent AI Orchestration",
               "operatingSystem": "Web",
               "description":
-                "Otogent is a high-performance Multi-Agent Automation Platform that enables businesses to build, orchestrate, and deploy complex AI workflows using multiple agents. It integrates seamlessly with OpenAI GPT-4, Anthropic Claude 3.5, and Google Gemini.",
+                "Otogent is a high-performance Multi-Agent Automation Platform that enables businesses to build, orchestrate, and deploy complex AI workflows using multiple agents. It integrates seamlessly with OpenAI, Anthropic Claude, Google Gemini, and other leading LLM providers.",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
                 "priceCurrency": "USD",
                 "availability": "https://schema.org/InStock"
               },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.9",
-                "reviewCount": "128"
-              },
               "featureList": [
                 "Multi-agent workflow orchestration",
                 "Visual drag-and-drop canvas builder",
                 "State management for long-running agents",
                 "Secure API credential management",
-                "Native integrations with OpenAI, Anthropic, and Gemini",
+                "Native integrations with leading AI models",
                 "Sector-specific automation blueprints",
                 "Human-in-the-loop validation nodes"
               ],
@@ -177,42 +172,34 @@ export default function RootLayout({
               "mainEntity": [
                 {
                   "@type": "Question",
-                  "name": "What is Otogent Multi-Agent Automation?",
+                  "name": "What is Otogent?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Otogent is the leading platform for building and orchestrating multi-agent automation workflows. Unlike simple chatbots, Otogent allows multiple intelligent agents to work together on complex business tasks, similar to a digital workforce."
+                    "text": "Otogent is an AI workflow automation platform that helps teams build multi-agent systems where AI agents handle tasks, decisions, and execution across business workflows."
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": "How does Otogent compare to Zapier?",
+                  "name": "What can I automate with Otogent?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Zapier is for simple 'if this, then that' app connections. Otogent is a multi-agent orchestration engine. It handles complex, multi-step reasoning, long-running agent states, and autonomous decision-making that simple automation tools cannot."
+                    "text": "You can automate lead management, follow-ups, reporting, internal approvals, data processing, customer operations, and other repeatable business workflows."
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": "Is Otogent an alternative to n8n for AI?",
+                  "name": "Is Otogent a no-code automation platform?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes, Otogent is the specialized multi-agent alternative to n8n. While n8n is a general-purpose workflow tool, Otogent is built from the ground up for agentic workflows, featuring native support for shared memory and multi-model collaboration."
+                    "text": "Yes. Otogent provides a visual workflow builder so users can create AI automation workflows without writing code."
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": "Which AI models does Otogent support?",
+                  "name": "How is Otogent different from basic automation tools?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Otogent supports the industry's leading LLMs, including OpenAI (GPT-4), Anthropic (Claude 3.5), and Google (Gemini 1.5). You can even mix and match different models within a single multi-agent workflow."
-                  }
-                },
-                {
-                  "@type": "Question",
-                  "name": "Is Otogent a no-code platform?",
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Yes. Otogent features a visual, drag-and-drop canvas that allows business users to build production-ready multi-agent automations without writing a single line of code."
+                    "text": "Otogent is designed for multi-agent automation, where AI agents can work together to process information, make decisions, and execute workflows instead of only triggering simple app-to-app actions."
                   }
                 }
               ]
