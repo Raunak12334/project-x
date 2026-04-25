@@ -13,6 +13,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -41,7 +42,9 @@ export const UserSidebar = () => {
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
 
-  const { data: subscription } = trpc.subscriptions.getCurrent.useQuery();
+  const { data: subscription } = useQuery(
+    trpc.subscriptions.getCurrent.queryOptions(),
+  );
   const isPro = subscription?.plan === "PRO" || subscription?.plan === "CUSTOM";
 
   const handleUpgradeToPro = async () => {
