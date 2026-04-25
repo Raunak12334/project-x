@@ -207,8 +207,8 @@
   --ring: hsl(175 80% 35%);
   --radius: 0.75rem;
 
-  --font-display: var(--font-landing-sans);
-  --font-body: var(--font-landing-sans);
+  --font-display: var(--font-geist-sans);
+  --font-body: var(--font-geist-sans);
 }
 
 /* Hide scrollbar for the entire page when landing theme is active */
@@ -228,7 +228,7 @@ body:has(.landing-theme)::-webkit-scrollbar {
 }
 
 .landing-theme {
-  font-family: var(--font-landing-sans), var(--font-sans), sans-serif;
+  font-family: var(--font-geist-sans), var(--font-sans), sans-serif;
 }
 
 .landing-theme .container {
