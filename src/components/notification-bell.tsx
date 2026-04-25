@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Notification } from "@prisma/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export const NotificationBell = () => {
   const trpc = useTRPC();
@@ -48,8 +49,8 @@ export const NotificationBell = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 focus:outline-none group active:scale-95">
-        <BellIcon className="size-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors" />
+      <DropdownMenuTrigger className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 focus:outline-none group active:scale-95">
+        <BellIcon className="size-5 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors" />
         {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 flex size-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -139,10 +140,13 @@ export const NotificationBell = () => {
           </div>
         </ScrollArea>
         
-        <div className="p-3 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 text-center">
-          <button className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+        <div className="p-2 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 text-center">
+          <Link 
+            href="/notifications"
+            className="text-[10px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors block w-full py-1"
+          >
             View all activity
-          </button>
+          </Link>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
