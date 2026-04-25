@@ -83,7 +83,7 @@ export async function createProCheckoutUrl() {
 
   try {
     const polar = getPolarClient();
-    checkout = await polar.checkouts.create({
+    const checkout = await polar.checkouts.create({
       products: [productId],
       successUrl: `${successBaseUrl}/workflows?success=true`,
       externalCustomerId: user.id,
@@ -99,6 +99,12 @@ export async function createProCheckoutUrl() {
         organizationId: user.organizationId,
       },
     });
+
+    if (!checkout.url) {
+      throw new Error("No checkout URL received from Polar.");
+    }
+
+    return checkout.url;
   } catch (error: any) {
     logger.error("billing.checkout.create_failed", {
       userId: user.id,
@@ -106,15 +112,10 @@ export async function createProCheckoutUrl() {
       error,
     });
     throw new Error(
-      error.message || "Unable to start checkout. Please contact support if this continues.",
+      error.message ||
+        "Unable to start checkout. Please contact support if this continues.",
     );
   }
-
-  if (!checkout.url) {
-    throw new Error("No checkout URL received from Polar.");
-  }
-
-  return checkout.url;
 }
 
 export async function createBillingPortalUrl() {
