@@ -13,8 +13,11 @@ import {
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -278,6 +281,75 @@ export default function SuperAdminDashboardPage() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Platform Growth Chart */}
+        <Card className="lg:col-span-2 border-none shadow-sm bg-white dark:bg-slate-900/50">
+          <CardHeader>
+            <CardTitle>Platform Growth</CardTitle>
+            <CardDescription>
+              New user signups per day (last 7 days)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={charts?.dailyUserSignups}>
+                  <defs>
+                    <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                  <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSignups)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Execution Success Rate */}
+        <Card className="border-none shadow-sm bg-white dark:bg-slate-900/50">
+          <CardHeader>
+            <CardTitle>Execution Health</CardTitle>
+            <CardDescription>Global status ratio</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts?.executionStatusRatio}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="count"
+                    nameKey="status"
+                  >
+                    {charts?.executionStatusRatio?.map((entry: any, index: number) => {
+                      const colorMap: Record<string, string> = {
+                        SUCCESS: "#10b981", // emerald
+                        FAILED: "#f43f5e",  // rose
+                        RUNNING: "#3b82f6", // blue
+                        WAITING_APPROVAL: "#f59e0b", // amber
+                      };
+                      return <Cell key={JSON.stringify(entry)} fill={colorMap[entry.status] || COLORS[index % COLORS.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Critical Systems Log */}
         <Card className="border-none shadow-sm bg-white dark:bg-slate-900/50 overflow-hidden">
@@ -360,6 +432,55 @@ export default function SuperAdminDashboardPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Workflows Leaderboard */}
+        <Card className="lg:col-span-3 border-none shadow-sm bg-white dark:bg-slate-900/50 overflow-hidden">
+          <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="flex items-center gap-2">
+              <ActivityIcon className="size-5 text-indigo-500" />
+              <CardTitle>Top Workflows by Volume</CardTitle>
+            </div>
+            <CardDescription>
+              Most heavily executed workflows across the ecosystem
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-50 dark:divide-slate-800">
+              {charts?.topWorkflows?.map((wf: any, i: number) => (
+                <div
+                  key={wf.id}
+                  className="flex items-center justify-between p-4 hover:bg-slate-50/80 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center size-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold text-xs">
+                      #{i + 1}
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-semibold text-sm">
+                        {wf.name}
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium">
+                        {wf.organizationName}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-md text-xs font-bold">
+                      {wf.executions.toLocaleString()} Executions
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {charts?.topWorkflows?.length === 0 && (
+                <div className="p-8 text-center text-slate-400 italic">
+                  No workflows have been executed yet.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

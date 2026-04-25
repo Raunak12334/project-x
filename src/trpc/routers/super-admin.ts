@@ -61,6 +61,9 @@ export const superAdminRouter = createTRPCRouter({
       nodeDistribution,
       dailyExecutions,
       topErrors,
+      dailyUserSignups,
+      executionStatusRatio,
+      topWorkflows,
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.organization.count({ where: { deletedAt: null } }),
@@ -113,6 +116,32 @@ export const superAdminRouter = createTRPCRouter({
         orderBy: { _count: { error: "desc" } },
         take: 5,
       }),
+      // Daily User Signups (last 7 days)
+      prisma.$queryRaw<{ date: Date; count: number }[]>`
+        SELECT DATE_TRUNC('day', "createdAt") as date, count(*)::int as count 
+        FROM "user" 
+        WHERE "createdAt" > NOW() - INTERVAL '7 days' AND "deletedAt" IS NULL
+        GROUP BY 1 
+        ORDER BY 1 ASC
+      `,
+      // Execution Status Ratio
+      prisma.execution.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+        where: { deletedAt: null },
+      }),
+      // Top Workflows by Execution Count
+      prisma.workflow.findMany({
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          organization: { select: { name: true } },
+          _count: { select: { executions: true } },
+        },
+        orderBy: { executions: { _count: "desc" } },
+        take: 5,
+      }),
     ]);
 
     const subscriptionCounts = {
@@ -150,6 +179,20 @@ export const superAdminRouter = createTRPCRouter({
         topErrors: topErrors.map((e) => ({
           error: e.error || "Unknown Error",
           count: e._count?._all || 0,
+        })),
+        dailyUserSignups: dailyUserSignups.map((d) => ({
+          date: d.date.toISOString().split("T")[0],
+          count: d.count,
+        })),
+        executionStatusRatio: executionStatusRatio.map((e) => ({
+          status: e.status,
+          count: e._count?._all || 0,
+        })),
+        topWorkflows: topWorkflows.map((w) => ({
+          id: w.id,
+          name: w.name,
+          organizationName: w.organization?.name || "Unknown",
+          executions: w._count.executions,
         })),
       },
     };
