@@ -1,9 +1,17 @@
+import { headers } from "next/headers";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { enforceAppRouting } from "@/lib/auth-utils";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
-  await enforceAppRouting("/workflows");
+  const headersList = await headers();
+  const fullUrl = headersList.get("x-url") || "";
+  const isTemplatesPage = fullUrl.endsWith("/templates");
+
+  // Only enforce auth if not the public templates page
+  if (!isTemplatesPage) {
+    await enforceAppRouting("/workflows");
+  }
 
   return (
     <SidebarProvider>
