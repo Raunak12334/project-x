@@ -51,8 +51,8 @@ export const UserSidebar = () => {
     setUpgradeLoading(true);
     try {
       const result = await createProCheckoutUrl();
-      if (result.error) {
-        throw new Error(result.error);
+      if (!result.url) {
+        throw new Error(result.error || "Unknown error occurred.");
       }
       window.location.href = result.url;
     } catch (error: any) {
@@ -68,8 +68,8 @@ export const UserSidebar = () => {
     setBillingLoading(true);
     try {
       const result = await createBillingPortalUrl();
-      if (result.error) {
-        throw new Error(result.error);
+      if (!result.url) {
+        throw new Error(result.error || "Unknown error occurred.");
       }
       window.location.href = result.url;
     } catch (error: any) {

@@ -28,8 +28,8 @@ export function PricingTable() {
     setLoading("pro");
     try {
       const result = await createProCheckoutUrl();
-      if (result.error) {
-        throw new Error(result.error);
+      if (!result.url) {
+        throw new Error(result.error || "Unknown error occurred.");
       }
       window.location.href = result.url;
     } catch (error: any) {
