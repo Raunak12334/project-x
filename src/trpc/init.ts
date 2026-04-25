@@ -103,6 +103,10 @@ export const premiumProcedure = protectedProcedure.use(
     }
 
     const polar = getPolarClient();
+    let customer:
+      | Awaited<ReturnType<typeof polar.customers.getStateExternal>>
+      | null = null;
+
     try {
       customer = await polar.customers.getStateExternal({
         externalId: ctx.auth.user.id,
@@ -113,6 +117,8 @@ export const premiumProcedure = protectedProcedure.use(
         organizationId: ctx.auth.organizationId,
         error: polarError,
       });
+      // We keep the throw here to prevent access if verification fails, 
+      // as per original design, but the variable is now declared correctly.
       throw new TRPCError({
         code: "FORBIDDEN",
         message:
@@ -120,7 +126,7 @@ export const premiumProcedure = protectedProcedure.use(
       });
     }
 
-    const activeSubscription = customer.activeSubscriptions?.[0];
+    const activeSubscription = customer?.activeSubscriptions?.[0];
 
     if (!activeSubscription) {
       throw new TRPCError({
