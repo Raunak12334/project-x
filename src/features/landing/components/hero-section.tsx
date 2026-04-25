@@ -13,7 +13,7 @@ const fadeUp = (delay: number, y: number = 16, duration: number = 0.6) => ({
 
 export function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center justify-start overflow-hidden h-screen pt-20 pb-10">
+    <section className="relative flex flex-col items-center justify-start overflow-hidden h-screen pt-20 pb-10" style={{ fontFamily: "var(--font-landing-sans)" }}>
       {/* Background Video */}
       <video
         autoPlay
