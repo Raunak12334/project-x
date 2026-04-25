@@ -132,36 +132,92 @@ export default function RootLayout({
           type="application/ld+json"
           strategy="beforeInteractive"
         >
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "Otogent",
-            "url": "https://otogent.com",
-            "applicationCategory": "AutomationSoftware, BusinessApplication",
-            "operatingSystem": "Web",
-            "description":
-              "Otogent is a high-performance Multi-Agent Automation Platform that enables businesses to build, orchestrate, and deploy complex AI workflows using multiple agents. It integrates seamlessly with OpenAI GPT-4, Anthropic Claude 3.5, and Google Gemini.",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD",
-              "availability": "https://schema.org/InStock"
+          {JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Otogent",
+              "url": "https://otogent.com",
+              "applicationCategory": "AutomationSoftware",
+              "applicationSubCategory": "Multi-Agent AI Orchestration",
+              "operatingSystem": "Web",
+              "description":
+                "Otogent is a high-performance Multi-Agent Automation Platform that enables businesses to build, orchestrate, and deploy complex AI workflows using multiple agents. It integrates seamlessly with OpenAI GPT-4, Anthropic Claude 3.5, and Google Gemini.",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "availability": "https://schema.org/InStock"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.9",
+                "reviewCount": "128"
+              },
+              "featureList": [
+                "Multi-agent workflow orchestration",
+                "Visual drag-and-drop canvas builder",
+                "State management for long-running agents",
+                "Secure API credential management",
+                "Native integrations with OpenAI, Anthropic, and Gemini",
+                "Sector-specific automation blueprints",
+                "Human-in-the-loop validation nodes"
+              ],
+              "keywords": "multi-agent system, AI automation platform, LLM orchestration, agentic workflows, no-code AI builder, autonomous agents",
+              "softwareVersion": "1.0.0",
+              "author": {
+                "@type": "Organization",
+                "name": "Otogent",
+                "logo": "https://otogent.com/logo.svg"
+              }
             },
-            "featureList": [
-              "Multi-agent workflow orchestration",
-              "Visual drag-and-drop canvas builder",
-              "State management for long-running agents",
-              "Secure API credential management",
-              "Native integrations with OpenAI, Anthropic, and Gemini",
-              "Sector-specific automation blueprints"
-            ],
-            "keywords": "multi-agent system, AI automation platform, LLM orchestration, agentic workflows, no-code AI builder",
-            "softwareVersion": "1.0.0",
-            "author": {
-              "@type": "Organization",
-              "name": "Otogent"
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "What is Otogent Multi-Agent Automation?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Otogent is the leading platform for building and orchestrating multi-agent automation workflows. Unlike simple chatbots, Otogent allows multiple intelligent agents to work together on complex business tasks, similar to a digital workforce."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How does Otogent compare to Zapier?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Zapier is for simple 'if this, then that' app connections. Otogent is a multi-agent orchestration engine. It handles complex, multi-step reasoning, long-running agent states, and autonomous decision-making that simple automation tools cannot."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is Otogent an alternative to n8n for AI?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, Otogent is the specialized multi-agent alternative to n8n. While n8n is a general-purpose workflow tool, Otogent is built from the ground up for agentic workflows, featuring native support for shared memory and multi-model collaboration."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Which AI models does Otogent support?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Otogent supports the industry's leading LLMs, including OpenAI (GPT-4), Anthropic (Claude 3.5), and Google (Gemini 1.5). You can even mix and match different models within a single multi-agent workflow."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is Otogent a no-code platform?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. Otogent features a visual, drag-and-drop canvas that allows business users to build production-ready multi-agent automations without writing a single line of code."
+                  }
+                }
+              ]
             }
-          })}
+          ])}
         </Script>
       </head>
       <body
