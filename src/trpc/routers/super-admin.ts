@@ -309,4 +309,26 @@ export const superAdminRouter = createTRPCRouter({
 
     return { auditLogs, executions };
   }),
+
+  broadcastNotification: superAdminProcedure
+    .input(
+      z.object({
+        title: z.string().min(1),
+        message: z.string().min(1),
+        type: z.enum(["SYSTEM", "OFFER", "WELCOME", "ALERT"]),
+        organizationId: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // If organizationId is provided, it's a targeted broadcast
+      // Otherwise, it's a global broadcast (null organizationId)
+      return prisma.notification.create({
+        data: {
+          title: input.title,
+          message: input.message,
+          type: input.type as any, // Cast to any to avoid temporary type mismatch if generate failed
+          organizationId: input.organizationId || null,
+        },
+      });
+    }),
 });

@@ -624,10 +624,12 @@ model Notification {
   @@map("notification")
 }
 
-enum NotificationType {
- SYSTEM
- WORKFLOW
- BILLING
- SUPPORT
- ALERT
-}
+ enum NotificationType {
+  SYSTEM
+  WORKFLOW
+  BILLING
+  SUPPORT
+  ALERT
+  OFFER
+  WELCOME
+ }

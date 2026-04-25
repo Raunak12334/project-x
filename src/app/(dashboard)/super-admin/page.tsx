@@ -34,6 +34,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
+import { BroadcastNotificationForm } from "@/components/super-admin/broadcast-form";
 
 const COLORS = [
   "#8884d8",
@@ -189,6 +190,9 @@ export default function SuperAdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <BroadcastNotificationForm />
+        </div>
         {/* Execution Flow Chart */}
         <Card className="lg:col-span-2 border-none shadow-sm bg-white dark:bg-slate-900/50">
           <CardHeader>
