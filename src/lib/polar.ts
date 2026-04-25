@@ -1,10 +1,17 @@
 import { Polar } from "@polar-sh/sdk";
 import { requireEnv } from "@/lib/env";
 
-const polarServer =
-  process.env.POLAR_SERVER === "production" ? "production" : "sandbox";
+let _polarClient: Polar | null = null;
 
-export const polarClient = new Polar({
-  accessToken: requireEnv("POLAR_ACCESS_TOKEN"),
-  server: polarServer,
-});
+export function getPolarClient() {
+  if (!_polarClient) {
+    const polarServer =
+      process.env.POLAR_SERVER === "production" ? "production" : "sandbox";
+
+    _polarClient = new Polar({
+      accessToken: requireEnv("POLAR_ACCESS_TOKEN"),
+      server: polarServer,
+    });
+  }
+  return _polarClient;
+}

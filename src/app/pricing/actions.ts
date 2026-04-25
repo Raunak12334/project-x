@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth-utils";
 import prisma from "@/lib/db";
 import { getPolarSuccessBaseUrl, requireEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { polarClient } from "@/lib/polar";
+import { getPolarClient } from "@/lib/polar";
 
 function isPaidPlan(plan: "FREE" | "PRO" | "CUSTOM" | "ENTERPRISE") {
   return plan === "PRO" || plan === "CUSTOM" || plan === "ENTERPRISE";
@@ -81,10 +81,9 @@ export async function createProCheckoutUrl() {
   const productId = requireEnv("POLAR_PRO_PRODUCT_ID");
   const successBaseUrl = getPolarSuccessBaseUrl();
 
-  let checkout: Awaited<ReturnType<typeof polarClient.checkouts.create>>;
-
   try {
-    checkout = await polarClient.checkouts.create({
+    const polar = getPolarClient();
+    checkout = await polar.checkouts.create({
       products: [productId],
       successUrl: `${successBaseUrl}/workflows?success=true`,
       externalCustomerId: user.id,
@@ -134,7 +133,8 @@ export async function createBillingPortalUrl() {
   }
 
   try {
-    const customerSession = await polarClient.customerSessions.create({
+    const polar = getPolarClient();
+    const customerSession = await polar.customerSessions.create({
       externalCustomerId: user.id,
     });
 

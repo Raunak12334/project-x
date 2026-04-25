@@ -5,7 +5,7 @@ import superjson from "superjson";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { polarClient } from "@/lib/polar";
+import { getPolarClient } from "@/lib/polar";
 
 export const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({
@@ -102,11 +102,9 @@ export const premiumProcedure = protectedProcedure.use(
       return next({ ctx: { ...ctx, subscription } });
     }
 
-    let customer: Awaited<
-      ReturnType<typeof polarClient.customers.getStateExternal>
-    >;
+    const polar = getPolarClient();
     try {
-      customer = await polarClient.customers.getStateExternal({
+      customer = await polar.customers.getStateExternal({
         externalId: ctx.auth.user.id,
       });
     } catch (polarError) {
