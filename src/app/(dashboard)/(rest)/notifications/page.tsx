@@ -71,7 +71,7 @@ export default function NotificationsPage() {
             title={notification.title}
             subtitle={
               <div className="space-y-1">
-                <p className="line-clamp-2">{notification.message}</p>
+                <p>{notification.message}</p>
                 <p className="text-[10px] text-slate-400 uppercase font-semibold">
                   {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                 </p>
