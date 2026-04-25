@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandLockup } from "@/components/brand-lockup";
 import { authClient } from "@/lib/auth-client";
-import { NotificationBell } from "@/components/notification-bell";
 
 export const UserSidebar = () => {
   const router = useRouter();
@@ -153,9 +152,6 @@ export const UserSidebar = () => {
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
         <SidebarMenu className="gap-3">
-          <SidebarMenuItem className="flex justify-center mb-2">
-            <NotificationBell />
-          </SidebarMenuItem>
           {!isPro && (
             <SidebarMenuItem>
               <SidebarMenuButton

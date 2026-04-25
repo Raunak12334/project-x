@@ -1,4 +1,5 @@
 import { requireSuperAdmin } from "@/lib/auth-utils";
+import { AppHeader } from "@/components/app-header";
 
 export default async function SuperAdminLayout({
   children,
@@ -9,8 +10,11 @@ export default async function SuperAdminLayout({
   await requireSuperAdmin();
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950/50">
-      {children}
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-slate-950/50 overflow-hidden">
+      <AppHeader />
+      <main className="flex-1 overflow-auto">
+        {children}
+      </main>
     </div>
   );
 }
