@@ -135,24 +135,32 @@ export default function RootLayout({
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            name: "Otogent",
-            url: "https://otogent.com",
-            applicationCategory: "AI Platform",
-            operatingSystem: "Web",
-            description:
-              "All-in-one AI agent platform for building and managing multi-agent workflows to automate repetitive tasks.",
-            offers: {
+            "name": "Otogent",
+            "url": "https://otogent.com",
+            "applicationCategory": "AutomationSoftware, BusinessApplication",
+            "operatingSystem": "Web",
+            "description":
+              "Otogent is a high-performance Multi-Agent Automation Platform that enables businesses to build, orchestrate, and deploy complex AI workflows using multiple agents. It integrates seamlessly with OpenAI GPT-4, Anthropic Claude 3.5, and Google Gemini.",
+            "offers": {
               "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock"
             },
-            featureList: [
-              "Multi-agent workflow builder",
-              "OpenAI integration",
-              "Anthropic integration",
-              "Gemini integration",
-              "No-code AI automation",
+            "featureList": [
+              "Multi-agent workflow orchestration",
+              "Visual drag-and-drop canvas builder",
+              "State management for long-running agents",
+              "Secure API credential management",
+              "Native integrations with OpenAI, Anthropic, and Gemini",
+              "Sector-specific automation blueprints"
             ],
+            "keywords": "multi-agent system, AI automation platform, LLM orchestration, agentic workflows, no-code AI builder",
+            "softwareVersion": "1.0.0",
+            "author": {
+              "@type": "Organization",
+              "name": "Otogent"
+            }
           })}
         </Script>
       </head>

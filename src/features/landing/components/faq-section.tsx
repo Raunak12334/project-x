@@ -7,24 +7,24 @@ import {
 
 const faqs = [
   {
-    q: "What is Otogent and how does it work?",
-    a: "Otogent is an infrastructure platform for multi-agent systems. It provides connectors, orchestration, and shared state so your AI agents can work together, similar to how Zapier connects apps, but designed for autonomous agents.",
+    q: "What is Otogent Multi-Agent Automation?",
+    a: "Otogent is the leading platform for building and orchestrating multi-agent automation workflows. Unlike simple chatbots, Otogent allows multiple intelligent agents to work together on complex business tasks, similar to a digital workforce.",
   },
   {
-    q: "Which agent frameworks are supported?",
-    a: "We support LangChain, CrewAI, AutoGen, Semantic Kernel, and custom agents via APIs. If your agent can make HTTP calls, it can work with Otogent.",
+    q: "How does Otogent compare to Zapier?",
+    a: "Zapier is for simple 'if this, then that' app connections. Otogent is a multi-agent orchestration engine. It handles complex, multi-step reasoning, long-running agent states, and autonomous decision-making that simple automation tools cannot.",
   },
   {
-    q: "Do I need coding experience?",
-    a: "The visual workflow editor covers no-code use cases. For advanced systems, TypeScript-first building blocks give you full control.",
+    q: "Is Otogent an alternative to n8n for AI?",
+    a: "Yes, Otogent is the specialized multi-agent alternative to n8n. While n8n is a general-purpose workflow tool, Otogent is built from the ground up for agentic workflows, featuring native support for shared memory and multi-model collaboration.",
   },
   {
-    q: "How is Otogent different from Zapier?",
-    a: "Zapier connects SaaS apps with simple triggers and actions. Otogent is built for AI agents, with stateful orchestration, shared memory, guardrails, and complex multi-step reasoning workflows.",
+    q: "Which AI models does Otogent support?",
+    a: "Otogent supports the industry's leading LLMs, including OpenAI (GPT-4), Anthropic (Claude 3.5), and Google (Gemini 1.5). You can even mix and match different models within a single multi-agent workflow.",
   },
   {
-    q: "Is my data secure?",
-    a: "Otogent is designed with encryption, role-aware access, and auditable execution flows so teams can safely run production-grade agent systems.",
+    q: "Is Otogent a no-code platform?",
+    a: "Yes. Otogent features a visual, drag-and-drop canvas that allows business users to build production-ready multi-agent automations without writing a single line of code.",
   },
 ];
 
