@@ -41,8 +41,8 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-brand text-6xl md:text-8xl lg:text-[7rem] leading-[1.05] tracking-tight text-foreground max-w-5xl"
         >
-          Automate your workflow <br className="hidden md:block" />{" "}
-          with multi-agent catalyst
+          Automate your workflow <br className="hidden md:block" /> with
+          multi-agent catalyst
         </motion.h1>
 
         {/* Supporting SEO Line */}
@@ -58,8 +58,9 @@ export function HeroSection() {
           {...fadeUp(0.2, 16, 0.6)}
           className="mt-6 text-center text-base md:text-lg text-foreground/80 max-w-[700px] leading-relaxed"
         >
-          Deploy AI agents that reason and execute complex tasks across your business. 
-          Otogent provides the sovereign execution layer for your autonomous workflows at scale.
+          Deploy AI agents that reason and execute complex tasks across your
+          business. Otogent provides the sovereign execution layer for your
+          autonomous workflows at scale.
         </motion.p>
 
         {/* Differentiation Line */}
@@ -78,7 +79,7 @@ export function HeroSection() {
           <div className="flex items-center gap-5">
             <Button
               asChild
-              className="rounded-full px-8 py-7 text-base font-bold bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-lg"
+              className="rounded-full bg-primary px-8 py-7 font-sans text-base font-semibold text-primary-foreground shadow-lg transition-all hover:opacity-90"
             >
               <Link href="/signup">Deploy Your First Agent</Link>
             </Button>
@@ -93,7 +94,7 @@ export function HeroSection() {
               </a>
             </Button>
           </div>
-          
+
           {/* Trust Microcopy */}
           <p className="text-xs font-medium text-foreground/50 flex items-center gap-4">
             <span>No-code builder</span>
