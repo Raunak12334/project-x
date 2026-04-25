@@ -14,6 +14,7 @@ import type { Notification } from "@prisma/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const NotificationBell = () => {
   const trpc = useTRPC();
@@ -62,9 +63,23 @@ export const NotificationBell = () => {
         align="end" 
         className="w-80 p-0 border-slate-200 dark:border-slate-800 shadow-lg rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
-        <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800">
-          <DropdownMenuLabel className="font-semibold text-sm px-0">Notifications</DropdownMenuLabel>
-          <div className="flex items-center gap-2">
+        <Tabs defaultValue="unread" className="w-full">
+          <div className="flex items-center justify-between px-3 pt-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <TabsList className="bg-transparent h-8 p-0 gap-4">
+              <TabsTrigger 
+                value="unread" 
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 transition-all"
+              >
+                Unread ({unreadCount})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 transition-all"
+              >
+                All
+              </TabsTrigger>
+            </TabsList>
+            
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllAsRead.mutate()}
@@ -74,81 +89,130 @@ export const NotificationBell = () => {
               </button>
             )}
           </div>
-        </div>
-        
-        <ScrollArea className="h-[400px]">
-          <div className="flex flex-col">
-            {notifications?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
-                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
-                  <BellIcon className="size-6 text-slate-400" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">All caught up!</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">You don&apos;t have any new notifications.</p>
-                </div>
+
+          <TabsContent value="unread" className="mt-0">
+            <ScrollArea className="h-[350px]">
+              <div className="flex flex-col">
+                {notifications?.filter(n => !n.isRead).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
+                    <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
+                      <BellIcon className="size-6 text-slate-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">All caught up!</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">No new notifications.</p>
+                    </div>
+                  </div>
+                ) : (
+                  notifications?.filter(n => !n.isRead).map((n) => (
+                    <NotificationItem 
+                      key={n.id} 
+                      notification={n} 
+                      onMarkRead={(id) => markAsRead.mutate({ id })} 
+                    />
+                  ))
+                )}
               </div>
-            ) : (
-              notifications?.map((notification: Notification) => (
-                <div
-                  key={notification.id}
-                  onClick={() => {
-                    if (!notification.isRead) {
-                      markAsRead.mutate({ id: notification.id });
-                    }
-                    if (notification.link) {
-                      window.location.href = notification.link;
-                    }
-                  }}
-                  className={cn(
-                    "group relative flex items-start gap-4 p-4 cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-all duration-200",
-                    !notification.isRead && "bg-blue-50/30 dark:bg-blue-900/5"
-                  )}
-                >
-                  <div className={cn(
-                    "mt-1 p-2 rounded-xl transition-colors",
-                    notification.type === "WORKFLOW" ? "bg-rose-50 dark:bg-rose-900/10" :
-                    notification.type === "BILLING" ? "bg-emerald-50 dark:bg-emerald-900/10" :
-                    "bg-blue-50 dark:bg-blue-900/10"
-                  )}>
-                    {getStatusIcon(notification.type)}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="all" className="mt-0">
+            <ScrollArea className="h-[350px]">
+              <div className="flex flex-col">
+                {notifications?.length === 0 ? (
+                  <div className="p-12 text-center text-[11px] text-slate-500">
+                    No activity found.
                   </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={cn(
-                        "text-sm truncate tracking-tight",
-                        !notification.isRead ? "font-bold text-slate-900 dark:text-slate-100" : "font-medium text-slate-600 dark:text-slate-400"
-                      )}>
-                        {notification.title}
-                      </p>
-                      <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                      {notification.message}
-                    </p>
-                  </div>
-                  {!notification.isRead && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
+                ) : (
+                  notifications?.map((n) => (
+                    <NotificationItem 
+                      key={n.id} 
+                      notification={n} 
+                      onMarkRead={(id) => markAsRead.mutate({ id })} 
+                    />
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
         
         <div className="p-2 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 text-center">
           <Link 
             href="/notifications"
             className="text-[10px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors block w-full py-1"
           >
-            View all activity
+            View full history
           </Link>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
+
+const NotificationItem = ({ 
+  notification, 
+  onMarkRead 
+}: { 
+  notification: Notification; 
+  onMarkRead: (id: string) => void;
+}) => {
+  const getStatusIcon = (type: string) => {
+    switch (type) {
+      case "WORKFLOW":
+        return <AlertCircleIcon className="size-4 text-rose-500" />;
+      case "BILLING":
+        return <CheckCircle2Icon className="size-4 text-emerald-500" />;
+      default:
+        return <InfoIcon className="size-4 text-blue-500" />;
+    }
+  };
+
+  return (
+    <div
+      onClick={() => {
+        if (!notification.isRead) {
+          onMarkRead(notification.id);
+        }
+        if (notification.link) {
+          window.location.href = notification.link;
+        }
+      }}
+      className={cn(
+        "group relative flex items-start gap-4 p-4 cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-all duration-200",
+        !notification.isRead && "bg-blue-50/30 dark:bg-blue-900/5"
+      )}
+    >
+      <div className={cn(
+        "mt-0.5 p-1.5 rounded-lg transition-colors border shadow-sm",
+        notification.type === "WORKFLOW" ? "bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/20" :
+        notification.type === "BILLING" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20" :
+        "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20"
+      )}>
+        {getStatusIcon(notification.type)}
+      </div>
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className={cn(
+            "text-xs truncate tracking-tight",
+            !notification.isRead ? "font-bold text-slate-900 dark:text-slate-100" : "font-medium text-slate-600 dark:text-slate-400"
+          )}>
+            {notification.title}
+          </p>
+          <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">
+            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+          {notification.message}
+        </p>
+      </div>
+      {!notification.isRead && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        </div>
+      )}
+    </div>
+  );
+};
+
