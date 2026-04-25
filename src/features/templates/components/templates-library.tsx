@@ -1,7 +1,6 @@
 "use client";
 
-import { LayoutTemplateIcon, SearchIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { LayoutTemplateIcon, SearchIcon, ArrowRightIcon } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,17 +9,15 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import { getNodeCatalogItem } from "@/config/node-catalog";
-import { useCreateWorkflowFromTemplate } from "@/features/workflows/hooks/use-workflows";
 import { cn } from "@/lib/utils";
 import {
   type WorkflowTemplateDefinition,
   workflowTemplates,
 } from "../lib/workflow-templates";
-import { authClient } from "@/lib/auth-client";
 
 const credentialLabels: Record<string, string> = {
   OPENAI: "OpenAI",
@@ -54,13 +51,7 @@ const matchesTemplateSearch = (
 };
 
 export const TemplatesLibrary = () => {
-  const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const createFromTemplate = useCreateWorkflowFromTemplate();
   const [search, setSearch] = useState("");
-  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(
-    null,
-  );
   const deferredSearch = useDeferredValue(search);
 
   const filteredTemplates = useMemo(() => {
@@ -84,25 +75,7 @@ export const TemplatesLibrary = () => {
     }));
   }, [filteredTemplates]);
 
-  const handleUseTemplate = (templateId: string) => {
-    if (!session) {
-      router.push("/sign-in?callbackUrl=/templates");
-      return;
-    }
 
-    setPendingTemplateId(templateId);
-    createFromTemplate.mutate(
-      { templateId },
-      {
-        onSuccess: (workflow) => {
-          router.push(`/workflows/${workflow.id}`);
-        },
-        onSettled: () => {
-          setPendingTemplateId(null);
-        },
-      },
-    );
-  };
 
   return (
     <div className="p-4 md:px-10 md:py-6 h-full">
@@ -174,8 +147,7 @@ export const TemplatesLibrary = () => {
                     <Card
                       key={template.id}
                       className={cn(
-                        "overflow-hidden rounded-[28px] border-border/60 transition-all hover:-translate-y-0.5 hover:shadow-md",
-                        pendingTemplateId === template.id && "opacity-80",
+                        "overflow-hidden rounded-[28px] border-border/60 transition-all hover:-translate-y-0.5 hover:shadow-md"
                       )}
                     >
                       <CardHeader className="border-b bg-muted/15">
@@ -231,22 +203,17 @@ export const TemplatesLibrary = () => {
                         </div>
                       </CardContent>
 
-                      <CardFooter className="border-t bg-muted/10 pt-6">
-                        <div className="flex w-full items-center justify-between gap-4">
-                          <p className="text-sm text-muted-foreground">
-                            You can edit it after opening.
-                          </p>
-                          <Button
-                            onClick={() => handleUseTemplate(template.id)}
-                            disabled={createFromTemplate.isPending}
-                          >
-                            {!session 
-                              ? "Login to use" 
-                              : pendingTemplateId === template.id
-                                ? "Creating..."
-                                : "Use template"}
-                          </Button>
-                        </div>
+                      <CardFooter className="bg-muted/5 pt-2">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          className="w-full rounded-xl gap-2 font-semibold text-primary hover:text-primary hover:bg-primary/5 transition-all group"
+                        >
+                          <Link href={`/templates/${template.slug}`}>
+                            View template
+                            <ArrowRightIcon className="size-4 group-hover:translate-x-1 transition-transform" />
+                          </Link>
+                        </Button>
                       </CardFooter>
                     </Card>
                   );

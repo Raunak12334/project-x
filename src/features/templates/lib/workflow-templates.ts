@@ -8,6 +8,12 @@ export type WorkflowTemplateDefinition = {
   tags: string[];
   isPremium?: boolean;
   requiredCredentials: CredentialType[];
+  slug?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  useCase?: string;
+  benefits?: string[];
+  steps?: string[];
   nodes: Array<{
     id: string;
     type: NodeType;
@@ -26,7 +32,21 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "real-estate-ai-qualifier",
     name: "Real Estate Lead Qualifier",
+    slug: "real-estate-ai-lead-qualifier-automation",
     description: "Qualifies inbound Zillow/Trulia leads using AI and alerts agents on high-intent buyers.",
+    useCase: "Perfect for real estate teams managing high volumes of inbound leads. Automate the first contact and lead grading process.",
+    benefits: [
+      "Instantly qualify leads 24/7",
+      "Prioritize high-budget buyers",
+      "Reduce response time to seconds",
+      "Seamless Slack/Discord alerts"
+    ],
+    steps: [
+      "Receive lead data via Webhook from Zillow/Trulia",
+      "AI Assistant analyzes budget, timeline, and intent",
+      "Lead is scored (1-10) based on conversion probability",
+      "Instant notification sent to the agent's mobile"
+    ],
     category: "Real Estate",
     tags: ["real-estate", "lead-gen", "qualification"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -50,7 +70,21 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "healthcare-appointment-reminder",
     name: "Healthcare Patient Reminder",
+    slug: "healthcare-patient-appointment-reminder",
     description: "Summarizes patient notes and sends a personalized appointment reminder via SMS/Email.",
+    useCase: "Clinics and private practices looking to reduce no-show rates with personalized, intelligent communication.",
+    benefits: [
+      "Reduce no-show rates significantly",
+      "Personalized instructions for every patient",
+      "HIPAA-compliant data handling",
+      "Automated summary of doctor notes"
+    ],
+    steps: [
+      "Fetch patient appointment data via API",
+      "AI summarizes specific preparation instructions",
+      "Personalized reminder is drafted and validated",
+      "Notification sent via patient's preferred channel"
+    ],
     category: "Healthcare",
     tags: ["healthcare", "patient-care", "reminders"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -74,7 +108,21 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "ecommerce-sentiment-alert",
     name: "E-commerce Review Monitor",
+    slug: "ecommerce-customer-review-sentiment-monitor",
     description: "Analyzes customer reviews for sentiment and alerts the support team on negative feedback.",
+    useCase: "Brand managers who need to react instantly to negative social proof before it impacts sales.",
+    benefits: [
+      "Protect brand reputation in real-time",
+      "Instant alerts for negative feedback",
+      "AI-driven root cause analysis",
+      "Seamless integration with support tools"
+    ],
+    steps: [
+      "Monitor reviews from Shopify, Amazon, or Google",
+      "AI analyzes sentiment and identifies complaints",
+      "Logic branch determines if immediate action is needed",
+      "Alert sent to customer support for rapid response"
+    ],
     category: "E-commerce",
     tags: ["ecommerce", "sentiment", "customer-support"],
     requiredCredentials: [CredentialType.OPENAI],
@@ -105,6 +153,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "finance-expense-auditor",
     name: "Finance Expense Auditor",
+    slug: "finance-expense-audit-compliance-automation",
     description: "Audits receipt data using AI to flag unusual spending or non-compliant expenses.",
     category: "Finance",
     tags: ["finance", "audit", "expenses"],
@@ -129,6 +178,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "marketing-content-multiplier",
     name: "Marketing Content Multiplier",
+    slug: "marketing-ai-content-multiplier-automation",
     description: "Generates a Blog Post, Twitter Thread, and LinkedIn Update from a single topic.",
     category: "Marketing",
     tags: ["marketing", "content", "social-media"],
@@ -160,6 +210,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "education-feedback-bot",
     name: "Education Feedback Bot",
+    slug: "education-student-feedback-grading-automation",
     description: "Analyzes student submissions and provides personalized feedback and grading suggestions.",
     category: "Education",
     tags: ["education", "grading", "feedback"],
@@ -184,6 +235,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "legal-contract-summarizer",
     name: "Legal Contract Summarizer",
+    slug: "legal-ai-contract-clause-summarizer",
     description: "Identifies key risks and summarizes termination clauses in legal documents.",
     category: "Legal",
     tags: ["legal", "contract", "risk-management"],
@@ -208,6 +260,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "hr-resume-screener",
     name: "HR AI Resume Screener",
+    slug: "hr-ai-candidate-resume-screener",
     description: "Screens candidates against a Job Description and ranks them by cultural and technical fit.",
     category: "Human Resources",
     tags: ["hr", "recruiting", "hiring"],
@@ -232,6 +285,7 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
     id: "saas-roadmap-prioritizer",
     name: "SaaS Roadmap Prioritizer",
+    slug: "saas-product-roadmap-feature-prioritization",
     description: "Analyzes customer feature requests and prioritizes them based on effort vs impact.",
     category: "Tech/SaaS",
     tags: ["saas", "product", "roadmap"],
@@ -257,6 +311,9 @@ export const workflowTemplates: WorkflowTemplateDefinition[] = [
 
 export const getWorkflowTemplateById = (templateId: string) =>
   workflowTemplates.find((template) => template.id === templateId);
+
+export const getWorkflowTemplateBySlug = (slug: string) =>
+  workflowTemplates.find((template) => template.slug === slug);
 
 export const getFilteredTemplates = (
   plan: "FREE" | "PRO" | "CUSTOM" = "FREE",

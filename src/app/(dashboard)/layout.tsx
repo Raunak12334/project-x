@@ -6,7 +6,7 @@ import { enforceAppRouting } from "@/lib/auth-utils";
 const Layout = async ({ children }: { children: React.ReactNode }) => {
   const headersList = await headers();
   const fullUrl = headersList.get("x-url") || "";
-  const isTemplatesPage = fullUrl.endsWith("/templates");
+  const isTemplatesPage = fullUrl.includes("/templates");
 
   // Only enforce auth if not the public templates page
   if (!isTemplatesPage) {

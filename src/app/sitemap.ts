@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { isMissingBlogTableError } from "@/features/blog/db";
+import { workflowTemplates } from "@/features/templates/lib/workflow-templates";
 import prisma from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -48,6 +49,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: post.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    ...workflowTemplates.map((template) => ({
+      url: `https://otogent.com/templates/${template.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
     })),
   ];
 }

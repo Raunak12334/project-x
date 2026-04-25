@@ -63,9 +63,10 @@ export function TemplatesSection() {
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2">
-                  <Button asChild variant="ghost" size="sm" className="w-full rounded-xl text-primary hover:text-primary hover:bg-primary/5">
-                    <Link href={`/templates?search=${template.name}`}>
+                  <Button asChild variant="ghost" size="sm" className="w-full rounded-xl text-primary hover:text-primary hover:bg-primary/5 transition-all group">
+                    <Link href={`/templates/${template.slug}`}>
                       Preview Blueprint
+                      <ArrowRightIcon className="size-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
                 </CardFooter>
