@@ -39,7 +39,7 @@ export function HeroSection() {
         {/* Headline */}
         <motion.h1
           {...fadeUp(0.1, 16, 0.6)}
-          className="text-center font-display text-5xl md:text-7xl lg:text-[5rem] leading-[1] tracking-[-0.04em] text-foreground max-w-4xl"
+          className="text-center font-brand text-6xl md:text-8xl lg:text-[6rem] leading-[1.05] tracking-tight text-foreground max-w-4xl"
         >
           Build and deploy your <br className="hidden md:block" />{" "}
           multi-agent workflows
