@@ -13,7 +13,7 @@ const fadeUp = (delay: number, y: number = 16, duration: number = 0.6) => ({
 
 export function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center justify-start overflow-hidden h-screen pt-20 pb-10" style={{ fontFamily: "var(--font-landing-sans)" }}>
+    <section className="relative flex flex-col items-center justify-start overflow-hidden h-screen pt-20 pb-10 font-brand">
       {/* Background Video */}
       <video
         autoPlay
@@ -39,7 +39,7 @@ export function HeroSection() {
         {/* Headline */}
         <motion.h1
           {...fadeUp(0.1, 16, 0.6)}
-          className="text-center font-brand text-6xl md:text-8xl lg:text-[6rem] leading-[1.05] tracking-tight text-foreground max-w-4xl"
+          className="text-center text-6xl md:text-8xl lg:text-[6rem] leading-[1.05] tracking-tight text-foreground max-w-4xl"
         >
           Build and deploy your <br className="hidden md:block" />{" "}
           multi-agent workflows
@@ -48,7 +48,7 @@ export function HeroSection() {
         {/* Subheadline */}
         <motion.p
           {...fadeUp(0.2, 16, 0.6)}
-          className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed font-body"
+          className="mt-8 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed"
         >
           Automate your busywork with intelligent agents that learn, adapt, and
           execute—so your team can focus on what matters most.

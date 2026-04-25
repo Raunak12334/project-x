@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  Quattrocento,
+  Instrument_Serif,
   Space_Grotesk,
 } from "next/font/google";
 import Script from "next/script";
@@ -28,9 +28,9 @@ const landingSans = Space_Grotesk({
   subsets: ["latin"],
 });
 
-const landingSerif = Quattrocento({
+const landingSerif = Instrument_Serif({
   variable: "--font-landing-serif",
-  weight: ["400", "700"],
+  weight: ["400"],
   subsets: ["latin"],
 });
 
