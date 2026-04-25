@@ -20,6 +20,7 @@ import {
   type WorkflowTemplateDefinition,
   workflowTemplates,
 } from "../lib/workflow-templates";
+import { authClient } from "@/lib/auth-client";
 
 const credentialLabels: Record<string, string> = {
   OPENAI: "OpenAI",
@@ -54,6 +55,7 @@ const matchesTemplateSearch = (
 
 export const TemplatesLibrary = () => {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
   const createFromTemplate = useCreateWorkflowFromTemplate();
   const [search, setSearch] = useState("");
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(
@@ -83,6 +85,11 @@ export const TemplatesLibrary = () => {
   }, [filteredTemplates]);
 
   const handleUseTemplate = (templateId: string) => {
+    if (!session) {
+      router.push("/sign-in?callbackUrl=/templates");
+      return;
+    }
+
     setPendingTemplateId(templateId);
     createFromTemplate.mutate(
       { templateId },
@@ -104,12 +111,22 @@ export const TemplatesLibrary = () => {
           <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border bg-muted/30 shadow-sm">
             <LayoutTemplateIcon className="size-7 text-primary" />
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight font-display">
-            Templates
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
-            Pick a ready workflow and edit it for your use case.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight font-display">
+                AI Automation Templates
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                Explore ready-to-use AI agent workflows for Real Estate, Healthcare, Marketing, and more. 
+                Select a template below to start automating your business sector today.
+              </p>
+            </div>
+            {session && (
+              <Button variant="outline" onClick={() => router.push("/workflows")} className="rounded-2xl">
+                Back to Dashboard
+              </Button>
+            )}
+          </div>
 
           <div className="relative mt-6 max-w-md">
             <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -228,9 +245,11 @@ export const TemplatesLibrary = () => {
                             onClick={() => handleUseTemplate(template.id)}
                             disabled={createFromTemplate.isPending}
                           >
-                            {pendingTemplateId === template.id
-                              ? "Creating..."
-                              : "Use template"}
+                            {!session 
+                              ? "Login to use" 
+                              : pendingTemplateId === template.id
+                                ? "Creating..."
+                                : "Use template"}
                           </Button>
                         </div>
                       </CardFooter>

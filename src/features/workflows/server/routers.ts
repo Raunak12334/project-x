@@ -493,7 +493,18 @@ export const workflowsRouter = createTRPCRouter({
         };
       }
     }),
-  create: premiumProcedure.mutation(({ ctx }) => {
+  create: premiumProcedure.mutation(async ({ ctx }) => {
+    const existingWorkflows = await prisma.workflow.count({
+      where: { organizationId: ctx.auth.organizationId },
+    });
+
+    if (existingWorkflows >= 2 && ctx.subscription?.plan === "FREE") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Free plan is limited to 2 workflows. Please upgrade to PRO to create more.",
+      });
+    }
+
     return prisma.workflow.create({
       data: {
         name: generateSlug(3),
@@ -515,6 +526,17 @@ export const workflowsRouter = createTRPCRouter({
 
       if (!template) {
         throw new Error("Template not found");
+      }
+
+      const existingWorkflows = await prisma.workflow.count({
+        where: { organizationId: ctx.auth.organizationId },
+      });
+
+      if (existingWorkflows >= 2 && ctx.subscription?.plan === "FREE") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Free plan is limited to 2 workflows. Please upgrade to PRO to create more.",
+        });
       }
 
       // Check premium template access

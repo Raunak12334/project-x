@@ -24,711 +24,235 @@ export type WorkflowTemplateDefinition = {
 
 export const workflowTemplates: WorkflowTemplateDefinition[] = [
   {
-    id: "support-triage-assistant",
-    name: "Support Triage Assistant",
-    description:
-      "Checks if a support message is urgent. If it is urgent, it asks for approval and sends it to Slack.",
-    category: "Support",
-    tags: ["triage", "support", "approval", "urgent"],
-    isPremium: true,
+    id: "real-estate-ai-qualifier",
+    name: "Real Estate Lead Qualifier",
+    description: "Qualifies inbound Zillow/Trulia leads using AI and alerts agents on high-intent buyers.",
+    category: "Real Estate",
+    tags: ["real-estate", "lead-gen", "qualification"],
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 100 },
-      },
-      {
-        id: "input",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 240, y: 100 },
-        data: {
-          variableName: "ticketText",
-          valueTemplate:
-            "Customer says their production workspace is down and needs help immediately.",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "classifier",
-        type: NodeType.OPENAI,
-        position: { x: 500, y: 100 },
-        data: {
-          variableName: "priorityDecision",
-          systemPrompt:
-            "You are a support triage assistant. Reply with only true for urgent issues and false for normal issues.",
-          userPrompt: "Ticket text: {{ticketText}}",
-        },
-      },
-      {
-        id: "priority-check",
-        type: NodeType.CONDITION,
-        position: { x: 780, y: 100 },
-        data: {
-          variableName: "priorityRoute",
-          expression: "{{priorityDecision.text}}",
-          trueRoute: "urgent",
-          falseRoute: "normal",
-        },
-      },
-      {
-        id: "approval",
-        type: NodeType.HUMAN_APPROVAL,
-        position: { x: 1040, y: 30 },
-        data: {
-          variableName: "approvalStatus",
-          message:
-            "Urgent ticket detected. Review this request before alerting the on-call channel.\n\n{{ticketText}}",
-        },
-      },
-      {
-        id: "slack",
-        type: NodeType.SLACK,
-        position: { x: 1310, y: 30 },
-        data: {
-          variableName: "urgentSlack",
-          webhookUrl: "https://hooks.slack.com/services/replace-me",
-          content:
-            "Urgent support ticket approved for escalation:\n{{ticketText}}",
-        },
-      },
-      {
-        id: "logger",
-        type: NodeType.LOGGER,
-        position: { x: 1050, y: 210 },
-        data: {
-          level: "info",
-          variableName: "normalTicketLog",
-          message: "Normal priority ticket logged: {{ticketText}}",
-        },
-      },
+      { id: "trigger", type: NodeType.WEBHOOK_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "ai", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "qualification", 
+        systemPrompt: "You are a Real Estate Assistant. Analyze the lead's budget and timeline. Score intent 1-10.",
+        userPrompt: "Lead Data: {{json webhook}}" 
+      }},
+      { id: "slack", type: NodeType.SLACK, position: { x: 500, y: 150 }, data: { 
+        variableName: "notif",
+        content: "🏠 New Qualified Lead (Score: {{qualification.text}})\nDetails: {{json webhook}}"
+      }}
     ],
     edges: [
-      { source: "manual", target: "input" },
-      { source: "input", target: "classifier" },
-      { source: "classifier", target: "priority-check" },
-      { source: "priority-check", target: "approval", sourceHandle: "urgent" },
-      { source: "approval", target: "slack" },
-      { source: "priority-check", target: "logger", sourceHandle: "normal" },
-    ],
+      { source: "trigger", target: "ai" },
+      { source: "ai", target: "slack" }
+    ]
   },
   {
-    id: "api-summary-to-slack",
-    name: "API Summary To Slack",
-    description:
-      "Gets data from an API, makes a short summary, and sends it to Slack.",
-    category: "Operations",
-    tags: ["api", "summary", "slack", "digest"],
+    id: "healthcare-appointment-reminder",
+    name: "Healthcare Patient Reminder",
+    description: "Summarizes patient notes and sends a personalized appointment reminder via SMS/Email.",
+    category: "Healthcare",
+    tags: ["healthcare", "patient-care", "reminders"],
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "http",
-        type: NodeType.HTTP_REQUEST,
-        position: { x: 250, y: 120 },
-        data: {
-          variableName: "latestResponse",
-          method: "GET",
-          endpoint: "https://jsonplaceholder.typicode.com/posts/1",
-          body: "",
-        },
-      },
-      {
-        id: "summary",
-        type: NodeType.OPENAI,
-        position: { x: 520, y: 120 },
-        data: {
-          variableName: "summaryResult",
-          systemPrompt:
-            "You turn API responses into short operator-ready summaries.",
-          userPrompt:
-            "Summarize this response in 3 short bullet points:\n{{json latestResponse.httpResponse.data}}",
-        },
-      },
-      {
-        id: "slack",
-        type: NodeType.SLACK,
-        position: { x: 810, y: 120 },
-        data: {
-          variableName: "summarySlack",
-          webhookUrl: "https://hooks.slack.com/services/replace-me",
-          content: "API digest:\n{{summaryResult.text}}",
-        },
-      },
+      { id: "trigger", type: NodeType.HTTP_REQUEST, position: { x: 0, y: 150 } },
+      { id: "summarizer", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "summary", 
+        systemPrompt: "Summarize appointment prep instructions for the patient.",
+        userPrompt: "Patient Notes: {{json httpRequest}}" 
+      }},
+      { id: "slack", type: NodeType.SLACK, position: { x: 500, y: 150 }, data: { 
+        variableName: "notif",
+        content: "🏥 Reminder Sent to Patient.\nPrep Summary: {{summary.text}}"
+      }}
     ],
     edges: [
-      { source: "manual", target: "http" },
-      { source: "http", target: "summary" },
-      { source: "summary", target: "slack" },
-    ],
+      { source: "trigger", target: "summarizer" },
+      { source: "summarizer", target: "slack" }
+    ]
   },
   {
-    id: "lead-intake-router",
-    name: "Lead Intake Router",
-    description:
-      "Reads new form leads and sends hot leads to Slack and the rest to Discord.",
-    category: "Sales",
-    tags: ["lead", "routing", "forms", "qualification"],
+    id: "ecommerce-sentiment-alert",
+    name: "E-commerce Review Monitor",
+    description: "Analyzes customer reviews for sentiment and alerts the support team on negative feedback.",
+    category: "E-commerce",
+    tags: ["ecommerce", "sentiment", "customer-support"],
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
-      {
-        id: "form",
-        type: NodeType.GOOGLE_FORM_TRIGGER,
-        position: { x: 0, y: 160 },
-      },
-      {
-        id: "classification",
-        type: NodeType.OPENAI,
-        position: { x: 280, y: 160 },
-        data: {
-          variableName: "leadRoute",
-          systemPrompt:
-            "You classify inbound leads. Reply with only sales or nurture.",
-          userPrompt:
-            "Form response data:\n{{json googleForm.responses}}\n\nRoute:",
-        },
-      },
-      {
-        id: "router",
-        type: NodeType.ROUTER,
-        position: { x: 560, y: 160 },
-        data: {
-          variableName: "leadDecision",
-          routeExpression: "{{leadRoute.text}}",
-          routes: ["sales", "nurture"],
-          fallbackRoute: "nurture",
-        },
-      },
-      {
-        id: "sales-slack",
-        type: NodeType.SLACK,
-        position: { x: 860, y: 80 },
-        data: {
-          variableName: "salesSlack",
-          webhookUrl: "https://hooks.slack.com/services/replace-me",
-          content:
-            "New sales-ready lead:\n{{json googleForm.responses}}\nRoute: {{leadRoute.text}}",
-        },
-      },
-      {
-        id: "nurture-discord",
-        type: NodeType.DISCORD,
-        position: { x: 860, y: 260 },
-        data: {
-          variableName: "nurtureDiscord",
-          webhookUrl: "https://discord.com/api/webhooks/replace-me",
-          username: "Otogent Router",
-          content:
-            "Lead sent to nurture queue:\n{{json googleForm.responses}}\nRoute: {{leadRoute.text}}",
-        },
-      },
+      { id: "trigger", type: NodeType.WEBHOOK_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "sentiment", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "sentimentResult", 
+        systemPrompt: "Analyze the sentiment of this review. If negative, explain why.",
+        userPrompt: "Review: {{json webhook}}" 
+      }},
+      { id: "router", type: NodeType.CONDITION, position: { x: 500, y: 150 }, data: {
+        variableName: "isNegative",
+        expression: "{{sentimentResult.text}}",
+        trueRoute: "alert",
+        falseRoute: "ignore"
+      }},
+      { id: "slack", type: NodeType.SLACK, position: { x: 750, y: 50 }, data: { 
+        variableName: "alert",
+        content: "🚨 Negative Review Detected!\nReason: {{sentimentResult.text}}"
+      }}
     ],
     edges: [
-      { source: "form", target: "classification" },
-      { source: "classification", target: "router" },
-      { source: "router", target: "sales-slack", sourceHandle: "sales" },
-      {
-        source: "router",
-        target: "nurture-discord",
-        sourceHandle: "nurture",
-      },
-    ],
+      { source: "trigger", target: "sentiment" },
+      { source: "sentiment", target: "router" },
+      { source: "router", target: "slack", sourceHandle: "alert" }
+    ]
   },
   {
-    id: "stripe-review-queue",
-    name: "Stripe Review Queue",
-    description:
-      "Takes a Stripe event, saves a log, and waits for approval before sending an alert.",
+    id: "finance-expense-auditor",
+    name: "Finance Expense Auditor",
+    description: "Audits receipt data using AI to flag unusual spending or non-compliant expenses.",
     category: "Finance",
-    tags: ["stripe", "payments", "approval", "ops"],
-    requiredCredentials: [],
-    nodes: [
-      {
-        id: "stripe",
-        type: NodeType.STRIPE_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "logger",
-        type: NodeType.LOGGER,
-        position: { x: 260, y: 120 },
-        data: {
-          level: "info",
-          variableName: "paymentLog",
-          message:
-            "Stripe event received: {{stripe.eventType}} for {{stripe.amount}} {{stripe.currency}}",
-        },
-      },
-      {
-        id: "approval",
-        type: NodeType.HUMAN_APPROVAL,
-        position: { x: 520, y: 120 },
-        data: {
-          variableName: "paymentApproval",
-          message:
-            "Review this Stripe event before notifying operations.\n\n{{json stripe}}",
-        },
-      },
-      {
-        id: "slack",
-        type: NodeType.SLACK,
-        position: { x: 790, y: 120 },
-        data: {
-          variableName: "paymentSlack",
-          webhookUrl: "https://hooks.slack.com/services/replace-me",
-          content:
-            "Approved Stripe event:\nType: {{stripe.eventType}}\nCustomer: {{stripe.customerId}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "stripe", target: "logger" },
-      { source: "logger", target: "approval" },
-      { source: "approval", target: "slack" },
-    ],
-  },
-  {
-    id: "delayed-follow-up",
-    name: "Delayed Follow-up",
-    description:
-      "Saves a reminder, waits for a set time, and sends it to Discord.",
-    category: "Operations",
-    tags: ["delay", "follow-up", "reminder", "discord"],
-    requiredCredentials: [],
-    nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "set",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 240, y: 120 },
-        data: {
-          variableName: "followUpMessage",
-          valueTemplate:
-            "Check in with the customer after the deployment window.",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "delay",
-        type: NodeType.DELAY,
-        position: { x: 500, y: 120 },
-        data: {
-          amount: 30,
-          unit: "m",
-        },
-      },
-      {
-        id: "discord",
-        type: NodeType.DISCORD,
-        position: { x: 740, y: 120 },
-        data: {
-          variableName: "followUpDiscord",
-          webhookUrl: "https://discord.com/api/webhooks/replace-me",
-          username: "Otogent Reminder",
-          content: "Reminder after delay:\n{{followUpMessage}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "manual", target: "set" },
-      { source: "set", target: "delay" },
-      { source: "delay", target: "discord" },
-    ],
-  },
-  {
-    id: "gemini-research-digest",
-    name: "Gemini Research Digest",
-    description:
-      "Gets data from an API, asks Gemini to summarize it, and saves the result in the log.",
-    category: "Research",
-    tags: ["gemini", "research", "digest", "api"],
-    requiredCredentials: [CredentialType.GEMINI],
-    nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "http",
-        type: NodeType.HTTP_REQUEST,
-        position: { x: 250, y: 120 },
-        data: {
-          variableName: "researchPayload",
-          method: "GET",
-          endpoint: "https://jsonplaceholder.typicode.com/users",
-          body: "",
-        },
-      },
-      {
-        id: "gemini",
-        type: NodeType.GEMINI,
-        position: { x: 520, y: 120 },
-        data: {
-          variableName: "geminiDigest",
-          systemPrompt:
-            "You produce concise research digests for operations teams.",
-          userPrompt:
-            "Summarize the most important points from this payload:\n{{json researchPayload.httpResponse.data}}",
-        },
-      },
-      {
-        id: "logger",
-        type: NodeType.LOGGER,
-        position: { x: 810, y: 120 },
-        data: {
-          level: "info",
-          variableName: "geminiLog",
-          message: "Gemini digest:\n{{geminiDigest.text}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "manual", target: "http" },
-      { source: "http", target: "gemini" },
-      { source: "gemini", target: "logger" },
-    ],
-  },
-  {
-    id: "anthropic-review-desk",
-    name: "Anthropic Review Desk",
-    description:
-      "Creates a review summary with Anthropic, then asks for approval before sending it to Slack.",
-    category: "Reviews",
-    tags: ["anthropic", "approval", "review", "slack"],
-    requiredCredentials: [CredentialType.ANTHROPIC],
-    nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "set",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 250, y: 120 },
-        data: {
-          variableName: "reviewSubject",
-          valueTemplate:
-            "Review the new onboarding workflow before it goes live.",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "anthropic",
-        type: NodeType.ANTHROPIC,
-        position: { x: 530, y: 120 },
-        data: {
-          variableName: "reviewDraft",
-          systemPrompt:
-            "You prepare concise internal review summaries for senior operators.",
-          userPrompt:
-            "Prepare a short review summary for this item:\n{{reviewSubject}}",
-        },
-      },
-      {
-        id: "approval",
-        type: NodeType.HUMAN_APPROVAL,
-        position: { x: 820, y: 120 },
-        data: {
-          variableName: "reviewApproval",
-          message:
-            "Please approve this review summary before sending it to Slack.\n\n{{reviewDraft.text}}",
-        },
-      },
-      {
-        id: "slack",
-        type: NodeType.SLACK,
-        position: { x: 1090, y: 120 },
-        data: {
-          variableName: "reviewSlack",
-          webhookUrl: "https://hooks.slack.com/services/replace-me",
-          content: "Approved review summary:\n{{reviewDraft.text}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "manual", target: "set" },
-      { source: "set", target: "anthropic" },
-      { source: "anthropic", target: "approval" },
-      { source: "approval", target: "slack" },
-    ],
-  },
-  {
-    id: "gemma-routing-ops",
-    name: "Gemma Routing Ops",
-    description:
-      "Uses Gemma to decide where an ops message should go, then routes it to Discord or the log.",
-    category: "Operations",
-    tags: ["gemma", "routing", "ops", "classification"],
-    requiredCredentials: [CredentialType.GEMMA],
-    nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 150 },
-      },
-      {
-        id: "set",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 240, y: 150 },
-        data: {
-          variableName: "opsMessage",
-          valueTemplate:
-            "Customer requests a billing follow-up and wants a direct reply.",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "gemma",
-        type: NodeType.GEMMA,
-        position: { x: 500, y: 150 },
-        data: {
-          variableName: "opsRoute",
-          model: "gemma-3-27b-it",
-          systemPrompt:
-            "Reply with only chat or archive based on whether the message needs a human response.",
-          userPrompt: "Message: {{opsMessage}}",
-        },
-      },
-      {
-        id: "router",
-        type: NodeType.ROUTER,
-        position: { x: 790, y: 150 },
-        data: {
-          variableName: "opsDecision",
-          routeExpression: "{{opsRoute.text}}",
-          routes: ["chat", "archive"],
-          fallbackRoute: "archive",
-        },
-      },
-      {
-        id: "discord",
-        type: NodeType.DISCORD,
-        position: { x: 1080, y: 70 },
-        data: {
-          variableName: "opsDiscord",
-          webhookUrl: "https://discord.com/api/webhooks/replace-me",
-          username: "Otogent Ops",
-          content: "Route: chat\n{{opsMessage}}",
-        },
-      },
-      {
-        id: "logger",
-        type: NodeType.LOGGER,
-        position: { x: 1080, y: 250 },
-        data: {
-          level: "info",
-          variableName: "archiveLog",
-          message: "Archived ops note: {{opsMessage}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "manual", target: "set" },
-      { source: "set", target: "gemma" },
-      { source: "gemma", target: "router" },
-      { source: "router", target: "discord", sourceHandle: "chat" },
-      { source: "router", target: "logger", sourceHandle: "archive" },
-    ],
-  },
-  {
-    id: "huggingface-support-draft",
-    name: "Hugging Face Support Draft",
-    description:
-      "Creates a support reply draft with an open-source model and saves it to the log.",
-    category: "Support",
-    tags: ["huggingface", "support", "open-source", "draft"],
-    requiredCredentials: [CredentialType.HUGGINGFACE],
-    nodes: [
-      {
-        id: "manual",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 120 },
-      },
-      {
-        id: "set",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 250, y: 120 },
-        data: {
-          variableName: "ticketText",
-          valueTemplate:
-            "A customer cannot access their dashboard after upgrading and wants a calm, helpful reply.",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "huggingface",
-        type: NodeType.HUGGINGFACE,
-        position: { x: 530, y: 120 },
-        data: {
-          variableName: "supportDraft",
-          model: "google/gemma-3-27b-it",
-          systemPrompt:
-            "You write short, clear, empathetic support replies for SaaS teams.",
-          userPrompt:
-            "Write a helpful reply for this customer message:\n{{ticketText}}",
-        },
-      },
-      {
-        id: "logger",
-        type: NodeType.LOGGER,
-        position: { x: 840, y: 120 },
-        data: {
-          level: "info",
-          variableName: "supportDraftLog",
-          message: "Hugging Face draft reply:\n{{supportDraft.text}}",
-        },
-      },
-    ],
-    edges: [
-      { source: "manual", target: "set" },
-      { source: "set", target: "huggingface" },
-      { source: "huggingface", target: "logger" },
-    ],
-  },
-  {
-    id: "ai-support-auto-responder",
-    name: "AI Support Auto-Responder",
-    description:
-      "Automatically analyzes incoming support tickets and drafts a high-quality response to be sent via webhook.",
-    category: "Support",
-    tags: ["support", "openai", "automation", "responder"],
+    tags: ["finance", "audit", "expenses"],
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
-      {
-        id: "trigger",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 150 },
-      },
-      {
-        id: "ticket-input",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 250, y: 150 },
-        data: {
-          variableName: "customerTicket",
-          valueTemplate:
-            "Subject: Cannot reset password\n\nHi support, I've tried clicking the reset link but it just takes me to a 404 page. Can you help?",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "ai-drafter",
-        type: NodeType.OPENAI,
-        position: { x: 500, y: 150 },
-        data: {
-          variableName: "aiReply",
-          systemPrompt:
-            "You are a helpful, senior support agent. Your goal is to provide a clear, empathetic response to customer issues.",
-          userPrompt:
-            "Draft a reply to this ticket:\n{{customerTicket}}\n\nMake sure to apologize for the 404 error and tell them you've alerted the engineering team.",
-        },
-      },
-      {
-        id: "webhook-sender",
-        type: NodeType.HTTP_REQUEST,
-        position: { x: 780, y: 150 },
-        data: {
-          variableName: "sendResult",
-          method: "POST",
-          endpoint: "https://your-api.com/webhooks/support",
-          body: JSON.stringify({
-            ticket: "{{customerTicket}}",
-            reply: "{{aiReply.text}}",
-            status: "replied",
-          }),
-        },
-      },
+      { id: "trigger", type: NodeType.GOOGLE_FORM_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "audit", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "auditLog", 
+        systemPrompt: "Audit this expense against company policy: Max $100 for meals, no alcohol. Flag any issues.",
+        userPrompt: "Expense Data: {{json googleForm}}" 
+      }},
+      { id: "approval", type: NodeType.HUMAN_APPROVAL, position: { x: 500, y: 150 }, data: {
+        variableName: "managerReview",
+        message: "Expense Audit Result: {{auditLog.text}}\nDo you approve this expense?"
+      }}
     ],
     edges: [
-      { source: "trigger", target: "ticket-input" },
-      { source: "ticket-input", target: "ai-drafter" },
-      { source: "ai-drafter", target: "webhook-sender" },
-    ],
+      { source: "trigger", target: "audit" },
+      { source: "audit", target: "approval" }
+    ]
   },
   {
-    id: "social-media-brainstormer",
-    name: "Social Media Brainstormer",
-    description:
-      "Generates content ideas, waits for your approval, and then drafts a full LinkedIn post for you.",
+    id: "marketing-content-multiplier",
+    name: "Marketing Content Multiplier",
+    description: "Generates a Blog Post, Twitter Thread, and LinkedIn Update from a single topic.",
     category: "Marketing",
-    tags: ["marketing", "linkedin", "brainstorm", "approval"],
+    tags: ["marketing", "content", "social-media"],
     requiredCredentials: [CredentialType.OPENAI],
     nodes: [
-      {
-        id: "start",
-        type: NodeType.MANUAL_TRIGGER,
-        position: { x: 0, y: 200 },
-      },
-      {
-        id: "topic",
-        type: NodeType.SET_VARIABLE,
-        position: { x: 250, y: 200 },
-        data: {
-          variableName: "baseTopic",
-          valueTemplate: "The future of AI agents in software engineering",
-          parseAsJson: false,
-        },
-      },
-      {
-        id: "ideator",
-        type: NodeType.OPENAI,
-        position: { x: 500, y: 200 },
-        data: {
-          variableName: "ideas",
-          systemPrompt:
-            "You are a creative content strategist. Generate 3 unique and catchy angles for a LinkedIn post about the given topic.",
-          userPrompt: "Topic: {{baseTopic}}",
-        },
-      },
-      {
-        id: "review",
-        type: NodeType.HUMAN_APPROVAL,
-        position: { x: 780, y: 200 },
-        data: {
-          variableName: "approval",
-          message:
-            "Here are the ideas generated by AI:\n\n{{ideas.text}}\n\nDo you want to proceed with drafting the post based on these?",
-        },
-      },
-      {
-        id: "writer",
-        type: NodeType.OPENAI,
-        position: { x: 1050, y: 200 },
-        data: {
-          variableName: "finalPost",
-          systemPrompt:
-            "You are a master LinkedIn ghostwriter. Write a professional, engaging post (under 200 words) with emojis and hashtags based on the approved ideas.",
-          userPrompt: "Ideas: {{ideas.text}}",
-        },
-      },
-      {
-        id: "output",
-        type: NodeType.LOGGER,
-        position: { x: 1330, y: 200 },
-        data: {
-          level: "info",
-          variableName: "logOutput",
-          message: "Final LinkedIn Post:\n\n{{finalPost.text}}",
-        },
-      },
+      { id: "trigger", type: NodeType.MANUAL_TRIGGER, position: { x: 0, y: 200 } },
+      { id: "blog", type: NodeType.OPENAI, position: { x: 250, y: 50 }, data: { 
+        variableName: "blogPost", 
+        systemPrompt: "Write a 500-word blog post about the topic.",
+        userPrompt: "Topic: {{json manual}}" 
+      }},
+      { id: "twitter", type: NodeType.OPENAI, position: { x: 250, y: 200 }, data: { 
+        variableName: "tweets", 
+        systemPrompt: "Write a 5-tweet thread about the topic.",
+        userPrompt: "Topic: {{json manual}}" 
+      }},
+      { id: "linkedin", type: NodeType.OPENAI, position: { x: 250, y: 350 }, data: { 
+        variableName: "linkedInPost", 
+        systemPrompt: "Write a professional LinkedIn post about the topic.",
+        userPrompt: "Topic: {{json manual}}" 
+      }}
     ],
     edges: [
-      { source: "start", target: "topic" },
-      { source: "topic", target: "ideator" },
-      { source: "ideator", target: "review" },
-      { source: "review", target: "writer" },
-      { source: "writer", target: "output" },
-    ],
+      { source: "trigger", target: "blog" },
+      { source: "trigger", target: "twitter" },
+      { source: "trigger", target: "linkedin" }
+    ]
   },
+  {
+    id: "education-feedback-bot",
+    name: "Education Feedback Bot",
+    description: "Analyzes student submissions and provides personalized feedback and grading suggestions.",
+    category: "Education",
+    tags: ["education", "grading", "feedback"],
+    requiredCredentials: [CredentialType.OPENAI],
+    nodes: [
+      { id: "trigger", type: NodeType.WEBHOOK_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "grader", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "feedback", 
+        systemPrompt: "Grade this student submission based on rubrics. Provide 3 tips for improvement.",
+        userPrompt: "Submission: {{json webhook}}" 
+      }},
+      { id: "slack", type: NodeType.SLACK, position: { x: 500, y: 150 }, data: { 
+        variableName: "log",
+        content: "🎓 Grade Drafted for Student.\nFeedback: {{feedback.text}}"
+      }}
+    ],
+    edges: [
+      { source: "trigger", target: "grader" },
+      { source: "trigger", target: "slack" }
+    ]
+  },
+  {
+    id: "legal-contract-summarizer",
+    name: "Legal Contract Summarizer",
+    description: "Identifies key risks and summarizes termination clauses in legal documents.",
+    category: "Legal",
+    tags: ["legal", "contract", "risk-management"],
+    requiredCredentials: [CredentialType.OPENAI],
+    nodes: [
+      { id: "trigger", type: NodeType.HTTP_REQUEST, position: { x: 0, y: 150 } },
+      { id: "risk-scanner", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "riskSummary", 
+        systemPrompt: "Extract termination clauses and identify any high-risk liability terms.",
+        userPrompt: "Contract Text: {{json httpRequest}}" 
+      }},
+      { id: "logger", type: NodeType.LOGGER, position: { x: 500, y: 150 }, data: { 
+        variableName: "log",
+        message: "Legal Risk Summary: {{riskSummary.text}}"
+      }}
+    ],
+    edges: [
+      { source: "trigger", target: "risk-scanner" },
+      { source: "risk-scanner", target: "logger" }
+    ]
+  },
+  {
+    id: "hr-resume-screener",
+    name: "HR AI Resume Screener",
+    description: "Screens candidates against a Job Description and ranks them by cultural and technical fit.",
+    category: "Human Resources",
+    tags: ["hr", "recruiting", "hiring"],
+    requiredCredentials: [CredentialType.OPENAI],
+    nodes: [
+      { id: "trigger", type: NodeType.GOOGLE_FORM_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "screener", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "fitScore", 
+        systemPrompt: "Compare this resume against the JD. Score fit 1-100 and justify.",
+        userPrompt: "Applicant: {{json googleForm}}" 
+      }},
+      { id: "slack", type: NodeType.SLACK, position: { x: 500, y: 150 }, data: { 
+        variableName: "hiringAlert",
+        content: "👥 New Candidate Screened!\nScore: {{fitScore.text}}"
+      }}
+    ],
+    edges: [
+      { source: "trigger", target: "screener" },
+      { source: "screener", target: "slack" }
+    ]
+  },
+  {
+    id: "saas-roadmap-prioritizer",
+    name: "SaaS Roadmap Prioritizer",
+    description: "Analyzes customer feature requests and prioritizes them based on effort vs impact.",
+    category: "Tech/SaaS",
+    tags: ["saas", "product", "roadmap"],
+    requiredCredentials: [CredentialType.OPENAI],
+    nodes: [
+      { id: "trigger", type: NodeType.WEBHOOK_TRIGGER, position: { x: 0, y: 150 } },
+      { id: "prioritizer", type: NodeType.OPENAI, position: { x: 250, y: 150 }, data: { 
+        variableName: "priority", 
+        systemPrompt: "Estimate Effort (1-5) and Impact (1-5) for this feature request. Suggest roadmap quarter.",
+        userPrompt: "Feature Request: {{json webhook}}" 
+      }},
+      { id: "logger", type: NodeType.LOGGER, position: { x: 500, y: 150 }, data: { 
+        variableName: "roadmapLog",
+        message: "New Feature Priority: {{priority.text}}"
+      }}
+    ],
+    edges: [
+      { source: "trigger", target: "prioritizer" },
+      { source: "prioritizer", target: "logger" }
+    ]
+  }
 ];
 
 export const getWorkflowTemplateById = (templateId: string) =>
