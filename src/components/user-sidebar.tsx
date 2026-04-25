@@ -52,9 +52,9 @@ export const UserSidebar = () => {
     try {
       const checkoutUrl = await createProCheckoutUrl();
       window.location.href = checkoutUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upgrade checkout failed:", error);
-      alert("Upgrade failed. Please try again or contact support.");
+      alert(error.message || "Upgrade failed. Please try again or contact support.");
       setUpgradeLoading(false);
     }
   };
@@ -64,9 +64,9 @@ export const UserSidebar = () => {
     try {
       const portalUrl = await createBillingPortalUrl();
       window.location.href = portalUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Billing portal failed:", error);
-      alert("Billing portal failed. Please try again or contact support.");
+      alert(error.message || "Billing portal failed. Please try again or contact support.");
       setBillingLoading(false);
     }
   };
