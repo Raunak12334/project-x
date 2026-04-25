@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLockup } from "@/components/brand-lockup";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   Sidebar,
   SidebarContent,
@@ -126,7 +127,10 @@ export const AdminSidebar = () => {
         ))}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <SidebarMenu>
+        <SidebarMenu className="gap-3">
+          <SidebarMenuItem className="flex justify-center mb-2">
+            <NotificationBell />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               className="w-full justify-start gap-3 h-10 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 font-bold transition-colors"

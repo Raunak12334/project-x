@@ -559,15 +559,34 @@ export const executeWorkflow = inngest.createFunction(
         return;
       }
 
-      return prisma.execution.update({
+      const updatedExecution = await prisma.execution.update({
         where: { id: execution.id },
         data: {
           status: ExecutionStatus.FAILED,
           error: error.message,
           errorStack: error.stack,
         },
-        select: executionSelect,
+        include: {
+          workflow: { select: { name: true, organizationId: true } }
+        }
       });
+
+      // Create a notification for the organization
+      try {
+        await prisma.notification.create({
+          data: {
+            organizationId: updatedExecution.workflow.organizationId,
+            title: `Workflow Execution Failed`,
+            message: `Execution for "${updatedExecution.workflow.name}" failed: ${error.message || 'Unknown error'}`,
+            type: "WORKFLOW",
+            link: `/executions/${updatedExecution.id}`,
+          }
+        });
+      } catch (notifErr) {
+        logger.error("workflow.execution.notification_failed", { error: notifErr });
+      }
+
+      return updatedExecution;
     },
   },
   {
