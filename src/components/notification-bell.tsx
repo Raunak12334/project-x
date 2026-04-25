@@ -67,16 +67,16 @@ export const NotificationBell = () => {
       >
         <Tabs defaultValue="unread" className="w-full">
           <div className="flex items-center justify-between px-3 pt-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-            <TabsList className="bg-transparent h-8 p-0 gap-4">
+            <TabsList className="bg-transparent h-8 p-0 gap-6">
               <TabsTrigger 
                 value="unread" 
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 transition-all"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus-visible:ring-0 focus-visible:outline-none ring-offset-0"
               >
                 Unread ({unreadCount})
               </TabsTrigger>
               <TabsTrigger 
                 value="all" 
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 transition-all"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus-visible:ring-0 focus-visible:outline-none ring-offset-0"
               >
                 All
               </TabsTrigger>
