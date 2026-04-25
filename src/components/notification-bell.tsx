@@ -70,13 +70,13 @@ export const NotificationBell = () => {
             <TabsList className="bg-transparent h-8 p-0 gap-6">
               <TabsTrigger 
                 value="unread" 
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus-visible:ring-0 focus-visible:outline-none ring-offset-0"
+                className="bg-transparent shadow-none border-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none !ring-0 !outline-none"
               >
                 Unread ({unreadCount})
               </TabsTrigger>
               <TabsTrigger 
                 value="all" 
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 rounded-none h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus-visible:ring-0 focus-visible:outline-none ring-offset-0"
+                className="bg-transparent shadow-none border-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-slate-100 h-8 text-[11px] font-bold px-0 text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-all focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none !ring-0 !outline-none"
               >
                 All
               </TabsTrigger>
