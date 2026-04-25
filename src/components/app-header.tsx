@@ -10,9 +10,9 @@ export const AppHeader = () => {
   const { data: session, isPending } = authClient.useSession();
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 bg-background/80 backdrop-blur-md sticky top-0 z-30">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 bg-background sticky top-0 z-30">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
+        <SidebarTrigger className="size-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
       </div>
 
       <div className="flex items-center gap-4">

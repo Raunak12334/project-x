@@ -59,22 +59,19 @@ export const NotificationBell = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-96 p-0 border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-80 p-0 border-slate-200 dark:border-slate-800 shadow-lg rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
-        <div className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-          <DropdownMenuLabel className="font-bold text-base px-0 tracking-tight">Notifications</DropdownMenuLabel>
+        <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800">
+          <DropdownMenuLabel className="font-semibold text-sm px-0">Notifications</DropdownMenuLabel>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllAsRead.mutate()}
-                className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline"
               >
-                Mark all as read
+                Mark all read
               </button>
             )}
-            <button className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-400">
-              <MoreHorizontalIcon className="size-4" />
-            </button>
           </div>
         </div>
         

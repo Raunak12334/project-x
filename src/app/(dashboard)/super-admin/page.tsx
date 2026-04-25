@@ -190,9 +190,6 @@ export default function SuperAdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <BroadcastNotificationForm />
-        </div>
         {/* Execution Flow Chart */}
         <Card className="lg:col-span-2 border-none shadow-sm bg-white dark:bg-slate-900/50">
           <CardHeader>
@@ -443,7 +440,7 @@ export default function SuperAdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Workflows Leaderboard */}
-        <Card className="lg:col-span-3 border-none shadow-sm bg-white dark:bg-slate-900/50 overflow-hidden">
+        <Card className="lg:col-span-2 border-none shadow-sm bg-white dark:bg-slate-900/50 overflow-hidden">
           <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
             <div className="flex items-center gap-2">
               <ActivityIcon className="size-5 text-indigo-500" />
@@ -488,6 +485,11 @@ export default function SuperAdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Broadcast Form (Now Sidebar-style) */}
+        <div className="lg:col-span-1">
+          <BroadcastNotificationForm />
+        </div>
       </div>
     </div>
   );
