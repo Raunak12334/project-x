@@ -27,12 +27,15 @@ export function PricingTable() {
   const handleCheckoutPro = async () => {
     setLoading("pro");
     try {
-      const checkoutUrl = await createProCheckoutUrl();
-      window.location.href = checkoutUrl;
-    } catch (error) {
+      const result = await createProCheckoutUrl();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      window.location.href = result.url;
+    } catch (error: any) {
       console.error("Checkout failed:", error);
       setLoading(null);
-      alert("Checkout failed. Please try again or contact support.");
+      alert(error.message || "Checkout failed. Please try again or contact support.");
     }
   };
 

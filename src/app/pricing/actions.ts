@@ -61,27 +61,29 @@ export async function selectFreeTier() {
   redirect("/workflows");
 }
 
-export async function createProCheckoutUrl() {
-  const session = await requireAuth();
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      organizationId: true,
-    },
-  });
-
-  if (!user?.organizationId) {
-    throw new Error("User must complete onboarding first.");
-  }
-
-  const productId = requireEnv("POLAR_PRO_PRODUCT_ID");
-  const successBaseUrl = getPolarSuccessBaseUrl();
-
+export async function createProCheckoutUrl(): Promise<
+  { url: string; error?: never } | { url?: never; error: string }
+> {
   try {
+    const session = await requireAuth();
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        organizationId: true,
+      },
+    });
+
+    if (!user?.organizationId) {
+      return { error: "User must complete onboarding first." };
+    }
+
+    const productId = requireEnv("POLAR_PRO_PRODUCT_ID");
+    const successBaseUrl = getPolarSuccessBaseUrl();
+
     const polar = getPolarClient();
     const checkout = await polar.checkouts.create({
       products: [productId],
@@ -101,55 +103,62 @@ export async function createProCheckoutUrl() {
     });
 
     if (!checkout.url) {
-      throw new Error("No checkout URL received from Polar.");
+      return { error: "No checkout URL received from Polar." };
     }
 
-    return checkout.url;
+    return { url: checkout.url };
   } catch (error: any) {
-    logger.error("billing.checkout.create_failed", {
-      userId: user.id,
-      organizationId: user.organizationId,
-      error,
-    });
-    throw new Error(
-      error.message ||
-        "Unable to start checkout. Please contact support if this continues.",
-    );
+    // If it's a redirect, we must re-throw it so Next.js handles it
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+
+    logger.error("billing.checkout.create_failed", { error });
+    return {
+      error:
+        error.message ||
+        "Unable to start checkout. Please check if POLAR_PRO_PRODUCT_ID is configured.",
+    };
   }
 }
 
-export async function createBillingPortalUrl() {
-  const session = await requireAuth();
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      organizationId: true,
-    },
-  });
-
-  if (!user?.organizationId) {
-    throw new Error("User must complete onboarding first.");
-  }
-
+export async function createBillingPortalUrl(): Promise<
+  { url: string; error?: never } | { url?: never; error: string }
+> {
   try {
+    const session = await requireAuth();
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        organizationId: true,
+      },
+    });
+
+    if (!user?.organizationId) {
+      return { error: "User must complete onboarding first." };
+    }
+
     const polar = getPolarClient();
     const customerSession = await polar.customerSessions.create({
       externalCustomerId: user.id,
     });
 
     if (!customerSession.customerPortalUrl) {
-      throw new Error("No customer portal URL received from Polar.");
+      return { error: "No customer portal URL received from Polar." };
     }
 
-    return customerSession.customerPortalUrl;
-  } catch (error) {
+    return { url: customerSession.customerPortalUrl };
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+
     logger.warn("billing.portal.create_failed_falling_back_to_checkout", {
-      userId: user.id,
-      organizationId: user.organizationId,
       error,
     });
+    // Fallback to checkout if portal fails (usually means no existing customer in Polar)
     return createProCheckoutUrl();
   }
 }

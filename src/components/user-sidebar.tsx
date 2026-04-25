@@ -50,11 +50,16 @@ export const UserSidebar = () => {
   const handleUpgradeToPro = async () => {
     setUpgradeLoading(true);
     try {
-      const checkoutUrl = await createProCheckoutUrl();
-      window.location.href = checkoutUrl;
+      const result = await createProCheckoutUrl();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      window.location.href = result.url;
     } catch (error: any) {
       console.error("Upgrade checkout failed:", error);
-      alert(error.message || "Upgrade failed. Please try again or contact support.");
+      alert(
+        error.message || "Upgrade failed. Please try again or contact support.",
+      );
       setUpgradeLoading(false);
     }
   };
@@ -62,11 +67,17 @@ export const UserSidebar = () => {
   const handleOpenBillingPortal = async () => {
     setBillingLoading(true);
     try {
-      const portalUrl = await createBillingPortalUrl();
-      window.location.href = portalUrl;
+      const result = await createBillingPortalUrl();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      window.location.href = result.url;
     } catch (error: any) {
       console.error("Billing portal failed:", error);
-      alert(error.message || "Billing portal failed. Please try again or contact support.");
+      alert(
+        error.message ||
+          "Billing portal failed. Please try again or contact support.",
+      );
       setBillingLoading(false);
     }
   };
