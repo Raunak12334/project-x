@@ -1,5 +1,10 @@
 import { TemplatesLibrary } from "@/features/templates/components/templates-library";
 import { Metadata } from "next";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppHeader } from "@/components/app-header";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "AI Automation Templates | Otogent Library",
@@ -22,7 +27,27 @@ export const metadata: Metadata = {
   }
 };
 
-export default function PublicTemplatesPage() {
+export default async function PublicTemplatesPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // If user is logged in, show the sidebar AND header to keep the dashboard flow perfectly intact
+  if (session) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="bg-slate-50/50 dark:bg-slate-950/50 flex flex-col">
+          <AppHeader />
+          <div className="flex-1 overflow-auto">
+            <TemplatesLibrary />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
+  // If not logged in, show a clean public view (SEO optimized)
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/30 dark:bg-slate-950/30">
       <TemplatesLibrary />

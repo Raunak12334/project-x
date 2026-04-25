@@ -121,11 +121,6 @@ export const TemplatesLibrary = () => {
                 Select a template below to start automating your business sector today.
               </p>
             </div>
-            {session && (
-              <Button variant="outline" onClick={() => router.push("/workflows")} className="rounded-2xl">
-                Back to Dashboard
-              </Button>
-            )}
           </div>
 
           <div className="relative mt-6 max-w-md">
