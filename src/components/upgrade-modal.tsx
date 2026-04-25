@@ -20,11 +20,14 @@ interface UpgradeModalProps {
 export const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
   const handleUpgrade = async () => {
     try {
-      const checkoutUrl = await createProCheckoutUrl();
-      window.location.href = checkoutUrl;
-    } catch (error) {
+      const result = await createProCheckoutUrl();
+      if (!result.url) {
+        throw new Error(result.error || "Unknown error occurred.");
+      }
+      window.location.href = result.url;
+    } catch (error: any) {
       console.error("Upgrade failed:", error);
-      alert("Upgrade failed. Please try again or contact support.");
+      alert(error.message || "Upgrade failed. Please try again or contact support.");
     }
   };
 
