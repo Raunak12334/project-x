@@ -48,28 +48,26 @@ export function HeroSection() {
         {/* Supporting SEO Line */}
         <motion.p
           {...fadeUp(0.15, 16, 0.6)}
-          className="mt-4 text-center text-xl md:text-2xl font-medium text-primary"
+          className="mt-4 text-center text-lg md:text-xl font-medium text-primary"
         >
-          Next-generation AI Automation for autonomous systems.
+          Autonomous AI Orchestration
         </motion.p>
 
         {/* Subheadline */}
         <motion.p
           {...fadeUp(0.2, 16, 0.6)}
-          className="mt-6 text-center text-base md:text-lg text-foreground/80 max-w-[800px] leading-relaxed"
+          className="mt-6 text-center text-base md:text-lg text-foreground/80 max-w-[700px] leading-relaxed"
         >
-          Orchestrate a digital workforce of AI agents that reason, decide, and
-          execute complex tasks across your business ecosystem. Otogent
-          eliminates manual bottlenecks by providing a sovereign execution layer
-          that runs your autonomous agentic workflows with precision and scale.
+          Deploy AI agents that reason and execute complex tasks across your business. 
+          Otogent provides the sovereign execution layer for your autonomous workflows at scale.
         </motion.p>
 
         {/* Differentiation Line */}
         <motion.p
           {...fadeUp(0.25, 16, 0.6)}
-          className="mt-4 text-center text-sm font-semibold uppercase tracking-widest text-foreground/60"
+          className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-foreground/60"
         >
-          Not just another automation tool—the complete autonomous system for the agentic era.
+          Built for the agentic era
         </motion.p>
 
         {/* CTA Buttons */}
