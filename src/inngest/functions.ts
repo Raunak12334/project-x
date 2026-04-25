@@ -894,3 +894,23 @@ export const executeWorkflow = inngest.createFunction(
     };
   },
 );
+
+export const onUserSignup = inngest.createFunction(
+  { id: "on-user-signup" },
+  { event: "auth/user.created" },
+  async ({ event, step }) => {
+    const { userId, name } = event.data;
+
+    await step.run("create-welcome-notification", async () => {
+      return prisma.notification.create({
+        data: {
+          userId,
+          title: `Welcome to Otogent, ${name || "there"}! 🚀`,
+          message: "We're thrilled to have you on board. Start by creating your first agentic workflow or explore our template library to see what's possible. Let's build something amazing!",
+          type: "WELCOME",
+          link: "/workflows",
+        },
+      });
+    });
+  },
+);

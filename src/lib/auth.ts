@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-security";
 import prisma from "@/lib/db";
 import { requireEnv } from "@/lib/env";
+import { inngest } from "@/inngest/client";
 
 const createSecurePrismaAdapter = (client: PrismaClient) => {
   const baseAdapterFactory = prismaAdapter(client, {
@@ -333,6 +334,19 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
-    // Removed auto-admin promotion for security
+    user: {
+      create: {
+        after: async (user) => {
+          await inngest.send({
+            name: "auth/user.created",
+            data: {
+              userId: user.id,
+              email: user.email,
+              name: user.name,
+            },
+          });
+        },
+      },
+    },
   },
 });
