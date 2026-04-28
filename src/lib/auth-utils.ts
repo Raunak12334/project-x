@@ -18,11 +18,8 @@ function hasUsableSubscription(
     return false;
   }
 
-  if (subscription.plan !== "FREE") {
-    return true;
-  }
-
-  return Boolean(subscription.expiresAt && subscription.expiresAt > new Date());
+  // FREE plan is always valid as long as the subscription is ACTIVE
+  return true;
 }
 
 export const requireAuth = async () => {
