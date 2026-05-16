@@ -54,6 +54,11 @@ const validateJsonField = (
     JSON.parse(value);
     return [];
   } catch {
+    // If the value contains handlebars, it might be valid after interpolation
+    if (value.includes("{{") && value.includes("}}")) {
+      return [];
+    }
+
     return [
       {
         code: "INVALID_JSON",
