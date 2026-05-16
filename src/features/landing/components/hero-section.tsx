@@ -33,7 +33,7 @@ export function HeroSection() {
           className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-4 py-1.5 text-sm text-foreground mb-8"
         >
           <Settings className="h-3.5 w-3.5" />
-          Multi-Agent AI Automation Platform
+          Workflow Otomation
         </motion.div>
 
         {/* Headline */}
@@ -41,8 +41,7 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-brand text-6xl md:text-8xl lg:text-[7rem] leading-[1.05] tracking-tight text-foreground max-w-5xl"
         >
-          Automate your workflow <br className="hidden md:block" /> with
-          multi-agent catalyst
+          Agentic Automation <br className="hidden md:block" /> 
         </motion.h1>
 
         {/* Supporting SEO Line */}
@@ -81,7 +80,7 @@ export function HeroSection() {
               asChild
               className="rounded-full bg-primary px-8 py-7 font-sans text-base font-semibold text-primary-foreground shadow-lg transition-all hover:opacity-90"
             >
-              <Link href="/signup">Deploy Your First Agent</Link>
+              <Link href="/signup">Start Otomation</Link>
             </Button>
             <Button
               asChild

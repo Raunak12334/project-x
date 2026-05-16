@@ -1,4 +1,4 @@
-import { NodeType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import { getNodeDefinition } from "@/features/nodes/core/registry";
 import type { EditorNode } from "./graph-utils";
 import type { WorkflowValidationIssue } from "./workflow-validator";
@@ -70,6 +70,7 @@ const validateCredential = (
   node: EditorNode,
   data: Record<string, unknown>,
   field: string,
+  type: CredentialType,
   context: NodeConfigValidationContext,
 ) => {
   const value = data[field];
@@ -81,23 +82,37 @@ const validateCredential = (
         severity: "error",
         nodeId: node.id,
         field,
-        message: `${field} is required.`,
+        message:
+          type === CredentialType.COMPOSIO
+            ? "Select a connected integration or Composio credential."
+            : `${field} is required.`,
       } satisfies WorkflowValidationIssue,
     ];
   }
 
-  if (
-    context.validCredentialIds &&
-    typeof value === "string" &&
-    !context.validCredentialIds.has(value)
-  ) {
+  if (typeof value !== "string") return [];
+
+  const isValid =
+    type === CredentialType.COMPOSIO
+      ? context.validIntegrationIds?.has(value)
+      : context.validCredentialIds?.has(value);
+
+  const checkSet =
+    type === CredentialType.COMPOSIO
+      ? context.validIntegrationIds
+      : context.validCredentialIds;
+
+  if (checkSet && !isValid) {
     return [
       {
         code: "MISSING_REQUIRED_CONFIG",
         severity: "error",
         nodeId: node.id,
         field,
-        message: "Selected credential is missing or unavailable.",
+        message:
+          type === CredentialType.COMPOSIO
+            ? "Selected Composio integration is not connected."
+            : "Selected credential is missing or unavailable.",
       } satisfies WorkflowValidationIssue,
     ];
   }
@@ -105,49 +120,8 @@ const validateCredential = (
   return [];
 };
 
-const validateComposio: LegacyConfigValidator = (node, context) => {
-  const data = asData(node);
-  const issues = [
-    ...required(
-      node,
-      data,
-      "variableName",
-      "Composio variable name is required.",
-    ),
-    ...required(node, data, "toolSlug", "Composio action is required."),
-    ...validateJsonField(node, data, "argumentsJson"),
-  ];
 
-  const integrationId = data.integrationId;
-  const credentialId = data.credentialId;
 
-  if (!isPresent(integrationId) && !isPresent(credentialId)) {
-    issues.push({
-      code: "MISSING_INTEGRATION",
-      severity: "error",
-      nodeId: node.id,
-      field: "integrationId",
-      message: "Select a connected integration or Composio credential.",
-    });
-  }
-
-  if (
-    context.validIntegrationIds &&
-    typeof integrationId === "string" &&
-    integrationId &&
-    !context.validIntegrationIds.has(integrationId)
-  ) {
-    issues.push({
-      code: "MISSING_INTEGRATION",
-      severity: "error",
-      nodeId: node.id,
-      field: "integrationId",
-      message: "Selected Composio integration is not connected.",
-    });
-  }
-
-  return issues;
-};
 
 const validateCondition: LegacyConfigValidator = (node) => {
   const data = asData(node);
@@ -224,7 +198,6 @@ const validateRouter: LegacyConfigValidator = (node) => {
 };
 
 const legacyValidators: Partial<Record<NodeType, LegacyConfigValidator>> = {
-  [NodeType.COMPOSIO]: validateComposio,
   [NodeType.CONDITION]: validateCondition,
   [NodeType.ROUTER]: validateRouter,
 };
@@ -262,7 +235,13 @@ export const validateNodeConfig = (
 
     const credentialIssues = definition.credentials.flatMap((credential) =>
       credential.required
-        ? validateCredential(node, data, credential.key, context)
+        ? validateCredential(
+            node,
+            data,
+            credential.key,
+            credential.type,
+            context,
+          )
         : [],
     );
     const jsonFieldIssues = definition.fields.flatMap((field) =>
@@ -270,15 +249,8 @@ export const validateNodeConfig = (
         ? validateJsonField(node, data, field.name)
         : [],
     );
-    const legacyBridgeIssues =
-      type === NodeType.COMPOSIO ? validateComposio(node, context) : [];
 
-    return [
-      ...schemaIssues,
-      ...credentialIssues,
-      ...jsonFieldIssues,
-      ...legacyBridgeIssues,
-    ];
+    return [...schemaIssues, ...credentialIssues, ...jsonFieldIssues];
   }
 
   return legacyValidators[type]?.(node, context) ?? [];

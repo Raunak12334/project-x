@@ -11,6 +11,10 @@ const faqs = [
     a: "Otogent is an AI workflow automation platform that helps teams build multi-agent systems where AI agents handle tasks, decisions, and execution across business workflows.",
   },
   {
+    q: "How can I use Otogent?",
+    a: "Otogent is an infrastructure platform for multi-agent systems. It provides connectors, orchestration, and shared state so your AI agents can work together — similar to how Zapier connects apps, but designed for autonomous agents.",
+  },
+  {
     q: "What can I automate with Otogent?",
     a: "You can automate lead management, follow-ups, reporting, internal approvals, data processing, customer operations, and other repeatable business workflows.",
   },
