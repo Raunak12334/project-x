@@ -28,6 +28,8 @@ export const credentialsRouter = createTRPCRouter({
           organizationId: ctx.auth.organizationId,
           type,
           valueEncrypted: encrypt(value),
+          accessRoles: [],
+          rotationCount: 0,
         },
         select: {
           id: true,
