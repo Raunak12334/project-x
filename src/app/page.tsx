@@ -6,9 +6,9 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Otogent | Agentic Otomation",
+  title: "Otogent | Otomation-Agent",
   description:
-    "Agentic Workflow Otomation.",
+    "Agentic Multi Agent Automation Infrastructure",
 };
 
 export default async function Page() {
