@@ -1,33 +1,25 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { LandingPage } from "@/features/landing/components/landing-page";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Otogent | Otomation-Agent",
-  description: "Agentic Multi Agent Automation Infrastructure",
+  title: "Otogent | Multi-Agent Automation Platform",
+  description: "Agentic Multi Agent Automation Infrastructure for modern businesses.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Otogent | Multi-Agent Automation Platform",
+    description: "Agentic Multi Agent Automation Infrastructure for modern businesses.",
+    url: "https://www.otogent.com",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Otogent | Multi-Agent Automation Platform",
+    description: "Agentic Multi Agent Automation Infrastructure for modern businesses.",
+  },
 };
 
-export default async function Page() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session) {
-    // Check if user is super-admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    });
-
-    if (user?.role === "SUPER_ADMIN") {
-      redirect("/super-admin");
-    } else {
-      redirect("/workflows");
-    }
-  }
-
+export default function Page() {
   return <LandingPage />;
 }

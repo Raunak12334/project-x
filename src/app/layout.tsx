@@ -41,7 +41,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://otogent.com"),
+  metadataBase: new URL("https://www.otogent.com"),
 
   title: {
     default:
@@ -73,8 +73,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     languages: {
-      en: "https://otogent.com",
-      "x-default": "https://otogent.com",
+      en: "https://www.otogent.com",
+      "x-default": "https://www.otogent.com",
     },
   },
 
@@ -82,15 +82,8 @@ export const metadata: Metadata = {
     title: "Otogent - Multi-Agent AI Platform",
     description:
       "Build and deploy scalable AI agent workflows using Otogent. One platform. Infinite automation.",
-    url: "https://otogent.com",
+    url: "https://www.otogent.com",
     siteName: "Otogent",
-    images: [
-      {
-        url: "/logo.svg",
-        width: 512,
-        height: 512,
-      },
-    ],
     type: "website",
   },
 
@@ -98,7 +91,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Otogent AI Platform",
     description: "Create and scale AI agent workflows with ease using Otogent.",
-    images: ["/logo.svg"],
   },
 
   robots: {
@@ -137,7 +129,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
               "name": "Otogent",
-              "url": "https://otogent.com",
+              "url": "https://www.otogent.com",
               "applicationCategory": "AutomationSoftware",
               "applicationSubCategory": "Multi-Agent AI Orchestration",
               "operatingSystem": "Web",
@@ -163,7 +155,7 @@ export default function RootLayout({
               "author": {
                 "@type": "Organization",
                 "name": "Otogent",
-                "logo": "https://otogent.com/logo.svg"
+                "logo": "https://www.otogent.com/logo.svg"
               }
             },
             {
