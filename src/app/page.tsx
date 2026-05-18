@@ -3,7 +3,7 @@ import { LandingPage } from "@/features/landing/components/landing-page";
 
 export const metadata: Metadata = {
   title: "Otogent | Multi-Agent Automation Platform",
-  description: "Agentic Multi Agent Automation Infrastructure for modern businesses.",
+  description: "Otogent is an Agentic Automation Platform powered by Multi-Agent Infrastructure.",
   alternates: {
     canonical: "/",
   },
