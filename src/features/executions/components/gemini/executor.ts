@@ -109,7 +109,7 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
   try {
     const text = await step.run("gemini-generate-text", async () => {
       const result = await generateText({
-        model: google(data.model || "gemini-3.1-flash"),
+        model: google(data.model || "gemini-3.1-flash-lite-preview"),
         system: systemPrompt,
         prompt: userPrompt,
         experimental_telemetry: {
