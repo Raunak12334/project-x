@@ -1048,7 +1048,7 @@ export const nodeCatalog: NodeCatalogItem[] = [
         key: "model",
         label: "Model",
         type: "select",
-        options: ["gemini-1.5-pro", "gemini-1.5-flash"],
+        options: ["gemini-3.1-pro", "gemini-3.1-flash", "gemini-3-flash"],
         required: true,
         supportsDynamic: false,
       },

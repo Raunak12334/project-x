@@ -72,7 +72,7 @@ export const GeminiDialog = ({
     defaultValues: {
       variableName: defaultValues.variableName || "",
       credentialId: defaultValues.credentialId || "",
-      model: defaultValues.model || "gemini-1.5-flash",
+      model: defaultValues.model || "gemini-3.1-flash-lite-preview",
       systemPrompt: defaultValues.systemPrompt || "",
       userPrompt: defaultValues.userPrompt || "",
     },
@@ -84,7 +84,7 @@ export const GeminiDialog = ({
       form.reset({
         variableName: defaultValues.variableName || "",
         credentialId: defaultValues.credentialId || "",
-        model: defaultValues.model || "gemini-1.5-flash",
+        model: defaultValues.model || "gemini-3.1-flash-lite-preview",
         systemPrompt: defaultValues.systemPrompt || "",
         userPrompt: defaultValues.userPrompt || "",
       });
@@ -146,14 +146,14 @@ export const GeminiDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="gemini-1.5-flash">
-                        Gemini 1.5 Flash
+                      <SelectItem value="gemini-3.1-flash-lite-preview">
+                        Gemini 3.1 Flash Lite
                       </SelectItem>
-                      <SelectItem value="gemini-1.5-pro">
-                        Gemini 1.5 Pro
+                      <SelectItem value="gemini-3.1-pro-preview">
+                        Gemini 3.1 Pro
                       </SelectItem>
-                      <SelectItem value="gemini-2.0-flash">
-                        Gemini 2.0 Flash
+                      <SelectItem value="gemini-3-flash-preview">
+                        Gemini 3 Flash
                       </SelectItem>
                     </SelectContent>
                   </Select>

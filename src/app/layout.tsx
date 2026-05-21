@@ -41,7 +41,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://otogent.com"),
+  metadataBase: new URL("https://www.otogent.com"),
 
   title: {
     default: "Otogent | Multi-Agent Automation Infrastructure & Workflow Engine",
@@ -71,8 +71,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://otogent.com",
     languages: {
-      en: "https://otogent.com",
-      "x-default": "https://otogent.com",
+      en: "https://www.otogent.com",
+      "x-default": "https://www.otogent.com",
     },
   },
 
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     title: "Otogent - Multi-Agent AI Platform",
     description:
       "Build and deploy scalable AI agent workflows using Otogent. One platform. Infinite automation.",
-    url: "https://otogent.com",
+    url: "https://www.otogent.com",
     siteName: "Otogent",
     images: [
       {
@@ -133,7 +133,7 @@ export default function RootLayout({
               "@type": "SoftwareApplication",
               "@id": "https://otogent.com/#software",
               "name": "Otogent",
-              "url": "https://otogent.com",
+              "url": "https://www.otogent.com",
               "applicationCategory": "DeveloperApplication, BusinessApplication, ComputingSoftware",
               "applicationSubCategory": "Multi-Agent AI Orchestration & Workflow Automation",
               "operatingSystem": "Cloud, Web, Linux, macOS, Windows",
@@ -156,7 +156,7 @@ export default function RootLayout({
               "softwareVersion": "1.0.0",
               "author": {
                 "@type": "Organization",
-                "@id": "https://otogent.com/#organization"
+                "@id": "https://www.otogent.com/#organization"
               },
               "about": [
                 {
@@ -174,10 +174,10 @@ export default function RootLayout({
             {
               "@context": "https://schema.org",
               "@type": "Organization",
-              "@id": "https://otogent.com/#organization",
+              "@id": "https://www.otogent.com/#organization",
               "name": "Otogent",
-              "url": "https://otogent.com",
-              "logo": "https://otogent.com/logo.png",
+              "url": "https://www.otogent.com",
+              "logo": "https://www.otogent.com/logo.png",
               "description": "An enterprise technology platform building AI orchestration layers and runtime execution code environments.",
               "knowsAbout": [
                 "https://en.wikipedia.org/wiki/Multi-agent_system",

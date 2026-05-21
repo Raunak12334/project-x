@@ -174,7 +174,7 @@ model Credential {
   expiresAt      DateTime?
   lastUsedAt     DateTime?
   rotationCount  Int            @default(0)
-  accessRoles    String[]
+  accessRoles    String[]       @default([])
   lastRotatedAt  DateTime?
   valueEncrypted String?
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -431,7 +431,7 @@ model WorkflowTemplate {
   description String
   isPremium   Boolean  @default(false)
   category    String
-  tags        String[]
+  tags        String[] @default([])
   nodes       Json
   edges       Json
   createdAt   DateTime @default(now())

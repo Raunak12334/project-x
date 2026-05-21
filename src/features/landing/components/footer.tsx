@@ -1,31 +1,41 @@
+import Link from "next/link";
 import { BrandLockup } from "@/components/brand-lockup";
 
 const columns = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "/#features" },
-      { label: "Pricing", href: "/#pricing" },
-      { label: "Integrations", href: "/signup" },
-      { label: "Changelog", href: "/signup" },
+      { label: "Features", href: "/features" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Integrations", href: "/integrations" },
+      { label: "Templates", href: "/templates" },
+    ],
+  },
+  {
+    title: "Solutions",
+    links: [
+      { label: "Multi-Agent Automation", href: "/multi-agent-automation" },
+      { label: "Agentic Workflows", href: "/agentic-workflows" },
+      { label: "AI Workflow Orchestration", href: "/ai-workflow-orchestration" },
+      { label: "Industry Automation", href: "/industry-automation" },
     ],
   },
   {
     title: "Resources",
     links: [
-      { label: "Documentation", href: "/#how-it-works" },
-      { label: "Tutorials", href: "/#faqs" },
+      { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "/blog" },
-      { label: "Community", href: "/signup" },
+      { label: "Community", href: "/community" },
+      { label: "Contact", href: "/contact" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About", href: "/#features" },
-      { label: "Careers", href: "/signup" },
-      { label: "Contact", href: "mailto:hello@otogent.com" },
-      { label: "Privacy Policy", href: "/signup" },
+      { label: "About Us", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
     ],
   },
 ];
@@ -34,16 +44,16 @@ export function Footer() {
   return (
     <footer className="border-t border-border py-16">
       <div className="container">
-        <div className="grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="self-start">
+        <div className="grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="self-start lg:col-span-2">
             <BrandLockup
               imageSize={24}
               className="mb-3"
               textClassName="font-brand font-bold"
             />
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
               Infrastructure for multi-agent systems. Connect, orchestrate, and
-              scale AI agents.
+              scale AI agents. Build robust autonomous workflows for your business.
             </p>
           </div>
 
@@ -53,12 +63,12 @@ export function Footer() {
               <ul className="space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <a
+                    <Link
                       href={link.href}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -1,4 +1,4 @@
-import Handlebars from "handlebars";
+import { jsonHandlebars as Handlebars } from "@/lib/json-handlebars";
 import { NonRetriableError } from "inngest";
 import type { NodeExecutor } from "@/features/executions/types";
 import { composioChannel } from "@/inngest/channels/composio";
@@ -6,13 +6,6 @@ import prisma from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { executeComposioAction } from "@/lib/integrations/composio";
 import { logger } from "@/lib/logger";
-
-Handlebars.registerHelper("json", (context) => {
-  const jsonString = JSON.stringify(context, null, 2);
-  const safeString = new Handlebars.SafeString(jsonString);
-
-  return safeString;
-});
 
 type ComposioData = {
   variableName?: string;
@@ -77,7 +70,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
   let parsedArguments = {};
   try {
     parsedArguments = JSON.parse(compiledArgsJsonString);
-  } catch (_err) {
+  } catch (err) {
     await publish(
       composioChannel().status({
         nodeId,
@@ -85,7 +78,7 @@ export const composioExecutor: NodeExecutor<ComposioData> = async ({
       }),
     );
     throw new NonRetriableError(
-      "Composio node: Failed to parse arguments JSON",
+      `Composio node: Failed to parse arguments JSON. Error: ${err instanceof Error ? err.message : String(err)}. Compiled String: ${compiledArgsJsonString}`,
     );
   }
 

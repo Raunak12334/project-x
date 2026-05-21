@@ -2,7 +2,7 @@ const { existsSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const REQUIRED_NODE_VERSION = "22.22.2";
+const REQUIRED_NODE_VERSION = "22.22.0";
 const REQUIRED_NODE_TAG = `v${REQUIRED_NODE_VERSION}`;
 const repoRoot = resolve(__dirname, "..");
 const nextBin = join(repoRoot, "node_modules", "next", "dist", "bin", "next");
@@ -15,7 +15,14 @@ const bundledWindowsNode = join(
 const DEFAULT_NODE_OPTIONS = "--max-old-space-size=4096";
 
 function resolveNodeBinary() {
-  if (process.version === REQUIRED_NODE_TAG) {
+  const version = process.version.replace("v", "").split(".").map(Number);
+  const required = REQUIRED_NODE_VERSION.split(".").map(Number);
+
+  const isAtLeast = version[0] > required[0] || 
+                   (version[0] === required[0] && (version[1] > required[1] || 
+                   (version[1] === required[1] && version[2] >= required[2])));
+
+  if (isAtLeast) {
     return process.execPath;
   }
 

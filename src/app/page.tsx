@@ -1,34 +1,25 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { LandingPage } from "@/features/landing/components/landing-page";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Otogent | The Multi-Agent Automation Platform",
-  description:
-    "Build, deploy, and scale multi-agent automation workflows with Otogent. The visual workflow builder for complex multi-agent systems using OpenAI, Anthropic Claude, and Google Gemini.",
+  title: "Otogent | Agentic Automation Infrastructure",
+  description: "Otogent is an Agentic Automation Platform powered by Multi-Agent Infrastructure.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Otogent | Agentic Automation Infrastructure",
+    description: "Otogent is an Agentic Automation Platform powered by Multi-Agent Infrastructure.",
+    url: "https://www.otogent.com",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Otogent | Agentic Automation Infrastructure",
+    description: "Otogent is an Agentic Automation Platform powered by Multi-Agent Infrastructure.",
+  },
 };
 
-export default async function Page() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session) {
-    // Check if user is super-admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    });
-
-    if (user?.role === "SUPER_ADMIN") {
-      redirect("/super-admin");
-    } else {
-      redirect("/workflows");
-    }
-  }
-
+export default function Page() {
   return <LandingPage />;
 }
