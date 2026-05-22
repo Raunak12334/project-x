@@ -47,6 +47,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/autonomous-execution`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${baseUrl}/workflow-infrastructure`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${baseUrl}/blog`, priority: 0.7, changeFrequency: "weekly" as const },
+
+    // Competitor Alternative Engineering Docs
+    { url: `${baseUrl}/docs/temporal-alternative`, priority: 0.8, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/docs/langgraph-alternative`, priority: 0.8, changeFrequency: "weekly" as const },
   ];
 
   const mappedStaticEntries = staticRoutes.map((route) => ({

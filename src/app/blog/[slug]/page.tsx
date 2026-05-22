@@ -49,13 +49,14 @@ export async function generateMetadata({
   }
 
   return {
-    title: post.title,
+    title: `${post.title} | Otogent Architecture Insights`,
     description: post.excerpt,
+    authors: [{ name: "Raunak Sahu", url: "https://github.com/Raunak12334" }],
     alternates: {
       canonical: `/blog/${post.slug}`,
     },
     openGraph: {
-      title: post.title,
+      title: `${post.title} | Otogent Architecture Insights`,
       description: post.excerpt,
       url: `/blog/${post.slug}`,
       type: "article",
@@ -63,7 +64,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
+      title: `${post.title} | Otogent Architecture Insights`,
       description: post.excerpt,
       images: post.coverImage ? [post.coverImage] : undefined,
     },
