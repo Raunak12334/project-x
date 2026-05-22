@@ -4,6 +4,10 @@ import { workflowTemplates } from "@/features/templates/lib/workflow-templates";
 import prisma from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Synchronized with metadataBase configuration in root layout
+  const baseUrl = "https://otogent.com";
+  const staticBuildDate = new Date("2026-05-22");
+
   const posts = await prisma.blogPost
     .findMany({
       where: {
@@ -21,95 +25,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (isMissingBlogTableError(error)) {
         return [];
       }
-
       throw error;
     });
 
-  return [
-    {
-      url: "https://www.otogent.com",
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 1,
-    },
-    {
-      url: "https://www.otogent.com/pricing",
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: "https://www.otogent.com/features",
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: "https://www.otogent.com/about",
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: "https://www.otogent.com/contact",
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: "https://www.otogent.com/docs",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    // Phase 1: Authority Hub Pages
-    {
-      url: "https://www.otogent.com/multi-agent-automation",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: "https://www.otogent.com/agentic-workflows",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: "https://www.otogent.com/ai-workflow-orchestration",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: "https://www.otogent.com/autonomous-execution",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: "https://www.otogent.com/workflow-infrastructure",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: "https://www.otogent.com/blog",
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    ...posts.map((post) => ({
-      url: `https://www.otogent.com/blog/${post.slug}`,
-      lastModified: post.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
-    ...workflowTemplates.map((template) => ({
-      url: `https://www.otogent.com/templates/${template.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.9,
-    })),
+  const staticRoutes = [
+    { url: `${baseUrl}`, priority: 1.0, changeFrequency: "daily" as const },
+    { url: `${baseUrl}/pricing`, priority: 0.8, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/features`, priority: 0.8, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/about`, priority: 0.7, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/contact`, priority: 0.7, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/docs`, priority: 0.8, changeFrequency: "weekly" as const },
+
+    // Explicit Sitelink Acceleration Routes
+    { url: `${baseUrl}/login`, priority: 0.8, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/signup`, priority: 0.8, changeFrequency: "monthly" as const },
+
+    // Topical Authority Hubs
+    { url: `${baseUrl}/multi-agent-automation`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/agentic-workflows`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/ai-workflow-orchestration`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/autonomous-execution`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/workflow-infrastructure`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/blog`, priority: 0.7, changeFrequency: "weekly" as const },
   ];
+
+  const mappedStaticEntries = staticRoutes.map((route) => ({
+    url: route.url,
+    lastModified: staticBuildDate,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
+  }));
+
+  const mappedPostEntries = posts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: post.updatedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  const mappedTemplateEntries = workflowTemplates.map((template) => ({
+    url: `${baseUrl}/templates/${template.slug}`,
+    lastModified: staticBuildDate,
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
+
+  return [...mappedStaticEntries, ...mappedPostEntries, ...mappedTemplateEntries];
 }
