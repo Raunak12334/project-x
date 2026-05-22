@@ -75,3 +75,48 @@ export function SoftwareAppSchema({
     />
   );
 }
+
+export function TechArticleSchema({
+  headline,
+  description,
+  url,
+  datePublished = "2026-05-22",
+  dateModified = "2026-05-22",
+}: {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished?: string;
+  dateModified?: string;
+}) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline,
+    description,
+    url,
+    datePublished,
+    dateModified,
+    author: {
+      "@type": "Organization",
+      name: "Otogent",
+      url: "https://otogent.com",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Otogent",
+      url: "https://otogent.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://otogent.com/logo.png",
+      },
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}

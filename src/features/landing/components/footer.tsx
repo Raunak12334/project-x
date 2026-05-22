@@ -12,12 +12,13 @@ const columns = [
     ],
   },
   {
-    title: "Solutions",
+    title: "Platform Infrastructure",
     links: [
       { label: "Multi-Agent Automation", href: "/multi-agent-automation" },
       { label: "Agentic Workflows", href: "/agentic-workflows" },
       { label: "AI Workflow Orchestration", href: "/ai-workflow-orchestration" },
-      { label: "Industry Automation", href: "/industry-automation" },
+      { label: "Autonomous Execution Systems", href: "/autonomous-execution" },
+      { label: "Workflow Infrastructure", href: "/workflow-infrastructure" },
     ],
   },
   {
@@ -44,7 +45,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border py-16">
       <div className="container">
-        <div className="grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-6">
           <div className="self-start lg:col-span-2">
             <BrandLockup
               imageSize={24}
