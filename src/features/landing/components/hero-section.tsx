@@ -41,7 +41,7 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-brand text-6xl md:text-8xl lg:text-[7rem] leading-[1.05] tracking-tight text-foreground max-w-5xl"
         >
-          Agentic Automation <br className="hidden md:block" /> 
+          Agentic Workflow Automation <br className="hidden md:block" />
         </motion.h1>
 
         {/* Supporting SEO Line */}
