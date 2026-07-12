@@ -104,7 +104,15 @@ export const metadata: Metadata = {
     follow: true,
   },
 
-  // Icons are auto-detected from src/app/icon.png (Next.js convention)
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
