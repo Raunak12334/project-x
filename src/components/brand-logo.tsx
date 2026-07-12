@@ -18,7 +18,7 @@ export function BrandLogo({
   className,
   imageClassName,
   candidates,
-  fallbackSrc = "/logos/composio.svg",
+  fallbackSrc = "/icon.png",
 }: BrandLogoProps) {
   const logoCandidates = useMemo(
     () =>

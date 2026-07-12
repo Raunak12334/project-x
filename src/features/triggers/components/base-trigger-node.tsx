@@ -37,7 +37,7 @@ export const BaseTriggerNode = memo(
     onDoubleClick,
   }: BaseTriggerNodeProps) => {
     const catalogItem = nodeCatalog.find((item) => item.type === type);
-    const Icon = propsIcon || catalogItem?.icon || "/logo.svg";
+    const Icon = propsIcon || catalogItem?.icon || "/icon.png";
     const logoCandidates = catalogItem?.logoCandidates;
     const name = propsName || catalogItem?.label || "Trigger Node";
     const { setNodes, setEdges } = useReactFlow();

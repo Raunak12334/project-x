@@ -104,12 +104,7 @@ export const metadata: Metadata = {
     follow: true,
   },
 
-  icons: {
-    icon: "/fevicon.ico",
-    shortcut: "/fevicon.ico",
-    apple: "/logo.png",
-  },
-  // The verification block is removed because your DNS records handle ownership perfectly!
+  // Icons are auto-detected from src/app/icon.png (Next.js convention)
 };
 
 export default function RootLayout({

@@ -20,7 +20,7 @@ export function BrandLockup({
   return (
     <Link href={href} className={cn("flex items-center gap-2.5", className)}>
       <Image
-        src="/logo.svg"
+        src="/icon.png"
         alt="Otogent"
         width={imageSize}
         height={imageSize}
