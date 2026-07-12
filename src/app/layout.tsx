@@ -105,9 +105,9 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/fevicon.ico",
+    shortcut: "/fevicon.ico",
+    apple: "/logo.png",
   },
   // The verification block is removed because your DNS records handle ownership perfectly!
 };
