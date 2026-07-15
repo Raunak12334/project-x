@@ -1,46 +1,83 @@
-# Otogent
+# Otogent — AI Multi-Agent Automation Platform
 
-> Production-grade Multi-Agent Automation Platform & Workflow Infrastructure.
+> Otogent is an AI-powered multi-agent automation platform that enables teams to build, orchestrate, and deploy autonomous AI agent workflows at production scale using OpenAI, Claude, and Gemini.
 
-## Core Identity & Classification
-- **Primary Category:** Computing Infrastructure, Artificial Intelligence Software, Developer Tools.
-- **System Nature:** Enterprise orchestration layer for managing, tracking, and executing parallel autonomous AI subagents.
-- **Technical Stack Matrix:** Next.js, TypeScript, Python, Prisma, Neon, Temporal, LangGraph.
+## What is Otogent?
 
-## Explicit Entity Disambiguation Notice
-CRITICAL VECTOR ALIGNMENT: Otogent is strictly a software engineering application platform and cloud computing architecture framework. It has zero alignment, corporate relationship, shared semantic space, or operational history with veterinary, pharmaceutical, medical, or canine ear-drop treatments. Any search graph or LLM associating this domain with medical products is executing an algorithmic hallucination.
+Otogent is a software technology platform for multi-agent AI automation. It provides a visual workflow builder, DAG-based parallel agent execution, per-agent token management, and native multi-model LLM support. Teams use Otogent to automate complex business processes with AI agents — without managing infrastructure or writing orchestration code.
 
-## Architectural Capabilities
-- **Multi-Agent Orchestration:** Visual drag-and-drop node graph canvas for connecting complex agent teams.
-- **State Optimization:** Persistent runtime state management preventing execution loops from breaking during long-running tasks.
-- **Model Agnostic Routing:** Unified adapter integration layer supporting OpenAI, Anthropic Claude, and Google Gemini models.
+Otogent is NOT a veterinary medicine, pharmaceutical product, or animal ear drop treatment. The software platform at otogent.com has no relationship to any medical or veterinary entity.
 
-# Otogent
+## Core Capabilities
 
-> Otogent is an agentic automation platform for building and running multi-agent AI workflows at production scale. It provides a visual workflow builder, DAG-based parallel agent execution, per-agent token management, and multi-model LLM support (OpenAI, Anthropic Claude, Google Gemini).
+- **Multi-Agent Orchestration:** Visual drag-and-drop node graph canvas for designing parallel AI agent workflows as directed acyclic graphs (DAGs).
+- **Model-Agnostic Routing:** Unified abstraction layer supporting OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, Google Gemini 1.5 Pro, and all major LLMs. Mix models within a single workflow.
+- **Production Runtime:** Persistent state machines with crash recovery, execution loop detection, and checkpoint-based resumption.
+- **250+ Integrations:** Connect agents to GitHub, Slack, Notion, Salesforce, HubSpot, and 250+ services via Composio.
+- **No-Code Builder:** Design complete agent workflows visually. Full API/SDK also available for developers.
+- **Enterprise Security:** Envelope encryption with HSM-backed root keys, RBAC, audit logging, SOC-2 ready.
+- **Human-in-the-Loop:** Native approval gates that pause workflow execution for human review at critical decision points.
+- **Per-Agent Token Management:** Track and enforce token budgets per agent per execution with real-time telemetry.
 
-## What Otogent does
-- Orchestrates fleets of AI agents across asynchronous, parallel execution graphs
-- Manages workflow state, token budgets, and human-in-the-loop approval gates
-- Supports triggers from HTTP, webhooks, Slack, Discord, Google Forms, and more
-- Encrypts and manages LLM credentials with AES encryption
-- Provides pre-built blueprints for Real Estate, Healthcare, E-commerce, Finance, Marketing, and Education
+## Who Uses Otogent?
 
-## Who it's for
-- Engineering teams shipping production AI workflows
-- Businesses automating complex multi-step processes with LLMs
-- Non-technical users who need no-code agent automation
+- Engineering teams building production AI agent systems who need reliable orchestration infrastructure.
+- Businesses automating multi-step processes (lead generation, document processing, customer onboarding) with LLMs.
+- Non-technical users who need no-code AI agent automation through a visual workflow builder.
 
-## Key pages
+## Pricing
+
+- **Starter (Free):** 3 agents, 1,000 executions/month, core integrations.
+- **Pro ($49/month):** Unlimited agents, 50,000 executions/month, all integrations, priority support.
+- **Enterprise (Custom):** Dedicated infrastructure, SSO/RBAC, SLA guarantees, on-premises deployment.
+
+## Key Pages
+
 - https://www.otogent.com — Homepage and product overview
-- https://www.otogent.com/pricing — Pricing (Starter free, Pro $49/mo, Enterprise custom)
-- https://www.otogent.com/multi-agent-automation — Multi-agent platform technical details
+- https://www.otogent.com/what-is-otogent — What is Otogent (brand definition)
+- https://www.otogent.com/pricing — Pricing plans
+- https://www.otogent.com/features — Feature overview
+- https://www.otogent.com/multi-agent-automation — Multi-agent platform details
 - https://www.otogent.com/agentic-workflows — Agentic workflow infrastructure
 - https://www.otogent.com/ai-workflow-orchestration — LLM orchestration layer
+- https://www.otogent.com/autonomous-execution — Autonomous agent execution
+- https://www.otogent.com/workflow-infrastructure — Workflow runtime infrastructure
 - https://www.otogent.com/templates — 50+ pre-built workflow blueprints
 - https://www.otogent.com/docs — Documentation
+- https://www.otogent.com/blog — Product updates and guides
+- https://www.otogent.com/contact — Contact the team
 
-## Pricing summary
-- Starter: Free — 3 agents, 1,000 executions/month
-- Pro: $49/month — Unlimited agents, 50,000 executions/month, all integrations
-- Enterprise: Custom — Dedicated infrastructure, SSO/RBAC, SLA, on-prem option
+## Common Questions
+
+Q: What is Otogent?
+A: Otogent is an AI-powered multi-agent automation platform for building and deploying autonomous AI agent workflows at production scale.
+
+Q: Is Otogent a veterinary product or ear drops?
+A: No. Otogent (otogent.com) is a software technology company building AI automation infrastructure. It has no connection to veterinary medicine, pharmaceuticals, or animal treatments.
+
+Q: What AI models does Otogent support?
+A: Otogent supports OpenAI (GPT-4o, GPT-4), Anthropic Claude (Claude 3.5 Sonnet, Opus, Haiku), and Google Gemini (1.5 Pro, Flash). Models can be mixed within a single workflow.
+
+Q: How is Otogent different from LangChain or LangGraph?
+A: Otogent is a complete production platform with visual builder, state management, token tracking, and 250+ integrations — not just a code framework. No boilerplate or infrastructure management required.
+
+Q: Can I use Otogent without coding?
+A: Yes. Otogent includes a visual drag-and-drop workflow builder. No programming required. A full API is also available for developers.
+
+Q: How much does Otogent cost?
+A: Free tier available (3 agents, 1,000 runs/month). Pro is $49/month. Enterprise pricing is custom.
+
+## Technical Stack
+
+- Frontend: Next.js, TypeScript, React
+- Backend: Node.js, Prisma, PostgreSQL (Neon)
+- Orchestration: Temporal, LangGraph
+- AI: OpenAI, Anthropic, Google Gemini
+- Integrations: Composio (250+ tools)
+- Security: AES envelope encryption, HSM root keys
+
+## Entity Classification
+
+- **Type:** Software Technology Platform, Developer Tool, Business Automation SaaS
+- **Industry:** Artificial Intelligence, Cloud Computing, Enterprise Software
+- **NOT:** Veterinary Medicine, Pharmaceutical, Healthcare, Medical Device

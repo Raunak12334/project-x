@@ -31,8 +31,8 @@ export function OrganizationSchema() {
     logo: "https://otogent.com/logo.png",
     description: "Multi-Agent Automation Platform and Agentic Workflow Infrastructure.",
     sameAs: [
-      "https://twitter.com/otogent",
-      "https://github.com/otogent",
+      "https://x.com/Otogent",
+      "https://github.com/Raunak12334/Otogent",
       "https://linkedin.com/company/otogent"
     ]
   };

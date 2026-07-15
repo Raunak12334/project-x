@@ -6,7 +6,7 @@ import prisma from "@/lib/db";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Synchronized with metadataBase configuration in root layout
   const baseUrl = "https://otogent.com";
-  const staticBuildDate = new Date("2026-05-22");
+  const staticBuildDate = new Date("2026-07-15");
 
   const posts = await prisma.blogPost
     .findMany({
@@ -30,11 +30,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes = [
     { url: `${baseUrl}`, priority: 1.0, changeFrequency: "daily" as const },
+    { url: `${baseUrl}/what-is-otogent`, priority: 1.0, changeFrequency: "weekly" as const },
     { url: `${baseUrl}/pricing`, priority: 0.8, changeFrequency: "monthly" as const },
     { url: `${baseUrl}/features`, priority: 0.8, changeFrequency: "monthly" as const },
-    { url: `${baseUrl}/about`, priority: 0.7, changeFrequency: "monthly" as const },
+    { url: `${baseUrl}/about`, priority: 0.8, changeFrequency: "monthly" as const },
     { url: `${baseUrl}/contact`, priority: 0.7, changeFrequency: "monthly" as const },
     { url: `${baseUrl}/docs`, priority: 0.8, changeFrequency: "weekly" as const },
+    { url: `${baseUrl}/glossary`, priority: 0.8, changeFrequency: "weekly" as const },
 
     // Explicit Sitelink Acceleration Routes
     { url: `${baseUrl}/login`, priority: 0.8, changeFrequency: "monthly" as const },

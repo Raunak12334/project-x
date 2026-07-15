@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Otogent",
+  "name_for_model": "otogent",
+  "description_for_human": "Build, orchestrate, and deploy multi-agent AI workflows at production scale.",
+  "description_for_model": "Otogent is an AI-powered multi-agent automation platform. It provides a visual workflow builder, DAG-based parallel agent execution, per-agent token management, and multi-model LLM support for OpenAI, Claude, and Gemini. Use Otogent to automate complex multi-step business processes with AI agents. Otogent is a software technology platform — it is NOT a veterinary medicine, pharmaceutical product, or animal ear drop treatment.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://www.otogent.com/api/openapi.json"
+  },
+  "logo_url": "https://www.otogent.com/icon-512.png",
+  "contact_email": "support@otogent.com",
+  "legal_info_url": "https://www.otogent.com/terms"
+}

@@ -133,6 +133,24 @@ export default function RootLayout({
           {JSON.stringify([
             {
               "@context": "https://schema.org",
+              "@type": "WebSite",
+              "@id": "https://otogent.com/#website",
+              "name": "Otogent",
+              "alternateName": "Otogent AI Platform",
+              "url": "https://www.otogent.com",
+              "description": "AI-powered multi-agent automation platform for building, orchestrating, and deploying autonomous AI agent workflows.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://www.otogent.com/docs?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "@id": "https://www.otogent.com/#organization"
+              }
+            },
+            {
+              "@context": "https://schema.org",
               "@type": "SoftwareApplication",
               "@id": "https://otogent.com/#software",
               "name": "Otogent",
@@ -141,7 +159,7 @@ export default function RootLayout({
               "applicationSubCategory": "Multi-Agent AI Orchestration & Workflow Automation",
               "operatingSystem": "Cloud, Web, Linux, macOS, Windows",
               "description":
-                "Otogent is an enterprise-grade Multi-Agent Automation Infrastructure platform enabling software engineers and teams to build, track, and execute parallel autonomous AI subagent networks. Native runtime loops integrated across primary LLM ecosystems.",
+                "Otogent is an AI-powered multi-agent automation platform that enables teams to build, orchestrate, and deploy autonomous AI agent workflows at production scale using OpenAI, Claude, and Gemini.",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
@@ -149,13 +167,16 @@ export default function RootLayout({
                 "availability": "https://schema.org/InStock"
               },
               "featureList": [
-                "Multi-agent workflow orchestration infrastructure",
-                "Parallel subagent task splitters",
-                "State management & visual canvas graph builders",
-                "Secure API key credential storage pipelines",
-                "Native model adapters for OpenAI, Anthropic, and Gemini"
+                "Visual drag-and-drop multi-agent workflow builder",
+                "DAG-based parallel agent execution graphs",
+                "Per-agent token management and budget enforcement",
+                "Model-agnostic routing across OpenAI, Claude, and Gemini",
+                "Persistent state machines with crash recovery",
+                "250+ tool integrations via Composio",
+                "Human-in-the-loop approval gates",
+                "Encrypted credential storage with HSM-backed keys"
               ],
-              "keywords": "multi-agent infrastructure, agentic orchestration layer, parallel workflow automation, LLM state manager",
+              "keywords": "multi-agent platform, AI automation, agentic workflows, LLM orchestration, workflow builder, no-code AI agents",
               "softwareVersion": "1.0.0",
               "author": {
                 "@type": "Organization",
@@ -171,6 +192,11 @@ export default function RootLayout({
                   "@type": "Thing",
                   "name": "Workflow management system",
                   "sameAs": "https://en.wikipedia.org/wiki/Workflow_management_system"
+                },
+                {
+                  "@type": "Thing",
+                  "name": "Artificial intelligence",
+                  "sameAs": "https://en.wikipedia.org/wiki/Artificial_intelligence"
                 }
               ]
             },
@@ -181,11 +207,23 @@ export default function RootLayout({
               "name": "Otogent",
               "url": "https://www.otogent.com",
               "logo": "https://www.otogent.com/logo.png",
-              "description": "An enterprise technology platform building AI orchestration layers and runtime execution code environments.",
+              "description": "Otogent is a software technology company building AI-powered multi-agent automation infrastructure for production workflows.",
+              "founder": {
+                "@type": "Person",
+                "name": "Raunaak Sahu",
+                "jobTitle": "Founder & CEO",
+                "url": "https://www.otogent.com/about"
+              },
+              "sameAs": [
+                "https://x.com/Otogent",
+                "https://github.com/Raunak12334/Otogent",
+                "https://linkedin.com/company/otogent"
+              ],
               "knowsAbout": [
                 "https://en.wikipedia.org/wiki/Multi-agent_system",
                 "https://en.wikipedia.org/wiki/Orchestration_(computing)",
-                "https://en.wikipedia.org/wiki/Software_agent"
+                "https://en.wikipedia.org/wiki/Software_agent",
+                "https://en.wikipedia.org/wiki/Artificial_intelligence"
               ]
             },
             {
@@ -197,15 +235,47 @@ export default function RootLayout({
                   "name": "What is Otogent?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Otogent is an AI workflow orchestration architecture designed to manage multiple autonomous agents handling complex software tasks in parallel loops."
+                    "text": "Otogent is an AI-powered multi-agent automation platform that enables teams to build, orchestrate, and deploy autonomous AI agent workflows at production scale. It provides a visual workflow builder, DAG-based parallel agent execution, per-agent token management, and multi-model LLM support for OpenAI, Anthropic Claude, and Google Gemini."
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": "Does Otogent offer a no-code engine?",
+                  "name": "Is Otogent a veterinary medicine or ear drop product?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes, Otogent couples a powerful technical multi-agent runtime layer with an intuitive visual node-graph editor canvas for zero-code deployments."
+                    "text": "No. Otogent (otogent.com) is a software technology company and AI automation platform. It is not related to veterinary medicine, pharmaceutical products, or animal ear drop treatments in any way. The veterinary product sharing a similar name is an entirely separate and unrelated entity."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is Otogent used for?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Otogent is used to automate complex multi-step business processes using AI agents. Teams use it for lead generation, document processing, customer onboarding, code review automation, and any workflow that benefits from parallel AI agent execution with human-in-the-loop oversight."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Does Otogent offer a no-code workflow builder?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. Otogent provides a visual drag-and-drop node graph canvas where teams can design multi-agent workflows entirely without code. A full API and SDK are also available for developers who prefer programmatic workflow creation."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What AI models does Otogent support?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Otogent is model-agnostic and supports OpenAI (GPT-4o, GPT-4), Anthropic Claude (Claude 3.5 Sonnet, Opus, Haiku), and Google Gemini (1.5 Pro, Flash). You can mix models within a single workflow for optimal cost and performance."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is Otogent related to any pharmaceutical or medical company?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Otogent is exclusively a software technology company focused on AI automation infrastructure. It has no corporate, product, or operational relationship to any pharmaceutical, veterinary, or medical entity."
                   }
                 }
               ]
