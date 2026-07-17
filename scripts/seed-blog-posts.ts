@@ -14,11 +14,19 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 
 // Append connection pool params for Neon compatibility if not already present
-const dbUrl = process.env.DATABASE_URL || "";
-const separator = dbUrl.includes("?") ? "&" : "?";
-const connectionUrl = dbUrl.includes("connect_timeout")
-  ? dbUrl
-  : `${dbUrl}${separator}connect_timeout=30&pool_timeout=30`;
+let dbUrl = process.env.DATABASE_URL || "";
+
+// Ensure connect_timeout=30
+if (!dbUrl.includes("connect_timeout")) {
+  dbUrl += (dbUrl.includes("?") ? "&" : "?") + "connect_timeout=30";
+}
+
+// Ensure pool_timeout=30
+if (!dbUrl.includes("pool_timeout")) {
+  dbUrl += (dbUrl.includes("?") ? "&" : "?") + "pool_timeout=30";
+}
+
+const connectionUrl = dbUrl;
 
 const prisma = new PrismaClient({
   datasourceUrl: connectionUrl,
@@ -303,26 +311,24 @@ For most teams building production AI agent workflows in 2026, **Otogent offers 
 async function seedBlogPosts() {
   console.log("🔍 Finding an admin user to assign as blog post author...");
 
-  // Find the first SUPER_ADMIN or ADMIN user to use as author
-  let author = await prisma.user.findFirst({
-    where: {
-      role: { in: ["SUPER_ADMIN", "ADMIN"] },
-      deletedAt: null,
-    },
+  // Find the admin user to use as author
+  let author = await prisma.user.findUnique({
+    where: { email: "raunak@otogent.com" },
     select: { id: true, name: true, email: true },
   });
 
-  // If no admin, use the first user
+  // If no admin, create one
   if (!author) {
-    author = await prisma.user.findFirst({
-      where: { deletedAt: null },
+    console.log("Creating admin user Raunaak Sahu (raunak@otogent.com)...");
+    author = await prisma.user.create({
+      data: {
+        email: "raunak@otogent.com",
+        name: "Raunaak Sahu",
+        role: "SUPER_ADMIN",
+        emailVerified: true,
+      },
       select: { id: true, name: true, email: true },
     });
-  }
-
-  if (!author) {
-    console.error("❌ No users found in database. Please create a user first by signing up.");
-    process.exit(1);
   }
 
   console.log(`✅ Using author: ${author.name} (${author.email})`);

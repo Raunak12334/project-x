@@ -41,7 +41,7 @@ export function HeroSection() {
           {...fadeUp(0.1, 16, 0.6)}
           className="text-center font-brand text-6xl md:text-8xl lg:text-[7rem] leading-[1.05] tracking-tight text-foreground max-w-5xl"
         >
-          Agentic Workflow Automation <br className="hidden md:block" />
+          Automate your Business with AI Agents <br className="hidden md:block" />
         </motion.h1>
 
         {/* Supporting SEO Line */}
@@ -57,9 +57,7 @@ export function HeroSection() {
           {...fadeUp(0.2, 16, 0.6)}
           className="mt-6 text-center text-base md:text-lg text-foreground/80 max-w-[700px] leading-relaxed"
         >
-          Deploy AI agents that reason and execute complex tasks across your
-          business. Otogent provides the sovereign execution layer for your
-          autonomous workflows at scale.
+          We help companies automate business processes with AI agents that understand your business and get work done.
         </motion.p>
 
         {/* Differentiation Line */}
