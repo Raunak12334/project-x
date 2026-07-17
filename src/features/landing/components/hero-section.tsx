@@ -49,7 +49,7 @@ export function HeroSection() {
           {...fadeUp(0.15, 16, 0.6)}
           className="mt-4 text-center text-lg md:text-xl font-medium text-primary"
         >
-          Autonomous AI Orchestration
+          Operating System for AI Agents
         </motion.p>
 
         {/* Subheadline */}
